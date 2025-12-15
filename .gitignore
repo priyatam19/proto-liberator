@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Virtualenvs
+.venv/
+venv/
+
+# Local build/output
+build/
+lib/
+*.o
+*.a
+*.so
+*.dylib
+*.exe
+*.out
+*.log
+*.profraw
+*.profdata
+corpus/
+crashes/
+
+# External deps (cloned/build artifacts)
+external/libprotobuf-mutator/**
+external/nanopb/**
+!external/libprotobuf-mutator/.gitkeep
+!external/nanopb/.gitkeep
+
+# Editors/OS
+.DS_Store
+.idea/
+.vscode/
+
