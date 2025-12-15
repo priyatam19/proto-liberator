@@ -1,0 +1,7 @@
+{
+  "test_func": {
+    "parameters": [
+      { "name": "param1", "type": "int" }
+    ]
+  }
+}
