@@ -1,0 +1,15 @@
+# Proto-libErator Python Dependencies
+
+# Core dependencies
+jinja2>=3.1.0        # Template engine for C code generation
+
+# Optional dependencies
+pyyaml>=6.0          # YAML configuration files
+colorama>=0.4.0      # Colored terminal output
+tqdm>=4.65.0         # Progress bars
+
+# Development dependencies (optional)
+pytest>=7.0.0        # Unit testing
+pytest-cov>=4.0.0    # Code coverage
+black>=23.0.0        # Code formatting
+mypy>=1.0.0          # Type checking
