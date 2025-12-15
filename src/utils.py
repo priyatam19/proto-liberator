@@ -97,6 +97,44 @@ def sanitize_identifier(name: str) -> str:
     return sanitized
 
 
+def to_snake_case(name: str) -> str:
+    """
+    Convert a name to snake_case.
+
+    Examples:
+      - "cJSON_AddItemToArray" -> "cjson_add_item_to_array"
+      - "FooBar" -> "foo_bar"
+    """
+    if not name:
+        return ""
+
+    import re
+
+    # Insert underscores before capitals, handling acronym boundaries reasonably well.
+    s = re.sub(r"(.)([A-Z][a-z]+)", r"\1_\2", name)
+    s = re.sub(r"([a-z0-9])([A-Z])", r"\1_\2", s)
+    # Replace non-identifier characters with underscores and normalize.
+    s = re.sub(r"[^0-9a-zA-Z_]+", "_", s)
+    s = s.strip("_")
+    while "__" in s:
+        s = s.replace("__", "_")
+    return s.lower()
+
+
+def to_proto_field_name(name: str) -> str:
+    """
+    Convert an arbitrary name into a protobuf field name:
+    - snake_case
+    - sanitized
+    - does not start with a digit
+    """
+    snake = to_snake_case(name)
+    sanitized = sanitize_identifier(snake).lower()
+    if sanitized and sanitized[0].isdigit():
+        sanitized = "_" + sanitized
+    return sanitized
+
+
 def humanize_bytes(size_bytes: int) -> str:
     """
     Convert byte count to human-readable string
