@@ -12,7 +12,7 @@ from dataclasses import dataclass
 
 # Import local modules
 from type_mapper import TypeMapper
-from utils import load_json, save_file
+from utils import load_json, load_text_lines, save_file, to_proto_field_name
 
 
 @dataclass
@@ -112,17 +112,51 @@ class ProtoGenerator:
     Transforms libErator's conditions.json to .proto using rules
     """
 
-    def __init__(self, conditions_path: Path, apis_path: Path):
+    def __init__(
+        self,
+        conditions_path: Path,
+        apis_path: Path,
+        *,
+        max_calls_per_api: int = 4,
+        max_bytes_size: int = 65536,
+    ):
         self.conditions = load_json(conditions_path)
         self.apis = self.load_apis(apis_path)
         self.type_mapper = TypeMapper()
+        self.max_calls_per_api = max_calls_per_api
+        self.max_bytes_size = max_bytes_size
 
     @staticmethod
-    def load_apis(apis_path: Path) -> Dict:
-        """Load API signatures from apis_clang.json"""
-        # TODO: Handle both apis_clang.json (JSON) and apis_clang.txt (text) formats
-        data = load_json(apis_path)
-        return data
+    def load_apis(apis_path: Path) -> List[Dict]:
+        """
+        Load API signatures from libErator outputs.
+
+        Supported formats:
+        - apis_clang.json: JSONL (one JSON object per line) as produced by libErator.
+        - apis_clang.txt: one function name per line.
+        - (fallback) JSON array/object.
+        """
+        try:
+            data = load_json(apis_path)
+            if isinstance(data, dict):
+                return [data]
+            if isinstance(data, list):
+                return data
+        except json.JSONDecodeError:
+            pass
+
+        # JSONL (most common in libErator)
+        apis: List[Dict] = []
+        try:
+            for line in load_text_lines(apis_path):
+                apis.append(json.loads(line))
+            if apis:
+                return apis
+        except Exception:
+            apis = []
+
+        # Plain-text list of API names
+        return [{"function_name": name} for name in load_text_lines(apis_path)]
 
     def generate_schema(self, library_name: str) -> ProtoSchema:
         """
@@ -136,19 +170,50 @@ class ProtoGenerator:
         """
         schema = ProtoSchema(f'{library_name}_fuzzer')
 
-        # Generate parameter message for each API function
-        for func_entry in self.conditions:
-            func_name = func_entry['function_name']
+        # Generate parameter message for each API function (stable ordering)
+        func_entries = sorted(
+            self.conditions,
+            key=lambda e: str(e.get("function_name") or e.get("functionName") or ""),
+        )
 
-            # Generate parameter message
-            param_msg = self.generate_param_message(func_name, func_entry)
-            schema.add_message(param_msg)
+        function_names: List[str] = []
+        for func_entry in func_entries:
+            func_name = func_entry.get("function_name") or func_entry.get("functionName")
+            if not func_name:
+                continue
+            function_names.append(func_name)
+            schema.add_message(self.generate_param_message(func_name, func_entry))
 
-        # TODO: Generate top-level FuzzInput message that combines all API params
-        # fuzzer_input_msg = self.generate_fuzzer_input_message()
-        # schema.add_message(fuzzer_input_msg)
+        # Top-level input message: stable contract for wrappers and fuzzers
+        schema.add_message(self.generate_fuzz_input_message(function_names))
 
         return schema
+
+    def generate_fuzz_input_message(self, function_names: List[str]) -> ProtoMessage:
+        """
+        Generate the top-level `FuzzInput` message.
+
+        Contract:
+        - One repeated field per API function, containing that function's Params message.
+        - Wrappers consume entries in call order (per-function index) to support multiple calls.
+        - All fields are optional/repeated to maximize exploration.
+        """
+        msg = ProtoMessage("FuzzInput")
+        msg.add_comment("Top-level fuzz input. One params list per API function.")
+        msg.add_comment("Wrappers consume per-function params in call order.")
+        msg.add_field("optional", "uint32", "global_seed")
+
+        for func_name in sorted(set(function_names)):
+            field_name = to_proto_field_name(func_name)
+            params_type = f"{func_name}_Params"
+            msg.add_field(
+                "repeated",
+                params_type,
+                field_name,
+                f"[(nanopb).max_count = {self.max_calls_per_api}]",
+            )
+
+        return msg
 
     def generate_param_message(self, func_name: str, func_metadata: Dict) -> ProtoMessage:
         """
@@ -197,7 +262,7 @@ class ProtoGenerator:
         # RULE 1: Array parameters
         if param_info.get('is_array'):
             msg.add_field('optional', 'bytes', param_name,
-                          '[(nanopb).max_size = 65536]')
+                          f'[(nanopb).max_size = {self.max_bytes_size}]')
             msg.add_field('optional', 'uint32', f'{param_name}_length')
             msg.add_field('optional', 'uint32', f'{param_name}_length_override')
             msg.add_comment(f'  ↳ Array with explicit length control')
@@ -218,7 +283,7 @@ class ProtoGenerator:
             msg.add_field('optional', proto_type, param_name)
 
         # RULE 4: Nullable flag
-        if self._is_nullable(param_info):
+        if self._is_nullable(param_info, llvm_type):
             msg.add_field('optional', 'bool', f'{param_name}_is_null')
             msg.add_comment(f'  ↳ Nullable exploration knob')
 
@@ -250,23 +315,20 @@ class ProtoGenerator:
             msg.add_field('optional', 'bool', 'allow_double_delete')
             msg.add_comment('  ↳ Skip double-delete protection')
 
-    def _is_nullable(self, param_info: Dict) -> bool:
+    def _is_nullable(self, param_info: Dict, llvm_type: str) -> bool:
         """
         Determine if parameter can be null from access_type_set
 
         Returns:
             True if parameter should have nullable exploration
         """
-        access_types = param_info.get('access_type_set', [])
-
-        # Extract access type strings
-        access_strs = [a.get('access', '') for a in access_types]
-
-        # If 'read' access without explicit null handling → non-nullable by default
-        # But we still want to explore null for fuzzing
-        if 'read' in access_strs:
-            return True  # Add nullable flag for exploration
-
+        # Only pointers/handles/arrays are meaningful nullable knobs.
+        if param_info.get("is_array"):
+            return True
+        if llvm_type.endswith("*") or llvm_type.startswith("%struct."):
+            return True
+        if self.type_mapper.is_handle_type(llvm_type):
+            return True
         return False
 
 
@@ -293,12 +355,21 @@ Example:
                         help='Output .proto file path')
     parser.add_argument('--library', required=True,
                         help='Library name (e.g., cjson)')
+    parser.add_argument('--max-calls-per-api', type=int, default=4,
+                        help='Max repeated Params entries per API in FuzzInput (default: 4)')
+    parser.add_argument('--max-bytes-size', type=int, default=65536,
+                        help='Nanopb max_size for bytes fields (default: 65536)')
 
     args = parser.parse_args()
 
     # Generate schema
     print(f"[Proto-libErator] Generating protobuf schema for {args.library}...")
-    generator = ProtoGenerator(Path(args.conditions), Path(args.apis))
+    generator = ProtoGenerator(
+        Path(args.conditions),
+        Path(args.apis),
+        max_calls_per_api=args.max_calls_per_api,
+        max_bytes_size=args.max_bytes_size,
+    )
     schema = generator.generate_schema(args.library)
 
     # Save to file

@@ -1,0 +1,2 @@
+{"function_name": "Foo", "namespace": [], "return_info": {"type_clang": "int", "const": [false]}, "arguments_info": [{"type_clang": "struct bar *", "const": [false, false]}, {"type_clang": "char *", "const": [false, false]}]}
+

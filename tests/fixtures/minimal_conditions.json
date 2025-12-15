@@ -1,0 +1,42 @@
+[
+  {
+    "function_name": "Foo",
+    "param_0": {
+      "type_string": "%struct.bar*",
+      "access_type_set": [
+        {
+          "access": "read",
+          "fields": [],
+          "parent": 0,
+          "type": "deadbeefdeadbeefdeadbeefdeadbeef",
+          "type_string": "%struct.bar*"
+        }
+      ]
+    },
+    "param_1": {
+      "type_string": "i8*",
+      "is_array": true,
+      "access_type_set": [
+        {
+          "access": "read",
+          "fields": [],
+          "parent": 1,
+          "type": "8b336322cb5b10c8b7dac308c85cff15",
+          "type_string": "i8*"
+        }
+      ]
+    },
+    "return": {
+      "type_string": "i32",
+      "access_type_set": [
+        {
+          "access": "create",
+          "fields": [],
+          "type": "c86ee0d9d7ed3e7b4fdbf486fa6c0ebb",
+          "type_string": "i32"
+        }
+      ]
+    }
+  }
+]
+
