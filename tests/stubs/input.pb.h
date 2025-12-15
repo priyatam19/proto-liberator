@@ -9,6 +9,9 @@ typedef struct _test_func_Params {
     int32_t param1;
 } test_func_Params;
 
+/* Initializer values (nanopb-style) */
+#define test_func_Params_init_zero {0}
+
 typedef struct _FuzzInput {
     pb_size_t test_func_count;
     test_func_Params test_func[4]; 

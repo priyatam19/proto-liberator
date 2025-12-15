@@ -44,19 +44,19 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
     /* Fixed API Sequence */
     {% for call in api_sequence %}
     /* Call {{ loop.index }}: {{ call.name }} */
-    if ({{ call.name }}_idx < message->{{ call.field_name }}_count) {
-        const {{ call.struct_type }} *params = &message->{{ call.field_name }}[{{ call.name }}_idx++];
-        
-        // Argument preparation
-        {% for arg in call.args %}
-        {{ arg.type }} arg_{{ arg.name }};
-        // TODO: Conversion logic for {{ arg.name }}
-        // e.g. arg_{{ arg.name }} = params->{{ arg.name }};
-        {% endfor %}
+    {
+        {{ call.struct_type }} params_zero = {{ call.struct_type }}_init_zero;
+        const {{ call.struct_type }} *params = &params_zero;
+        (void)params;
+        if ({{ call.name }}_idx < message->{{ call.field_name }}_count) {
+            params = &message->{{ call.field_name }}[{{ call.name }}_idx++];
+        }
 
+        // NOTE: MVP uses safe placeholder arguments to ensure calls execute even
+        // with empty/default protobuf messages. Param-to-C conversion comes next.
         {{ call.name }}(
-            {% for arg in call.args %}
-            arg_{{ arg.name }}{% if not loop.last %}, {% endif %}
+            {% for i in range(call.argc) %}
+            0{% if not loop.last %}, {% endif %}
             {% endfor %}
         );
     }

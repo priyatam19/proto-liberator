@@ -25,6 +25,11 @@ cd "$EXTERNAL_DIR"
 echo "[1/2] Building libprotobuf-mutator..."
 echo "----------------------------------------------------------------------"
 
+if [ -d "libprotobuf-mutator" ] && [ ! -f "libprotobuf-mutator/CMakeLists.txt" ]; then
+    echo "  ⚠️  external/libprotobuf-mutator exists but is not a clone; removing placeholder..."
+    rm -rf "libprotobuf-mutator"
+fi
+
 if [ ! -d "libprotobuf-mutator" ]; then
     echo "  Cloning libprotobuf-mutator..."
     git clone https://github.com/google/libprotobuf-mutator.git
@@ -64,6 +69,11 @@ cd "$EXTERNAL_DIR"
 echo ""
 echo "[2/2] Setting up nanopb..."
 echo "----------------------------------------------------------------------"
+
+if [ -d "nanopb" ] && [ ! -f "nanopb/pb_common.c" ]; then
+    echo "  ⚠️  external/nanopb exists but is not a clone; removing placeholder..."
+    rm -rf "nanopb"
+fi
 
 if [ ! -d "nanopb" ]; then
     echo "  Cloning nanopb..."
