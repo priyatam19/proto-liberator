@@ -23,6 +23,11 @@ lib/
 *.profdata
 corpus/
 crashes/
+workdir/
+crash-*
+
+# Test outputs (generated)
+tests/output/
 
 # External deps (cloned/build artifacts)
 external/libprotobuf-mutator/**
@@ -34,4 +39,3 @@ external/nanopb/**
 .DS_Store
 .idea/
 .vscode/
-

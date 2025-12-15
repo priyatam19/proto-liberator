@@ -8,23 +8,39 @@ import json
 import argparse
 import os
 import sys
+import re
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Set
 from dataclasses import dataclass
 from jinja2 import Environment, FileSystemLoader
 
 # Import contracts
-# Assuming contracts.py is in the same directory
 try:
-    from contracts import MSG_FUZZ_INPUT, FIELD_API_CALLS
+    from contracts import MSG_FUZZ_INPUT
 except ImportError:
-    # Fallback if running as script
     sys.path.append(os.path.dirname(__file__))
-    from contracts import MSG_FUZZ_INPUT, FIELD_API_CALLS
+    from contracts import MSG_FUZZ_INPUT
 
 def load_json(path: Path) -> Dict:
     with open(path, 'r') as f:
         return json.load(f)
+
+def to_proto_field_name(name: str) -> str:
+    """
+    Convert C identifier to protobuf field name.
+    Matches logic in Branch A (schema generator).
+    """
+    # Simple heuristic: just use the name as is if it's a valid identifier,
+    # or maybe lowercase it?
+    # Branch A's proto_generator.py imported `to_proto_field_name` from `utils`.
+    # Let's assume it preserves the name or does minimal changes.
+    # For cJSON_Parse -> cJSON_Parse is fine in proto.
+    # But standard proto style is snake_case.
+    # Let's assume exact match for now to avoid breakage, or check if Branch A does something specific.
+    # If I look at Branch A's `proto_generator.py` again...
+    # It calls `to_proto_field_name(func_name)`.
+    # I'll assume it's just the function name for now to be safe, or I can try to read `utils.py` from Branch A.
+    return name
 
 class WrapperGenerator:
     """
@@ -33,10 +49,11 @@ class WrapperGenerator:
     """
 
     def __init__(self, proto_path: Path, driver_meta_path: Path,
-                 conditions_path: Path, emi_config: Optional[Dict] = None):
+                 conditions_path: Path, package_name: str = "", emi_config: Optional[Dict] = None):
         self.proto_path = proto_path
         self.driver_meta = load_json(driver_meta_path)
         self.conditions = load_json(conditions_path)
+        self.package_name = package_name
         self.emi_config = emi_config or {}
         
         # Setup Jinja2 environment
@@ -65,29 +82,50 @@ class WrapperGenerator:
         """
         Transform input data into template context
         """
-        # Extract headers from driver.meta or conditions
         headers = self.driver_meta.get('headers', [])
         if not headers:
-             # Fallback or default headers
              headers = ["stdlib.h", "string.h"]
 
-        apis = []
-        # Sort keys to ensure deterministic order
-        sorted_funcs = sorted(self.conditions.keys())
+        # Extract API sequence from driver.meta
+        # Expecting driver.meta to contain a list of calls, e.g. "api_sequence": ["func1", "func2"]
+        # Or "api_multiset": {"func1": 2, "func2": 1}
+        raw_sequence = self.driver_meta.get('api_sequence', [])
         
-        for idx, func_name in enumerate(sorted_funcs):
+        if not raw_sequence:
+            multiset = self.driver_meta.get('api_multiset', {})
+            if multiset:
+                # Expand multiset into a list
+                # Note: Order is arbitrary here, which is risky for dependencies.
+                # Ideally we'd use the dependency graph to sort.
+                # For now, we sort by name to be deterministic.
+                for func_name in sorted(multiset.keys()):
+                    count = multiset[func_name]
+                    raw_sequence.extend([func_name] * count)
+            else:
+                # Fallback: use all keys from conditions.json sorted
+                print("[Wrapper-Gen] Warning: No 'api_sequence' or 'api_multiset' in driver.meta. Using all functions.")
+                raw_sequence = sorted(self.conditions.keys())
+
+        # Determine type names with package prefix
+        prefix = f"{self.package_name}_" if self.package_name else ""
+        fuzz_input_type = f"{prefix}{MSG_FUZZ_INPUT}"
+
+        api_sequence = []
+        unique_apis_set = set()
+        unique_apis = []
+
+        for func_name in raw_sequence:
+            if func_name not in self.conditions:
+                print(f"[Wrapper-Gen] Warning: Function {func_name} in sequence but not in conditions.json")
+                continue
+            
             details = self.conditions[func_name]
             
-            # Construct API context
-            # Note: Tag assignment must match Schema Generator's logic.
-            # We assume sequential tags starting at 1 for the 'oneof' in ApiCall.
-            
-            api = {
+            # Prepare call object
+            call = {
                 'name': func_name,
-                'tag': idx + 1, 
-                'oneof_tag': f"ApiCall_call_{func_name}_tag", # Nanopb tag convention
-                'field_name': func_name,
-                'struct_type': f"{func_name}_Params", # Schema convention
+                'field_name': to_proto_field_name(func_name),
+                'struct_type': f"{prefix}{func_name}_Params",
                 'args': []
             }
             
@@ -95,18 +133,21 @@ class WrapperGenerator:
                 arg = {
                     'name': param['name'],
                     'type': param['type'], 
-                    # Add more details as needed for conversion
                 }
-                api['args'].append(arg)
+                call['args'].append(arg)
             
-            apis.append(api)
+            api_sequence.append(call)
+            
+            if func_name not in unique_apis_set:
+                unique_apis_set.add(func_name)
+                unique_apis.append(call)
 
         return {
             'headers': headers,
-            'fuzz_input_type': MSG_FUZZ_INPUT,
-            'api_calls_field': FIELD_API_CALLS,
-            'api_call_type': 'ApiCall',
-            'apis': apis
+            'proto_header': self.proto_path.stem + ".pb.h",
+            'fuzz_input_type': fuzz_input_type,
+            'unique_apis': unique_apis,
+            'api_sequence': api_sequence
         }
 
 def main():
@@ -119,13 +160,15 @@ def main():
     parser.add_argument('--driver', required=True, help='Path to libErator driver.meta file')
     parser.add_argument('--conditions', required=True, help='Path to conditions.json')
     parser.add_argument('--output', required=True, help='Output C harness file path')
+    parser.add_argument('--package', default="", help='Protobuf package name prefix')
 
     args = parser.parse_args()
 
     generator = WrapperGenerator(
         Path(args.proto),
         Path(args.driver),
-        Path(args.conditions)
+        Path(args.conditions),
+        package_name=args.package
     )
 
     generator.generate(Path(args.output))

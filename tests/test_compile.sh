@@ -27,12 +27,17 @@ EOF
 
 cat <<EOF > "$OUTPUT_DIR/driver.meta"
 {
-  "headers": ["test_lib.h"]
+  "headers": ["test_lib.h"],
+  "api_sequence": ["test_func", "test_func"]
 }
 EOF
 
 # Create dummy library header
 echo "void test_func(int param1);" > "$OUTPUT_DIR/test_lib.h"
+
+# Create dummy protobuf header matching the provided --proto basename.
+# wrapper_generator.py includes "{{ proto_stem }}.pb.h".
+cp "$STUBS_DIR/input.pb.h" "$OUTPUT_DIR/dummy.pb.h"
 
 # Generate Harness
 echo "[Test] Generating harness..."

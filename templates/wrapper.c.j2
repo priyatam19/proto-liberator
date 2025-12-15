@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "pb_decode.h"
-#include "input.pb.h"
+#include "{{ proto_header }}"
 
 /* Library Headers */
 {% for header in headers %}
@@ -23,41 +23,45 @@ int LLVMFuzzerInitialize(int *argc, char ***argv) {
 }
 
 int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
-    {{ fuzz_input_type }} message = {{ fuzz_input_type }}_init_zero;
+    {{ fuzz_input_type }} *message = malloc(sizeof({{ fuzz_input_type }}));
+    if (!message) return 0;
+    
+    // Initialize to zero
+    memset(message, 0, sizeof({{ fuzz_input_type }}));
+    
     pb_istream_t stream = pb_istream_from_buffer(data, size);
 
-    if (!pb_decode(&stream, {{ fuzz_input_type }}_fields, &message)) {
+    if (!pb_decode(&stream, {{ fuzz_input_type }}_fields, message)) {
+        free(message);
         return 0;
     }
 
-    /* Execute API Calls */
-    for (size_t i = 0; i < message.{{ api_calls_field }}_count; i++) {
-        const {{ api_call_type }} *call = &message.{{ api_calls_field }}[i];
+    /* API Call Counters */
+    {% for api in unique_apis %}
+    size_t {{ api.name }}_idx = 0;
+    {% endfor %}
+
+    /* Fixed API Sequence */
+    {% for call in api_sequence %}
+    /* Call {{ loop.index }}: {{ call.name }} */
+    if ({{ call.name }}_idx < message->{{ call.field_name }}_count) {
+        const {{ call.struct_type }} *params = &message->{{ call.field_name }}[{{ call.name }}_idx++];
         
-        switch (call->which_call) {
-            {% for api in apis %}
-            case {{ api.oneof_tag }}: {
-                /* {{ api.name }} */
-                const {{ api.struct_type }} *params = &call->call.{{ api.field_name }};
-                
-                // Argument preparation
-                {% for arg in api.args %}
-                {{ arg.type }} arg_{{ arg.name }};
-                // TODO: Conversion logic for {{ arg.name }}
-                {% endfor %}
+        // Argument preparation
+        {% for arg in call.args %}
+        {{ arg.type }} arg_{{ arg.name }};
+        // TODO: Conversion logic for {{ arg.name }}
+        // e.g. arg_{{ arg.name }} = params->{{ arg.name }};
+        {% endfor %}
 
-                {{ api.name }}(
-                    {% for arg in api.args %}
-                    arg_{{ arg.name }}{% if not loop.last %}, {% endif %}
-                    {% endfor %}
-                );
-                break;
-            }
+        {{ call.name }}(
+            {% for arg in call.args %}
+            arg_{{ arg.name }}{% if not loop.last %}, {% endif %}
             {% endfor %}
-            default:
-                break;
-        }
+        );
     }
+    {% endfor %}
 
+    free(message);
     return 0;
 }
