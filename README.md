@@ -175,6 +175,19 @@ python3 src/wrapper_generator.py \
 - Adaptive validation with contract violation knobs
 - Nanopb deserialization
 
+### 2b. Seed Generator (`src/seed_generator.py`)
+
+**Purpose**: Generate an initial **seed corpus** for the v2 dynamic-dispatch harness (`FuzzInput.actions`).
+
+**Wire-only mode (no protoc required)**:
+```bash
+python3 src/seed_generator.py \
+  --conditions ../liberator/analysis/cjson/work/apipass/conditions.json \
+  --output-dir corpus/ \
+  --num-seeds 64 \
+  --max-len 16
+```
+
 ### 3. Refinement Loop (`src/refinement_loop.py`)
 
 **Input**: Fuzzer metrics (coverage, reject rate)
