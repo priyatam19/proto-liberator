@@ -84,6 +84,19 @@ sudo apt-get install -y \
 pip3 install pyyaml jinja2
 ```
 
+### Optional: Full Automation via libErator (Docker)
+
+If you have a working libErator checkout and Docker, you can run analysis + driver generation + proto-liberator in one step via:
+
+```bash
+LIBERATOR_ROOT=../liberator \
+  ./scripts/fuzz_library.sh cjson \
+    --schema-mode v2 \
+    --out-dir workdir/cjson_auto \
+    --header cjson/cJSON.h \
+    -- --build --fuzz --generate-seeds
+```
+
 ### Installation
 
 ```bash

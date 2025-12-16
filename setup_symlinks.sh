@@ -4,7 +4,10 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-LIBERATOR_ROOT="/home/priyatam/pin_compete/tools/liberator"
+LIBERATOR_ROOT="${LIBERATOR_ROOT:-/home/priyatam/pin_compete/tools/liberator}"
+if [ ! -d "$LIBERATOR_ROOT" ] && [ -d "${SCRIPT_DIR}/../liberator" ]; then
+    LIBERATOR_ROOT="${SCRIPT_DIR}/../liberator"
+fi
 
 echo "Setting up symlinks to libErator..."
 echo ""
