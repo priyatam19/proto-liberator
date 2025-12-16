@@ -88,6 +88,11 @@ def main() -> int:
 
     parser.add_argument("--build", action="store_true", help="Compile a libFuzzer binary")
     parser.add_argument("--fuzz", action="store_true", help="Run the fuzzer after build")
+    parser.add_argument(
+        "--detect-leaks",
+        action="store_true",
+        help="Enable LeakSanitizer detection (default: disabled via -detect_leaks=0)",
+    )
     parser.add_argument("--clang", default="clang", help="clang path")
     parser.add_argument("--cc-arg", action="append", default=[], help="Extra clang args (repeatable)")
     parser.add_argument("--target-include", action="append", default=[], help="Add -I<dir> (repeatable)")
@@ -262,11 +267,17 @@ def main() -> int:
 
     # 6) Fuzz
     if args.fuzz:
+        artifacts_dir = out_dir / "artifacts"
+        if not args.dry_run:
+            artifacts_dir.mkdir(parents=True, exist_ok=True)
         fuzz_argv: List[str] = [str(fuzzer_bin)]
         if args.generate_seeds:
             fuzz_argv.append(str(seeds_dir))
+        if not args.detect_leaks:
+            fuzz_argv.append("-detect_leaks=0")
+        fuzz_argv.append(f"-artifact_prefix={artifacts_dir.as_posix()}/")
         fuzz_argv.extend(["-runs=100"])
-        _run(Cmd(fuzz_argv), dry_run=args.dry_run)
+        _run(Cmd(fuzz_argv, cwd=out_dir), dry_run=args.dry_run)
 
     return 0
 
