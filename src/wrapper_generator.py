@@ -4,14 +4,18 @@ Wrapper Generator - Template-Based C Harness Generation
 
 Consumes:
 - Generated `.proto` (only for header naming / package prefix)
-- libErator `driver.meta` (sequence driver)
+- libErator `driver.meta` (headers and, for v1, fixed API sequence)
 - libErator `conditions.json` (function+param metadata; list of entries)
 - libErator `apis_clang.json` (JSONL; function signatures; optional)
 
 Generates:
-- `harness.c` implementing nanopb decode and a fixed API sequence.
+- `harness.c` implementing nanopb decode and:
+  - v1: fixed API sequence (driver.meta api_sequence/api_multiset)
+  - v2: dynamic dispatch over repeated Action.oneof
 
-This module must stay aligned with the schema contract in `docs/SCHEMA_CONTRACT.md`.
+This module must stay aligned with:
+- v1: `docs/SCHEMA_CONTRACT.md`
+- v2: `docs/SCHEMA_CONTRACT_V2.md`
 """
 
 import argparse
@@ -24,12 +28,12 @@ from typing import Any, Dict, List, Optional
 from jinja2 import Environment, FileSystemLoader
 
 try:
-    from contracts import MSG_FUZZ_INPUT
+    from contracts import MSG_FUZZ_INPUT, MSG_ACTION, FIELD_ACTIONS, FIELD_ACTION_ONEOF
     from utils import load_json, load_text_lines, to_proto_field_name
     from type_mapper import TypeMapper
 except ImportError:
     sys.path.append(os.path.dirname(__file__))
-    from contracts import MSG_FUZZ_INPUT
+    from contracts import MSG_FUZZ_INPUT, MSG_ACTION, FIELD_ACTIONS, FIELD_ACTION_ONEOF
     from utils import load_json, load_text_lines, to_proto_field_name
     from type_mapper import TypeMapper
 
@@ -205,7 +209,7 @@ def classify_param(
 
 class WrapperGenerator:
     """
-    Generate C fuzzing harness from protobuf schema + libErator metadata
+    Generate C fuzzing harness from protobuf schema + libErator metadata.
     Uses Jinja2 templates.
     """
 
@@ -217,6 +221,7 @@ class WrapperGenerator:
         *,
         apis_path: Optional[Path] = None,
         package_name: str = "",
+        schema_mode: str = "v1",
         emi_config: Optional[Dict] = None,
         extra_headers: Optional[List[str]] = None,
     ):
@@ -226,35 +231,32 @@ class WrapperGenerator:
         self.conditions = index_conditions(self.conditions_raw)
         self.api_sigs = build_signature_index(apis_path)
         self.package_name = package_name
+        self.schema_mode = schema_mode
         self.emi_config = emi_config or {}
         self.extra_headers = extra_headers or []
         self.mapper = TypeMapper()
-        
-        # Setup Jinja2 environment
-        template_dir = Path(__file__).parent.parent / 'templates'
+
+        template_dir = Path(__file__).parent.parent / "templates"
         self.env = Environment(loader=FileSystemLoader(str(template_dir)))
-        self.template = self.env.get_template('wrapper.c.j2')
+        template_name = "wrapper_v2.c.j2" if self.schema_mode == "v2" else "wrapper.c.j2"
+        self.template = self.env.get_template(template_name)
 
     def generate(self, output_path: Path):
-        """
-        Main generation entry point
-        """
         print(f"[Wrapper-Gen] Generating fuzzing harness...")
-
-        # Prepare context for template
         context = self._prepare_context()
-        
-        # Render template
         wrapper_code = self.template.render(context)
-
-        with open(output_path, 'w') as f:
+        with open(output_path, "w") as f:
             f.write(wrapper_code)
-            
         print(f"[Wrapper-Gen] ✓ Generated: {output_path}")
 
     def _prepare_context(self) -> Dict:
+        if self.schema_mode == "v2":
+            return self._prepare_context_v2()
+        return self._prepare_context_v1()
+
+    def _prepare_context_v1(self) -> Dict:
         """
-        Transform input data into template context
+        v1: fixed-sequence driver. Contract: docs/SCHEMA_CONTRACT.md
         """
         headers = self.driver_meta.get("headers", []) or []
         if not isinstance(headers, list):
@@ -263,27 +265,19 @@ class WrapperGenerator:
         if not headers:
             headers = []
 
-        # Extract API sequence from driver.meta
-        # Expecting driver.meta to contain a list of calls, e.g. "api_sequence": ["func1", "func2"]
-        # Or "api_multiset": {"func1": 2, "func2": 1}
         raw_sequence = self.driver_meta.get("api_sequence", [])
-        
         if not raw_sequence:
             multiset = self.driver_meta.get("api_multiset", {})
             if multiset:
-                # Expand multiset into a list
-                # Note: Order is arbitrary here, which is risky for dependencies.
-                # Ideally we'd use the dependency graph to sort.
-                # For now, we sort by name to be deterministic.
                 for func_name in sorted(multiset.keys()):
                     count = multiset[func_name]
                     raw_sequence.extend([func_name] * count)
             else:
-                # Fallback: use all keys from conditions.json sorted
-                print("[Wrapper-Gen] Warning: No 'api_sequence' or 'api_multiset' in driver.meta. Using all functions.")
+                print(
+                    "[Wrapper-Gen] Warning: No 'api_sequence' or 'api_multiset' in driver.meta. Using all functions."
+                )
                 raw_sequence = sorted(self.conditions.keys())
 
-        # Determine type names with package prefix
         prefix = f"{self.package_name}_" if self.package_name else ""
         fuzz_input_type = f"{prefix}{MSG_FUZZ_INPUT}"
 
@@ -295,9 +289,10 @@ class WrapperGenerator:
             if func_name not in self.conditions:
                 print(f"[Wrapper-Gen] Warning: Function {func_name} in sequence but not in conditions.json")
                 continue
-            
+
             entry = self.conditions[func_name]
             sig = self.api_sigs.get(func_name)
+
             arg_types: List[str] = []
             ret_type = "void"
             if sig:
@@ -309,13 +304,12 @@ class WrapperGenerator:
 
             argc = len(arg_types) if arg_types else infer_argc_from_conditions(entry)
             if not arg_types:
-                # Stub mode: attempt to use `parameters` list for types.
                 params = entry.get("parameters")
                 if isinstance(params, list):
                     arg_types = [normalize_c_type(str(p.get("type") or "int")) for p in params][:argc]
                 if len(arg_types) < argc:
                     arg_types.extend(["int"] * (argc - len(arg_types)))
-            
+
             args: List[Dict[str, Any]] = []
             for i in range(argc):
                 param_desc = classify_param(entry, i, self.mapper)
@@ -333,49 +327,134 @@ class WrapperGenerator:
 
             returns_handle = conditions_return_is_handle(entry, self.mapper)
 
-            # Prepare call object (template-facing)
             call = {
-                'name': func_name,
-                'field_name': to_proto_field_name(func_name),
-                'struct_type': f"{prefix}{func_name}_Params",
-                'argc': argc,
-                'args': args,
-                'return_type': ret_type,
-                'return_is_void': is_void_return(ret_type),
-                'returns_handle': returns_handle,
-                'has_skip_dependency_check': function_has_deps(entry),
-                'has_allow_double_delete': "return" in entry,
-                'is_destructor': is_destructor_name(func_name),
+                "name": func_name,
+                "field_name": to_proto_field_name(func_name),
+                "struct_type": f"{prefix}{func_name}_Params",
+                "argc": argc,
+                "args": args,
+                "return_type": ret_type,
+                "return_is_void": is_void_return(ret_type),
+                "returns_handle": returns_handle,
+                "has_skip_dependency_check": function_has_deps(entry),
+                "has_allow_double_delete": "return" in entry,
+                "is_destructor": is_destructor_name(func_name),
             }
-            
+
             api_sequence.append(call)
-            
+
             if func_name not in unique_apis_set:
                 unique_apis_set.add(func_name)
                 unique_apis.append(call)
 
         return {
-            'headers': headers,
-            'proto_header': self.proto_path.stem + ".pb.h",
-            'fuzz_input_type': fuzz_input_type,
-            'unique_apis': unique_apis,
-            'api_sequence': api_sequence
+            "headers": headers,
+            "proto_header": self.proto_path.stem + ".pb.h",
+            "fuzz_input_type": fuzz_input_type,
+            "unique_apis": unique_apis,
+            "api_sequence": api_sequence,
         }
 
-def main():
-    """CLI entry point"""
-    parser = argparse.ArgumentParser(
-        description='Template-Based Wrapper Generator for Proto-libErator'
-    )
+    def _prepare_context_v2(self) -> Dict:
+        """
+        v2: dynamic dispatch “super harness”. Contract: docs/SCHEMA_CONTRACT_V2.md
+        """
+        headers = self.driver_meta.get("headers", []) or []
+        if not isinstance(headers, list):
+            headers = []
+        headers.extend(self.extra_headers)
+        if not headers:
+            headers = []
 
-    parser.add_argument('--proto', required=True, help='Path to generated .proto file')
-    parser.add_argument('--driver', required=True, help='Path to libErator driver.meta file')
-    parser.add_argument('--conditions', required=True, help='Path to conditions.json')
-    parser.add_argument('--apis', help='Path to apis_clang.json (JSONL) for accurate arg counts')
-    parser.add_argument('--output', required=True, help='Output C harness file path')
-    parser.add_argument('--package', default="", help='Protobuf package name prefix')
-    parser.add_argument('--header', action='append', default=[],
-                        help='Extra header to include (repeatable), e.g. cjson/cJSON.h')
+        prefix = f"{self.package_name}_" if self.package_name else ""
+        fuzz_input_type = f"{prefix}{MSG_FUZZ_INPUT}"
+        action_type = f"{prefix}{MSG_ACTION}"
+
+        sorted_funcs = sorted(self.conditions.keys())
+
+        apis = []
+        for func_name in sorted_funcs:
+            entry = self.conditions[func_name]
+            sig = self.api_sigs.get(func_name)
+
+            arg_types: List[str] = []
+            ret_type = "void"
+            if sig:
+                ret_info = sig.get("return_info") or {}
+                ret_type = normalize_c_type(str(ret_info.get("type_clang") or "void"))
+                args_info = sig.get("arguments_info")
+                if isinstance(args_info, list):
+                    arg_types = [normalize_c_type(str(a.get("type_clang") or "int")) for a in args_info]
+
+            argc = len(arg_types) if arg_types else infer_argc_from_conditions(entry)
+            if not arg_types:
+                params = entry.get("parameters")
+                if isinstance(params, list):
+                    arg_types = [normalize_c_type(str(p.get("type") or "int")) for p in params][:argc]
+                if len(arg_types) < argc:
+                    arg_types.extend(["int"] * (argc - len(arg_types)))
+
+            args: List[Dict[str, Any]] = []
+            for i in range(argc):
+                param_desc = classify_param(entry, i, self.mapper)
+                c_type = arg_types[i] if i < len(arg_types) else "int"
+                args.append(
+                    {
+                        "i": i,
+                        "c_type": c_type,
+                        "param": param_desc,
+                        "is_char_ptr": is_char_ptr(c_type),
+                        "is_void_ptr": is_void_ptr(c_type),
+                        "is_pointer": is_pointer_type(c_type),
+                    }
+                )
+
+            returns_handle = conditions_return_is_handle(entry, self.mapper)
+            field_name = to_proto_field_name(func_name)
+
+            apis.append(
+                {
+                    "name": func_name,
+                    "field_name": field_name,
+                    "struct_type": f"{prefix}{func_name}_Params",
+                    "oneof_tag": f"{action_type}_{field_name}_tag",
+                    "args": args,
+                    "return_type": ret_type,
+                    "return_is_void": is_void_return(ret_type),
+                    "returns_handle": returns_handle,
+                    "has_skip_dependency_check": function_has_deps(entry),
+                    "has_allow_double_delete": "return" in entry,
+                    "is_destructor": is_destructor_name(func_name),
+                }
+            )
+
+        return {
+            "headers": headers,
+            "proto_header": self.proto_path.stem + ".pb.h",
+            "fuzz_input_type": fuzz_input_type,
+            "actions_field": FIELD_ACTIONS,
+            "action_type": action_type,
+            "action_oneof_field": FIELD_ACTION_ONEOF,
+            "apis": apis,
+        }
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Template-Based Wrapper Generator for Proto-libErator")
+
+    parser.add_argument("--proto", required=True, help="Path to generated .proto file")
+    parser.add_argument("--driver", required=True, help="Path to libErator driver.meta file")
+    parser.add_argument("--conditions", required=True, help="Path to conditions.json")
+    parser.add_argument("--apis", help="Path to apis_clang.json (JSONL) for accurate arg counts")
+    parser.add_argument("--output", required=True, help="Output C harness file path")
+    parser.add_argument("--package", default="", help="Protobuf package name prefix")
+    parser.add_argument("--schema-mode", choices=["v1", "v2"], default="v1", help="Schema contract version")
+    parser.add_argument(
+        "--header",
+        action="append",
+        default=[],
+        help="Extra header to include (repeatable), e.g. cjson/cJSON.h",
+    )
 
     args = parser.parse_args()
 
@@ -385,10 +464,13 @@ def main():
         Path(args.conditions),
         apis_path=Path(args.apis) if args.apis else None,
         package_name=args.package,
+        schema_mode=args.schema_mode,
         extra_headers=args.header,
     )
 
     generator.generate(Path(args.output))
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()
+

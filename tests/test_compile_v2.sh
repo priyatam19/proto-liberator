@@ -1,18 +1,18 @@
 #!/bin/bash
 set -e
 
-# Test script for verifying harness generation and compilation
+# Test script for verifying v2 harness generation and compilation
 # Uses stubs to avoid external dependencies
 
 TEST_DIR=$(dirname "$(realpath "$0")")
 ROOT_DIR=$(dirname "$TEST_DIR")
 SRC_DIR="$ROOT_DIR/src"
 STUBS_DIR="$TEST_DIR/stubs"
-OUTPUT_DIR="$TEST_DIR/output"
+OUTPUT_DIR="$TEST_DIR/output_v2"
 
 mkdir -p "$OUTPUT_DIR"
 
-echo "[Test] Setting up test environment..."
+echo "[Test] Setting up test environment (v2)..."
 
 # Ensure runtime Python deps are available (clean-machine friendly)
 PYTHON_BIN="${PYTHON_BIN:-python3}"
@@ -27,12 +27,26 @@ if ! "$PYTHON_BIN" -c 'import jinja2' >/dev/null 2>&1; then
     PYTHON_BIN="$VENV_DIR/bin/python"
 fi
 
-# Create dummy inputs
 cat <<EOF > "$OUTPUT_DIR/conditions.json"
 {
   "test_func": {
+    "param_0": {
+      "type_string": "%struct.foo*",
+      "set_by": ["creator"],
+      "access_type_set": [{"access": "read", "type_string": "%struct.foo*"}]
+    },
+    "param_1": {
+      "type_string": "i8*",
+      "is_array": true,
+      "access_type_set": [{"access": "read", "type_string": "i8*"}]
+    },
+    "return": {
+      "type_string": "i32",
+      "access_type_set": [{"access": "read", "type_string": "i32"}]
+    },
     "parameters": [
-      { "name": "param1", "type": "int" }
+      { "name": "h", "type": "struct foo *" },
+      { "name": "s", "type": "char *" }
     ]
   }
 }
@@ -41,30 +55,31 @@ EOF
 cat <<EOF > "$OUTPUT_DIR/driver.meta"
 {
   "headers": ["test_lib.h"],
-  "api_sequence": ["test_func", "test_func"]
+  "api_sequence": ["test_func"]
 }
 EOF
 
-# Create dummy library header
-echo "void test_func(int param1);" > "$OUTPUT_DIR/test_lib.h"
+cat <<EOF > "$OUTPUT_DIR/test_lib.h"
+struct foo;
+void test_func(struct foo *h, char *s);
+EOF
 
 # Create dummy protobuf header matching the provided --proto basename.
-# wrapper_generator.py includes "{{ proto_stem }}.pb.h".
-cp "$STUBS_DIR/input.pb.h" "$OUTPUT_DIR/dummy.pb.h"
+cp "$STUBS_DIR/input_v2.pb.h" "$OUTPUT_DIR/dummy.pb.h"
 
-# Generate Harness
-echo "[Test] Generating harness..."
+echo "[Test] Generating harness (v2)..."
 "$PYTHON_BIN" "$SRC_DIR/wrapper_generator.py" \
     --proto "dummy.proto" \
     --driver "$OUTPUT_DIR/driver.meta" \
     --conditions "$OUTPUT_DIR/conditions.json" \
+    --schema-mode v2 \
     --output "$OUTPUT_DIR/harness.c"
 
-# Compile
-echo "[Test] Compiling harness..."
+echo "[Test] Compiling harness (v2)..."
 if command -v clang >/dev/null 2>&1; then
     clang -c -I"$STUBS_DIR" -I"$OUTPUT_DIR" "$OUTPUT_DIR/harness.c" -o "$OUTPUT_DIR/harness.o"
     echo "[Test] Compilation successful!"
 else
     echo "[Test] clang not found, skipping compilation step."
 fi
+
