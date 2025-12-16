@@ -77,6 +77,15 @@ python3 src/proto_generator.py \
   --apis examples/cjson/input/apis_clang.json \
   --output examples/cjson/generated/cjson_params.proto \
   --library cjson
+
+# v2 (dynamic dispatch “super harness”) schema:
+python3 src/proto_generator.py \
+  --conditions examples/cjson/input/conditions.json \
+  --apis examples/cjson/input/apis_clang.json \
+  --output examples/cjson/generated/cjson_params_v2.proto \
+  --library cjson \
+  --schema-mode v2 \
+  --max-actions 64
 ```
 
 **Output:** `examples/cjson/generated/cjson_params.proto`
