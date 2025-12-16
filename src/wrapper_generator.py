@@ -1,17 +1,16 @@
 #!/usr/bin/env python3
 """
-Wrapper Generator - Template-Based C Harness Generation
+Wrapper Generator - Template-Based C Harness Generation (v2 Dynamic Dispatch)
 
 Consumes:
 - Generated `.proto` (only for header naming / package prefix)
-- libErator `driver.meta` (sequence driver)
 - libErator `conditions.json` (function+param metadata; list of entries)
 - libErator `apis_clang.json` (JSONL; function signatures; optional)
 
 Generates:
-- `harness.c` implementing nanopb decode and a fixed API sequence.
+- `harness.c` implementing nanopb decode and dynamic dispatch loop.
 
-This module must stay aligned with the schema contract in `docs/SCHEMA_CONTRACT.md`.
+This module must stay aligned with the schema contract in `docs/SCHEMA_CONTRACT_V2.md`.
 """
 
 import argparse
@@ -24,12 +23,12 @@ from typing import Any, Dict, List, Optional
 from jinja2 import Environment, FileSystemLoader
 
 try:
-    from contracts import MSG_FUZZ_INPUT
+    from contracts import MSG_FUZZ_INPUT, MSG_ACTION, FIELD_ACTIONS, FIELD_ACTION_ONEOF
     from utils import load_json, load_text_lines, to_proto_field_name
     from type_mapper import TypeMapper
 except ImportError:
     sys.path.append(os.path.dirname(__file__))
-    from contracts import MSG_FUZZ_INPUT
+    from contracts import MSG_FUZZ_INPUT, MSG_ACTION, FIELD_ACTIONS, FIELD_ACTION_ONEOF
     from utils import load_json, load_text_lines, to_proto_field_name
     from type_mapper import TypeMapper
 
@@ -44,15 +43,8 @@ def load_jsonl(path: Path) -> List[Dict[str, Any]]:
 def index_conditions(conditions: Any) -> Dict[str, Dict[str, Any]]:
     """
     Normalize libErator conditions.json into {function_name -> entry}.
-
-    libErator format (cJSON): a list of dicts with keys like:
-      - function_name
-      - param_0, param_1, ...
-      - return
-    Test stubs may use a simpler dict format; we support both.
     """
     if isinstance(conditions, dict):
-        # Stub format: {func: {...}}
         return conditions
 
     if not isinstance(conditions, list):
@@ -69,7 +61,6 @@ def index_conditions(conditions: Any) -> Dict[str, Dict[str, Any]]:
 
 
 def infer_argc_from_conditions(entry: Dict[str, Any]) -> int:
-    # Stub format: {"parameters": [{"name":..., "type":...}, ...]}
     params = entry.get("parameters")
     if isinstance(params, list):
         return len(params)
@@ -85,11 +76,6 @@ def infer_argc_from_conditions(entry: Dict[str, Any]) -> int:
 
 
 def build_signature_index(apis_path: Optional[Path]) -> Dict[str, Dict[str, Any]]:
-    """
-    Build {function_name -> apis_clang row}.
-
-    apis_clang.json is JSONL (one object per line).
-    """
     if not apis_path:
         return {}
     if not apis_path.exists():
@@ -254,7 +240,7 @@ class WrapperGenerator:
 
     def _prepare_context(self) -> Dict:
         """
-        Transform input data into template context
+        Transform input data into template context for v2 Dynamic Dispatch
         """
         headers = self.driver_meta.get("headers", []) or []
         if not isinstance(headers, list):
@@ -263,41 +249,19 @@ class WrapperGenerator:
         if not headers:
             headers = []
 
-        # Extract API sequence from driver.meta
-        # Expecting driver.meta to contain a list of calls, e.g. "api_sequence": ["func1", "func2"]
-        # Or "api_multiset": {"func1": 2, "func2": 1}
-        raw_sequence = self.driver_meta.get("api_sequence", [])
-        
-        if not raw_sequence:
-            multiset = self.driver_meta.get("api_multiset", {})
-            if multiset:
-                # Expand multiset into a list
-                # Note: Order is arbitrary here, which is risky for dependencies.
-                # Ideally we'd use the dependency graph to sort.
-                # For now, we sort by name to be deterministic.
-                for func_name in sorted(multiset.keys()):
-                    count = multiset[func_name]
-                    raw_sequence.extend([func_name] * count)
-            else:
-                # Fallback: use all keys from conditions.json sorted
-                print("[Wrapper-Gen] Warning: No 'api_sequence' or 'api_multiset' in driver.meta. Using all functions.")
-                raw_sequence = sorted(self.conditions.keys())
-
         # Determine type names with package prefix
         prefix = f"{self.package_name}_" if self.package_name else ""
         fuzz_input_type = f"{prefix}{MSG_FUZZ_INPUT}"
-
-        api_sequence = []
-        unique_apis_set = set()
-        unique_apis = []
-
-        for func_name in raw_sequence:
-            if func_name not in self.conditions:
-                print(f"[Wrapper-Gen] Warning: Function {func_name} in sequence but not in conditions.json")
-                continue
-            
+        action_type = f"{prefix}{MSG_ACTION}"
+        
+        # Sort functions deterministically for tag assignment
+        sorted_funcs = sorted(self.conditions.keys())
+        
+        apis = []
+        for idx, func_name in enumerate(sorted_funcs):
             entry = self.conditions[func_name]
             sig = self.api_sigs.get(func_name)
+            
             arg_types: List[str] = []
             ret_type = "void"
             if sig:
@@ -309,7 +273,6 @@ class WrapperGenerator:
 
             argc = len(arg_types) if arg_types else infer_argc_from_conditions(entry)
             if not arg_types:
-                # Stub mode: attempt to use `parameters` list for types.
                 params = entry.get("parameters")
                 if isinstance(params, list):
                     arg_types = [normalize_c_type(str(p.get("type") or "int")) for p in params][:argc]
@@ -320,6 +283,7 @@ class WrapperGenerator:
             for i in range(argc):
                 param_desc = classify_param(entry, i, self.mapper)
                 c_type = arg_types[i] if i < len(arg_types) else "int"
+
                 args.append(
                     {
                         "i": i,
@@ -332,13 +296,16 @@ class WrapperGenerator:
                 )
 
             returns_handle = conditions_return_is_handle(entry, self.mapper)
+            field_name = to_proto_field_name(func_name)
+            
+            # Enum tag name: Action_field_name_tag
+            oneof_tag = f"{action_type}_{field_name}_tag"
 
-            # Prepare call object (template-facing)
-            call = {
+            api = {
                 'name': func_name,
-                'field_name': to_proto_field_name(func_name),
+                'field_name': field_name,
                 'struct_type': f"{prefix}{func_name}_Params",
-                'argc': argc,
+                'oneof_tag': oneof_tag,
                 'args': args,
                 'return_type': ret_type,
                 'return_is_void': is_void_return(ret_type),
@@ -347,20 +314,18 @@ class WrapperGenerator:
                 'has_allow_double_delete': "return" in entry,
                 'is_destructor': is_destructor_name(func_name),
             }
-            
-            api_sequence.append(call)
-            
-            if func_name not in unique_apis_set:
-                unique_apis_set.add(func_name)
-                unique_apis.append(call)
+            apis.append(api)
 
         return {
             'headers': headers,
             'proto_header': self.proto_path.stem + ".pb.h",
             'fuzz_input_type': fuzz_input_type,
-            'unique_apis': unique_apis,
-            'api_sequence': api_sequence
+            'actions_field': FIELD_ACTIONS,
+            'action_type': action_type,
+            'action_oneof_field': FIELD_ACTION_ONEOF,
+            'apis': apis
         }
+
 
 def main():
     """CLI entry point"""
