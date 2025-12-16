@@ -1,0 +1,71 @@
+[
+  {
+    "function_name": "cJSON_Parse",
+    "param_0": {
+      "type_string": "i8*",
+      "is_array": true,
+      "access_type_set": [
+        {
+          "access": "read",
+          "fields": [],
+          "parent": 0,
+          "type": "8b336322cb5b10c8b7dac308c85cff15",
+          "type_string": "i8*"
+        }
+      ]
+    },
+    "return": {
+      "type_string": "%struct.cJSON*",
+      "access_type_set": [
+        {
+          "access": "create",
+          "fields": [],
+          "type": "cjsoncjsoncjsoncjsoncjsoncjsoncjson0001",
+          "type_string": "%struct.cJSON*"
+        }
+      ]
+    }
+  },
+  {
+    "function_name": "cJSON_Delete",
+    "param_0": {
+      "type_string": "%struct.cJSON*",
+      "access_type_set": [
+        {
+          "access": "delete",
+          "fields": [],
+          "parent": 0,
+          "type": "cjsoncjsoncjsoncjsoncjsoncjsoncjson0002",
+          "type_string": "%struct.cJSON*"
+        }
+      ]
+    }
+  },
+  {
+    "function_name": "cJSON_PrintUnformatted",
+    "param_0": {
+      "type_string": "%struct.cJSON*",
+      "access_type_set": [
+        {
+          "access": "read",
+          "fields": [],
+          "parent": 0,
+          "type": "cjsoncjsoncjsoncjsoncjsoncjsoncjson0003",
+          "type_string": "%struct.cJSON*"
+        }
+      ]
+    },
+    "return": {
+      "type_string": "i8*",
+      "access_type_set": [
+        {
+          "access": "create",
+          "fields": [],
+          "type": "cjsoncjsoncjsoncjsoncjsoncjsoncjson0004",
+          "type_string": "i8*"
+        }
+      ]
+    }
+  }
+]
+

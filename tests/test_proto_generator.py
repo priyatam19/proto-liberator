@@ -22,10 +22,47 @@ class TestProtoGenerator(unittest.TestCase):
         gen = ProtoGenerator(
             conditions_path=conditions,
             apis_path=apis,
+            schema_mode="v1",
             max_calls_per_api=4,
             max_bytes_size=65536,
         )
         schema = gen.generate_schema("demo")
+        actual = schema.serialize()
+
+        self.assertEqual(actual.strip() + "\n", expected.strip() + "\n")
+
+    def test_minimal_golden_v2(self):
+        conditions = FIXTURES / "minimal_conditions.json"
+        apis = FIXTURES / "minimal_apis_clang.jsonl"
+        expected = (FIXTURES / "expected_minimal_v2.proto").read_text()
+
+        gen = ProtoGenerator(
+            conditions_path=conditions,
+            apis_path=apis,
+            schema_mode="v2",
+            max_actions=64,
+            max_calls_per_api=4,
+            max_bytes_size=65536,
+        )
+        schema = gen.generate_schema("demo")
+        actual = schema.serialize()
+
+        self.assertEqual(actual.strip() + "\n", expected.strip() + "\n")
+
+    def test_cjsonish_golden_v2(self):
+        conditions = FIXTURES / "cjsonish_conditions.json"
+        apis = FIXTURES / "minimal_apis_clang.jsonl"
+        expected = (FIXTURES / "expected_cjsonish_v2.proto").read_text()
+
+        gen = ProtoGenerator(
+            conditions_path=conditions,
+            apis_path=apis,
+            schema_mode="v2",
+            max_actions=64,
+            max_calls_per_api=4,
+            max_bytes_size=65536,
+        )
+        schema = gen.generate_schema("cjson")
         actual = schema.serialize()
 
         self.assertEqual(actual.strip() + "\n", expected.strip() + "\n")

@@ -107,10 +107,23 @@ python3 tests/test_installation.py
 # Output: /home/priyatam/pin_compete/tools/liberator/analysis/cjson/work/apipass/
 
 # Step 2: Generate protobuf schemas (LLM-free)
+# Schema modes:
+#   - v1 (default): repeated params per API function (fixed-sequence harnesses)
+#   - v2: dynamic dispatch via Action.oneof + repeated actions (super harness)
 python3 src/proto_generator.py \
   --conditions ../liberator/analysis/cjson/work/apipass/conditions.json \
   --apis ../liberator/analysis/cjson/work/apipass/apis_clang.json \
-  --output examples/cjson/generated/cjson_params.proto
+  --output examples/cjson/generated/cjson_params.proto \
+  --library cjson
+
+# v2 example:
+python3 src/proto_generator.py \
+  --conditions ../liberator/analysis/cjson/work/apipass/conditions.json \
+  --apis ../liberator/analysis/cjson/work/apipass/apis_clang.json \
+  --output examples/cjson/generated/cjson_params_v2.proto \
+  --library cjson \
+  --schema-mode v2 \
+  --max-actions 64
 
 # Step 3: Generate fuzzing wrappers (LLM-free)
 python3 src/wrapper_generator.py \
