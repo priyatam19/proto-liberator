@@ -76,6 +76,7 @@ echo "[Test] Generating harness..."
     --proto "dummy.proto" \
     --driver "$OUTPUT_DIR/driver.meta" \
     --conditions "$OUTPUT_DIR/conditions.json" \
+    --schema-mode v2 \
     --output "$OUTPUT_DIR/harness.c"
 
 # Compile
