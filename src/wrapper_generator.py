@@ -19,17 +19,19 @@ import json
 import os
 import sys
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 from jinja2 import Environment, FileSystemLoader
 
 try:
     from contracts import MSG_FUZZ_INPUT
     from utils import load_json, load_text_lines, to_proto_field_name
+    from type_mapper import TypeMapper
 except ImportError:
     sys.path.append(os.path.dirname(__file__))
     from contracts import MSG_FUZZ_INPUT
     from utils import load_json, load_text_lines, to_proto_field_name
+    from type_mapper import TypeMapper
 
 
 def load_jsonl(path: Path) -> List[Dict[str, Any]]:
@@ -100,6 +102,107 @@ def build_signature_index(apis_path: Optional[Path]) -> Dict[str, Dict[str, Any]
             out[name] = row
     return out
 
+
+def normalize_c_type(type_str: str) -> str:
+    if not type_str:
+        return "int"
+    return " ".join(type_str.strip().split())
+
+
+def is_char_ptr(c_type: str) -> bool:
+    t = c_type.replace("const", "").strip()
+    return ("char" in t) and ("*" in t) and ("**" not in t.replace(" ", ""))
+
+
+def is_void_ptr(c_type: str) -> bool:
+    t = c_type.replace("const", "").strip()
+    return ("void" in t) and ("*" in t)
+
+
+def is_pointer_type(c_type: str) -> bool:
+    return "*" in c_type
+
+
+def is_void_return(ret: str) -> bool:
+    r = normalize_c_type(ret)
+    return r == "void"
+
+
+def conditions_return_is_handle(entry: Dict[str, Any], mapper: TypeMapper) -> bool:
+    ret = entry.get("return")
+    if not isinstance(ret, dict):
+        return False
+    access_set = ret.get("access_type_set", [])
+    if isinstance(access_set, list):
+        for a in access_set:
+            if isinstance(a, dict) and a.get("access") == "create":
+                llvm_t = a.get("type_string") or ret.get("type_string") or ""
+                return mapper.map_llvm_to_proto(str(llvm_t)) == "uint32"
+    llvm_t = ret.get("type_string") or ""
+    return mapper.map_llvm_to_proto(str(llvm_t)) == "uint32"
+
+
+def function_has_deps(entry: Dict[str, Any]) -> bool:
+    for k, v in entry.items():
+        if not k.startswith("param_") or not isinstance(v, dict):
+            continue
+        set_by = v.get("set_by", [])
+        if set_by:
+            return True
+    return False
+
+
+def is_destructor_name(func_name: str) -> bool:
+    lowered = func_name.lower()
+    return any(x in lowered for x in ("delete", "destroy", "free"))
+
+
+def classify_param(
+    entry: Dict[str, Any],
+    param_index: int,
+    mapper: TypeMapper,
+) -> Dict[str, Any]:
+    key = f"param_{param_index}"
+    info = entry.get(key)
+    if not isinstance(info, dict):
+        return {"kind": "scalar", "field": key, "index": param_index, "has_is_null": False}
+
+    llvm_type = str(info.get("type_string") or info.get("type") or "")
+    if not llvm_type:
+        access = info.get("access_type_set", [])
+        if isinstance(access, list) and access and isinstance(access[0], dict):
+            llvm_type = str(access[0].get("type_string") or access[0].get("type") or "")
+    is_array = bool(info.get("is_array"))
+    proto_type = mapper.map_llvm_to_proto(llvm_type) if llvm_type else "bytes"
+
+    if is_array:
+        return {
+            "kind": "bytes_array",
+            "field": key,
+            "index": param_index,
+            "has_is_null": True,
+            "has_length": True,
+        }
+
+    if proto_type == "uint32":
+        return {
+            "kind": "handle",
+            "field": f"{key}_handle",
+            "index": param_index,
+            "has_is_null": True,
+        }
+
+    if proto_type == "bytes":
+        return {
+            "kind": "bytes",
+            "field": key,
+            "index": param_index,
+            "has_is_null": True,
+        }
+
+    return {"kind": "scalar", "field": key, "index": param_index, "has_is_null": False}
+
+
 class WrapperGenerator:
     """
     Generate C fuzzing harness from protobuf schema + libErator metadata
@@ -125,6 +228,7 @@ class WrapperGenerator:
         self.package_name = package_name
         self.emi_config = emi_config or {}
         self.extra_headers = extra_headers or []
+        self.mapper = TypeMapper()
         
         # Setup Jinja2 environment
         template_dir = Path(__file__).parent.parent / 'templates'
@@ -194,17 +298,54 @@ class WrapperGenerator:
             
             entry = self.conditions[func_name]
             sig = self.api_sigs.get(func_name)
-            if sig and isinstance(sig.get("arguments_info"), list):
-                argc = len(sig["arguments_info"])
-            else:
-                argc = infer_argc_from_conditions(entry)
+            arg_types: List[str] = []
+            ret_type = "void"
+            if sig:
+                ret_info = sig.get("return_info") or {}
+                ret_type = normalize_c_type(str(ret_info.get("type_clang") or "void"))
+                args_info = sig.get("arguments_info")
+                if isinstance(args_info, list):
+                    arg_types = [normalize_c_type(str(a.get("type_clang") or "int")) for a in args_info]
+
+            argc = len(arg_types) if arg_types else infer_argc_from_conditions(entry)
+            if not arg_types:
+                # Stub mode: attempt to use `parameters` list for types.
+                params = entry.get("parameters")
+                if isinstance(params, list):
+                    arg_types = [normalize_c_type(str(p.get("type") or "int")) for p in params][:argc]
+                if len(arg_types) < argc:
+                    arg_types.extend(["int"] * (argc - len(arg_types)))
             
-            # Prepare call object
+            args: List[Dict[str, Any]] = []
+            for i in range(argc):
+                param_desc = classify_param(entry, i, self.mapper)
+                c_type = arg_types[i] if i < len(arg_types) else "int"
+                args.append(
+                    {
+                        "i": i,
+                        "c_type": c_type,
+                        "param": param_desc,
+                        "is_char_ptr": is_char_ptr(c_type),
+                        "is_void_ptr": is_void_ptr(c_type),
+                        "is_pointer": is_pointer_type(c_type),
+                    }
+                )
+
+            returns_handle = conditions_return_is_handle(entry, self.mapper)
+
+            # Prepare call object (template-facing)
             call = {
                 'name': func_name,
                 'field_name': to_proto_field_name(func_name),
                 'struct_type': f"{prefix}{func_name}_Params",
                 'argc': argc,
+                'args': args,
+                'return_type': ret_type,
+                'return_is_void': is_void_return(ret_type),
+                'returns_handle': returns_handle,
+                'has_skip_dependency_check': function_has_deps(entry),
+                'has_allow_double_delete': "return" in entry,
+                'is_destructor': is_destructor_name(func_name),
             }
             
             api_sequence.append(call)

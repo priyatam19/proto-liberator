@@ -242,6 +242,22 @@ class ProtoGenerator:
 
         return msg
 
+    def _infer_llvm_type(self, param_info: Dict) -> str:
+        """
+        Infer an LLVM/libErator type string for a parameter.
+
+        libErator sometimes stores `type_string` only inside `access_type_set`.
+        """
+        t = param_info.get("type_string") or param_info.get("type")
+        if t:
+            return str(t)
+        access = param_info.get("access_type_set", [])
+        if isinstance(access, list) and access:
+            first = access[0]
+            if isinstance(first, dict):
+                return str(first.get("type_string") or first.get("type") or "bytes")
+        return "bytes"
+
     def _add_parameter_fields(self, msg: ProtoMessage, param_idx: str, param_info: Dict):
         """
         Add fields for a single parameter
@@ -254,7 +270,7 @@ class ProtoGenerator:
         param_name = f'param_{param_idx}'
 
         # Get type information
-        llvm_type = param_info.get('type_string', 'bytes')
+        llvm_type = self._infer_llvm_type(param_info)
         access_types = param_info.get('access_type_set', [])
 
         msg.add_comment(f'{param_name}: {llvm_type}')
@@ -275,12 +291,28 @@ class ProtoGenerator:
                 msg.add_field('optional', 'uint32', f'{param_name}_handle')
                 msg.add_comment(f'  ↳ Handle to {llvm_type} object')
             else:
-                msg.add_field('optional', proto_type, param_name)
+                if proto_type == 'bytes':
+                    msg.add_field(
+                        'optional',
+                        'bytes',
+                        param_name,
+                        f'[(nanopb).max_size = {self.max_bytes_size}]',
+                    )
+                else:
+                    msg.add_field('optional', proto_type, param_name)
 
         # RULE 3: Primitive types
         else:
             proto_type = self.type_mapper.map_llvm_to_proto(llvm_type)
-            msg.add_field('optional', proto_type, param_name)
+            if proto_type == 'bytes':
+                msg.add_field(
+                    'optional',
+                    'bytes',
+                    param_name,
+                    f'[(nanopb).max_size = {self.max_bytes_size}]',
+                )
+            else:
+                msg.add_field('optional', proto_type, param_name)
 
         # RULE 4: Nullable flag
         if self._is_nullable(param_info, llvm_type):

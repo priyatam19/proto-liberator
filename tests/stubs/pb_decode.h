@@ -5,7 +5,7 @@
 #include <stddef.h>
 #include <stdbool.h>
 
-typedef uint16_t pb_size_t;
+#include "pb.h"
 typedef struct pb_msgdesc_s pb_msgdesc_t;
 
 struct pb_msgdesc_s {

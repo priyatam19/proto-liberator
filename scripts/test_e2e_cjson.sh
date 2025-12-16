@@ -27,7 +27,8 @@ if [ ! -x "$VENV_DIR/bin/python3" ]; then
   echo "[E2E] Creating venv: $VENV_DIR"
   "$PYTHON_SYSTEM" -m venv "$VENV_DIR"
   "$VENV_DIR/bin/python3" -m pip install --upgrade pip >/dev/null
-  "$VENV_DIR/bin/python3" -m pip install -r "$ROOT_DIR/requirements.txt"
+  # Runtime deps only (keep e2e fast on clean machines)
+  "$VENV_DIR/bin/python3" -m pip install jinja2 pyyaml >/dev/null
 fi
 PYTHON_BIN="$VENV_DIR/bin/python3"
 

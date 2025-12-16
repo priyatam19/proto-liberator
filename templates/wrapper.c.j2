@@ -7,6 +7,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
+#include "pb.h"
 #include "pb_decode.h"
 #include "{{ proto_header }}"
 
@@ -17,6 +19,51 @@
 
 /* Helper Macros */
 #define MIN(a,b) (((a)<(b))?(a):(b))
+
+/* Minimal handle table (supports struct-pointer handles as uint32 IDs) */
+#define MAX_HANDLES 1024
+static void *g_handles[MAX_HANDLES];
+static bool g_handle_valid[MAX_HANDLES];
+static uint32_t g_handle_count = 0;
+
+static uint32_t handle_register(void *ptr) {
+    if (!ptr) return 0;
+    if (g_handle_count + 1 >= MAX_HANDLES) return 0;
+    uint32_t id = ++g_handle_count;
+    g_handles[id] = ptr;
+    g_handle_valid[id] = true;
+    return id;
+}
+
+static uint32_t handle_select(uint32_t requested) {
+    if (g_handle_count == 0) return 0;
+    if (requested == 0) return g_handle_count; /* latest */
+    uint32_t idx = requested % g_handle_count;
+    if (idx == 0) idx = g_handle_count;
+    return idx;
+}
+
+static void *handle_get(uint32_t requested, bool allow_stale, uint32_t *out_selected) {
+    uint32_t idx = handle_select(requested);
+    if (out_selected) *out_selected = idx;
+    if (idx == 0) return NULL;
+    if (allow_stale || g_handle_valid[idx]) return g_handles[idx];
+    return NULL;
+}
+
+static void handle_invalidate(uint32_t selected) {
+    if (selected == 0 || selected > g_handle_count) return;
+    g_handle_valid[selected] = false;
+}
+
+static char *alloc_cstring_from_bytes(const pb_bytes_array_t *b) {
+    size_t n = b ? (size_t)b->size : 0;
+    char *s = (char*)malloc(n + 1);
+    if (!s) return NULL;
+    if (n) memcpy(s, b->bytes, n);
+    s[n] = 0;
+    return s;
+}
 
 int LLVMFuzzerInitialize(int *argc, char ***argv) {
     return 0;
@@ -47,18 +94,109 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
     {
         {{ call.struct_type }} params_zero = {{ call.struct_type }}_init_zero;
         const {{ call.struct_type }} *params = &params_zero;
-        (void)params;
         if ({{ call.name }}_idx < message->{{ call.field_name }}_count) {
             params = &message->{{ call.field_name }}[{{ call.name }}_idx++];
         }
 
-        // NOTE: MVP uses safe placeholder arguments to ensure calls execute even
-        // with empty/default protobuf messages. Param-to-C conversion comes next.
-        {{ call.name }}(
-            {% for i in range(call.argc) %}
-            0{% if not loop.last %}, {% endif %}
+        bool allow_stale = false;
+        bool allow_double_delete = false;
+        {% if call.has_skip_dependency_check %}
+        if (params->has_skip_dependency_check && params->skip_dependency_check) {
+            allow_stale = true;
+        }
+        {% endif %}
+        {% if call.has_allow_double_delete %}
+        if (params->has_allow_double_delete && params->allow_double_delete) {
+            allow_double_delete = true;
+            allow_stale = true;
+        }
+        {% endif %}
+
+        /* Argument conversions (protobuf -> C) */
+        {% for arg in call.args %}
+        {{ arg.c_type }} arg{{ arg.i }};
+        memset(&arg{{ arg.i }}, 0, sizeof(arg{{ arg.i }}));
+
+        {% if arg.param.kind == "scalar" %}
+        if (params->has_param_{{ arg.i }}) {
+            arg{{ arg.i }} = ({{ arg.c_type }})params->param_{{ arg.i }};
+        }
+        {% elif arg.param.kind == "handle" %}
+        {
+            bool is_null = false;
+            {% if arg.param.has_is_null %}
+            if (params->has_param_{{ arg.i }}_is_null && params->param_{{ arg.i }}_is_null) is_null = true;
+            {% endif %}
+            uint32_t hid = params->has_param_{{ arg.i }}_handle ? params->param_{{ arg.i }}_handle : 0;
+            uint32_t selected = 0;
+            void *ptr = NULL;
+            if (!is_null) {
+                ptr = handle_get(hid, allow_stale, &selected);
+            }
+            arg{{ arg.i }} = ({{ arg.c_type }})ptr;
+            {% if call.is_destructor and arg.i == 0 %}
+            /* if destructor on first-handle param, invalidate after call unless double-delete allowed */
+            (void)selected;
+            {% endif %}
+        }
+        {% elif arg.param.kind == "bytes_array" or arg.param.kind == "bytes" %}
+        {
+            bool is_null = false;
+            {% if arg.param.has_is_null %}
+            if (params->has_param_{{ arg.i }}_is_null && params->param_{{ arg.i }}_is_null) is_null = true;
+            {% endif %}
+            const pb_bytes_array_t *b = NULL;
+            if (params->has_param_{{ arg.i }} && !is_null) b = (const pb_bytes_array_t*)(const void*)&params->param_{{ arg.i }};
+            if ({{ "true" if arg.is_char_ptr else "false" }}) {
+                char *s = b ? alloc_cstring_from_bytes(b) : NULL;
+                arg{{ arg.i }} = ({{ arg.c_type }})s;
+            } else if ({{ "true" if arg.is_pointer else "false" }}) {
+                arg{{ arg.i }} = ({{ arg.c_type }})(b ? (void*)b->bytes : NULL);
+            } else {
+                /* non-pointer bytes -> 0 */
+            }
+        }
+        {% endif %}
+        {% endfor %}
+
+        {% if call.returns_handle %}
+        {{ call.return_type }} ret = {{ call.name }}(
+            {% for arg in call.args %}
+            arg{{ arg.i }}{% if not loop.last %}, {% endif %}
             {% endfor %}
         );
+        handle_register((void*)ret);
+        {% elif call.return_is_void %}
+        {{ call.name }}(
+            {% for arg in call.args %}
+            arg{{ arg.i }}{% if not loop.last %}, {% endif %}
+            {% endfor %}
+        );
+        {% else %}
+        (void){{ call.name }}(
+            {% for arg in call.args %}
+            arg{{ arg.i }}{% if not loop.last %}, {% endif %}
+            {% endfor %}
+        );
+        {% endif %}
+
+        {% if call.is_destructor %}
+        /* Best-effort invalidation: if first arg was a handle, invalidate the selected entry */
+        /* NOTE: this is heuristic and only affects semantic exploration. */
+        {% if call.args|length > 0 and call.args[0].param.kind == "handle" %}
+        if (!allow_double_delete) {
+            uint32_t selected = handle_select(params->has_param_0_handle ? params->param_0_handle : 0);
+            handle_invalidate(selected);
+        }
+        {% endif %}
+        {% endif %}
+
+        /* Cleanup temp allocations */
+        {% for arg in call.args %}
+        {% if arg.is_char_ptr and (arg.param.kind == "bytes" or arg.param.kind == "bytes_array") %}
+        if (arg{{ arg.i }}) free((void*)arg{{ arg.i }});
+        {% endif %}
+        {% endfor %}
     }
     {% endfor %}
 
