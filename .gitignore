@@ -30,6 +30,7 @@ crash-*
 tests/output/
 tests/output_v2/
 tests/output_seeds/
+tests/output_orch/
 
 # External deps (cloned/build artifacts)
 external/libprotobuf-mutator/**
