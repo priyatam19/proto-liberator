@@ -29,6 +29,7 @@ from typing import Iterable, List, Optional
 class Cmd:
     argv: List[str]
     cwd: Optional[Path] = None
+    env: Optional[dict] = None
 
     def to_shell(self) -> str:
         return " ".join(shlex.quote(a) for a in self.argv)
@@ -43,7 +44,11 @@ def _run(cmd: Cmd, *, dry_run: bool) -> None:
     print(f"{prefix} {cmd.to_shell()}")
     if dry_run:
         return
-    subprocess.check_call(cmd.argv, cwd=str(cmd.cwd) if cmd.cwd else None)
+    subprocess.check_call(
+        cmd.argv,
+        cwd=str(cmd.cwd) if cmd.cwd else None,
+        env=cmd.env,
+    )
 
 
 def _write_json(path: Path, obj: object, *, dry_run: bool) -> None:
@@ -277,7 +282,12 @@ def main() -> int:
             fuzz_argv.append("-detect_leaks=0")
         fuzz_argv.append(f"-artifact_prefix={artifacts_dir.as_posix()}/")
         fuzz_argv.extend(["-runs=100"])
-        _run(Cmd(fuzz_argv, cwd=out_dir), dry_run=args.dry_run)
+        env = os.environ.copy()
+        if not args.detect_leaks:
+            opts = env.get("ASAN_OPTIONS", "")
+            if "detect_leaks=" not in opts:
+                env["ASAN_OPTIONS"] = (opts + ":" if opts else "") + "detect_leaks=0"
+        _run(Cmd(fuzz_argv, cwd=out_dir, env=env), dry_run=args.dry_run)
 
     return 0
 
