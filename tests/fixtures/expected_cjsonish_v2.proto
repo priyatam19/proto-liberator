@@ -1,0 +1,59 @@
+syntax = "proto2";
+
+package cjson_fuzzer;
+
+import "nanopb.proto";
+
+// Parameters for cJSON_Delete
+// param_0: %struct.cJSON*
+//   ↳ Handle to %struct.cJSON* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+message cJSON_Delete_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+}
+
+// Parameters for cJSON_Parse
+// param_0: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message cJSON_Parse_Params {
+  optional bytes param_0 = 1 [(nanopb).max_size = 65536];
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for cJSON_PrintUnformatted
+// param_0: %struct.cJSON*
+//   ↳ Handle to %struct.cJSON* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message cJSON_PrintUnformatted_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Dynamic dispatch: exactly one API call variant per Action.
+message Action {
+  oneof action {
+    cJSON_Delete_Params c_json_delete = 1;
+    cJSON_Parse_Params c_json_parse = 2;
+    cJSON_PrintUnformatted_Params c_json_print_unformatted = 3;
+  }
+}
+
+// Top-level fuzz input (v2). Dynamic sequence of Actions.
+message FuzzInput {
+  optional uint32 global_seed = 1;
+  repeated Action actions = 2 [(nanopb).max_count = 64];
+}

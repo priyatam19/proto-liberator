@@ -12,6 +12,7 @@ from dataclasses import dataclass
 
 # Import local modules
 from type_mapper import TypeMapper
+from contracts import DEFAULT_MAX_ACTIONS
 from utils import load_json, load_text_lines, save_file, to_proto_field_name
 
 
@@ -25,6 +26,45 @@ class ProtoField:
     options: str = ""  # Nanopb options
 
 
+@dataclass
+class ProtoOneofField:
+    """Represents a protobuf field within a oneof"""
+    type: str
+    name: str
+    number: int
+    options: str = ""
+
+
+class ProtoOneof:
+    """Represents a protobuf oneof block"""
+
+    def __init__(self, name: str):
+        self.name = name
+        self.fields: List[ProtoOneofField] = []
+        self.comments: List[str] = []
+
+    def add_comment(self, comment: str):
+        self.comments.append(comment)
+
+    def add_field(self, proto_type: str, name: str, number: int, options: str = ""):
+        self.fields.append(ProtoOneofField(proto_type, name, number, options))
+
+    def serialize(self, indent: int = 0) -> str:
+        ind = "  " * indent
+        lines: List[str] = []
+        for comment in self.comments:
+            lines.append(f"{ind}// {comment}")
+        lines.append(f"{ind}oneof {self.name} {{")
+        for field in self.fields:
+            field_line = f"{ind}  {field.type} {field.name} = {field.number}"
+            if field.options:
+                field_line += f" {field.options}"
+            field_line += ";"
+            lines.append(field_line)
+        lines.append(f"{ind}}}")
+        return "\n".join(lines)
+
+
 class ProtoMessage:
     """Represents a protobuf message"""
 
@@ -33,6 +73,7 @@ class ProtoMessage:
         self.fields: List[ProtoField] = []
         self.comments: List[str] = []
         self.nested_messages: List['ProtoMessage'] = []
+        self.oneofs: List[ProtoOneof] = []
 
     def add_field(self, label: str, proto_type: str, name: str, options: str = ""):
         """Add a field to this message"""
@@ -42,6 +83,11 @@ class ProtoMessage:
     def add_comment(self, comment: str):
         """Add a comment line"""
         self.comments.append(comment)
+
+    def add_oneof(self, name: str) -> ProtoOneof:
+        oneof = ProtoOneof(name)
+        self.oneofs.append(oneof)
+        return oneof
 
     def serialize(self, indent: int = 0) -> str:
         """Serialize to protobuf syntax"""
@@ -56,9 +102,16 @@ class ProtoMessage:
         lines.append(f"{ind}message {self.name} {{")
 
         # Nested messages
-        for nested in self.nested_messages:
+        for idx, nested in enumerate(self.nested_messages):
             lines.append(nested.serialize(indent + 1))
-            lines.append("")
+            if idx != len(self.nested_messages) - 1 or self.oneofs or self.fields:
+                lines.append("")
+
+        # Oneofs
+        for idx, oneof in enumerate(self.oneofs):
+            lines.append(oneof.serialize(indent + 1))
+            if idx != len(self.oneofs) - 1 or self.fields:
+                lines.append("")
 
         # Fields
         for field in self.fields:
@@ -117,13 +170,17 @@ class ProtoGenerator:
         conditions_path: Path,
         apis_path: Path,
         *,
+        schema_mode: str = "v1",
         max_calls_per_api: int = 4,
+        max_actions: int = DEFAULT_MAX_ACTIONS,
         max_bytes_size: int = 65536,
     ):
         self.conditions = load_json(conditions_path)
         self.apis = self.load_apis(apis_path)
         self.type_mapper = TypeMapper()
+        self.schema_mode = schema_mode
         self.max_calls_per_api = max_calls_per_api
+        self.max_actions = max_actions
         self.max_bytes_size = max_bytes_size
 
     @staticmethod
@@ -184,8 +241,12 @@ class ProtoGenerator:
             function_names.append(func_name)
             schema.add_message(self.generate_param_message(func_name, func_entry))
 
-        # Top-level input message: stable contract for wrappers and fuzzers
-        schema.add_message(self.generate_fuzz_input_message(function_names))
+        if self.schema_mode == "v2":
+            schema.add_message(self.generate_action_message(function_names))
+            schema.add_message(self.generate_fuzz_input_message_v2())
+        else:
+            # Top-level input message: stable contract for wrappers and fuzzers
+            schema.add_message(self.generate_fuzz_input_message(function_names))
 
         return schema
 
@@ -213,6 +274,45 @@ class ProtoGenerator:
                 f"[(nanopb).max_count = {self.max_calls_per_api}]",
             )
 
+        return msg
+
+    def generate_action_message(self, function_names: List[str]) -> ProtoMessage:
+        """
+        Generate v2 dynamic-dispatch Action message:
+
+          message Action {
+            oneof action {
+              <FuncA>_Params func_a = 1;
+              <FuncB>_Params func_b = 2;
+              ...
+            }
+          }
+        """
+        msg = ProtoMessage("Action")
+        msg.add_comment("Dynamic dispatch: exactly one API call variant per Action.")
+        oneof = msg.add_oneof("action")
+
+        unique_sorted_funcs = sorted(set(function_names))
+        for tag, func_name in enumerate(unique_sorted_funcs, start=1):
+            field_name = to_proto_field_name(func_name)
+            params_type = f"{func_name}_Params"
+            oneof.add_field(params_type, field_name, tag)
+
+        return msg
+
+    def generate_fuzz_input_message_v2(self) -> ProtoMessage:
+        """
+        Generate v2 top-level FuzzInput for dynamic dispatch.
+        """
+        msg = ProtoMessage("FuzzInput")
+        msg.add_comment("Top-level fuzz input (v2). Dynamic sequence of Actions.")
+        msg.add_field("optional", "uint32", "global_seed")
+        msg.add_field(
+            "repeated",
+            "Action",
+            "actions",
+            f"[(nanopb).max_count = {self.max_actions}]",
+        )
         return msg
 
     def generate_param_message(self, func_name: str, func_metadata: Dict) -> ProtoMessage:
@@ -387,8 +487,12 @@ Example:
                         help='Output .proto file path')
     parser.add_argument('--library', required=True,
                         help='Library name (e.g., cjson)')
+    parser.add_argument('--schema-mode', choices=['v1', 'v2'], default='v1',
+                        help='Schema contract version (default: v1)')
     parser.add_argument('--max-calls-per-api', type=int, default=4,
                         help='Max repeated Params entries per API in FuzzInput (default: 4)')
+    parser.add_argument('--max-actions', type=int, default=DEFAULT_MAX_ACTIONS,
+                        help=f'Max Action entries in v2 FuzzInput (default: {DEFAULT_MAX_ACTIONS})')
     parser.add_argument('--max-bytes-size', type=int, default=65536,
                         help='Nanopb max_size for bytes fields (default: 65536)')
 
@@ -399,7 +503,9 @@ Example:
     generator = ProtoGenerator(
         Path(args.conditions),
         Path(args.apis),
+        schema_mode=args.schema_mode,
         max_calls_per_api=args.max_calls_per_api,
+        max_actions=args.max_actions,
         max_bytes_size=args.max_bytes_size,
     )
     schema = generator.generate_schema(args.library)
