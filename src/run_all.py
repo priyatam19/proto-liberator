@@ -158,6 +158,8 @@ def main() -> int:
     _run(schema_cmd, dry_run=args.dry_run)
 
     # 2) Bindings (nanopb)
+    if not args.dry_run:
+        bindings_dir.mkdir(parents=True, exist_ok=True)
     bindings_cmd = Cmd(
         [
             str(nanopb_protoc),
@@ -271,4 +273,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
