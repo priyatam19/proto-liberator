@@ -29,6 +29,7 @@ crash-*
 # Test outputs (generated)
 tests/output/
 tests/output_v2/
+tests/output_seeds/
 
 # External deps (cloned/build artifacts)
 external/libprotobuf-mutator/**
