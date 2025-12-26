@@ -128,10 +128,12 @@ class ProtoMessage:
 class ProtoSchema:
     """Represents a complete protobuf schema file"""
 
-    def __init__(self, package_name: str):
+    def __init__(self, package_name: str, mutation_mode: str = "nanopb"):
         self.package = package_name
         self.messages: List[ProtoMessage] = []
-        self.imports: Set[str] = {'import "nanopb.proto";'}
+        self.imports: Set[str] = set()
+        if mutation_mode == "nanopb":
+            self.imports.add('import "nanopb.proto";')
 
     def add_message(self, msg: ProtoMessage):
         """Add a message to schema"""
@@ -171,6 +173,7 @@ class ProtoGenerator:
         apis_path: Path,
         *,
         schema_mode: str = "v1",
+        mutation_mode: str = "nanopb",
         max_calls_per_api: int = 4,
         max_actions: int = DEFAULT_MAX_ACTIONS,
         max_bytes_size: int = 65536,
@@ -179,6 +182,7 @@ class ProtoGenerator:
         self.apis = self.load_apis(apis_path)
         self.type_mapper = TypeMapper()
         self.schema_mode = schema_mode
+        self.mutation_mode = mutation_mode
         self.max_calls_per_api = max_calls_per_api
         self.max_actions = max_actions
         self.max_bytes_size = max_bytes_size
@@ -225,7 +229,7 @@ class ProtoGenerator:
         Returns:
             Complete ProtoSchema object
         """
-        schema = ProtoSchema(f'{library_name}_fuzzer')
+        schema = ProtoSchema(f'{library_name}_fuzzer', mutation_mode=self.mutation_mode)
 
         # Generate parameter message for each API function (stable ordering)
         func_entries = sorted(
@@ -264,6 +268,7 @@ class ProtoGenerator:
         msg.add_comment("Wrappers consume per-function params in call order.")
         msg.add_field("optional", "uint32", "global_seed")
 
+        options = f"[(nanopb).max_count = {self.max_calls_per_api}]" if self.mutation_mode == "nanopb" else ""
         for func_name in sorted(set(function_names)):
             field_name = to_proto_field_name(func_name)
             params_type = f"{func_name}_Params"
@@ -271,7 +276,7 @@ class ProtoGenerator:
                 "repeated",
                 params_type,
                 field_name,
-                f"[(nanopb).max_count = {self.max_calls_per_api}]",
+                options,
             )
 
         return msg
@@ -307,11 +312,12 @@ class ProtoGenerator:
         msg = ProtoMessage("FuzzInput")
         msg.add_comment("Top-level fuzz input (v2). Dynamic sequence of Actions.")
         msg.add_field("optional", "uint32", "global_seed")
+        options = f"[(nanopb).max_count = {self.max_actions}]" if self.mutation_mode == "nanopb" else ""
         msg.add_field(
             "repeated",
             "Action",
             "actions",
-            f"[(nanopb).max_count = {self.max_actions}]",
+            options,
         )
         return msg
 
@@ -329,13 +335,24 @@ class ProtoGenerator:
         msg = ProtoMessage(f'{func_name}_Params')
         msg.add_comment(f'Parameters for {func_name}')
 
-        # Process each parameter
+        # Process each parameter in numeric order for stable field numbering.
+        # This is critical for:
+        # - stable schema diffs across runs
+        # - seed generator correctness (wire encoding depends on tag numbers)
+        param_items: List[Tuple[int, Dict]] = []
         for param_key, param_info in func_metadata.items():
-            if not param_key.startswith('param_'):
+            if not (isinstance(param_key, str) and param_key.startswith("param_")):
                 continue
+            if not isinstance(param_info, dict):
+                continue
+            try:
+                idx = int(param_key.split("_", 1)[1])
+            except Exception:
+                continue
+            param_items.append((idx, param_info))
 
-            param_idx = param_key.replace('param_', '')
-            self._add_parameter_fields(msg, param_idx, param_info)
+        for idx, param_info in sorted(param_items, key=lambda t: t[0]):
+            self._add_parameter_fields(msg, str(idx), param_info)
 
         # Add contract violation knobs
         self._add_contract_violation_knobs(msg, func_metadata)
@@ -372,18 +389,28 @@ class ProtoGenerator:
         # Get type information
         llvm_type = self._infer_llvm_type(param_info)
         access_types = param_info.get('access_type_set', [])
+        has_set_by = bool(param_info.get("set_by", []))
+        has_delete_access = any(
+            isinstance(a, dict) and a.get("access") == "delete" for a in (access_types or [])
+        )
 
         msg.add_comment(f'{param_name}: {llvm_type}')
 
+        nanopb_bytes_opt = f'[(nanopb).max_size = {self.max_bytes_size}]' if self.mutation_mode == "nanopb" else ""
+
         # RULE 1: Array parameters
         if param_info.get('is_array'):
-            msg.add_field('optional', 'bytes', param_name,
-                          f'[(nanopb).max_size = {self.max_bytes_size}]')
+            msg.add_field('optional', 'bytes', param_name, nanopb_bytes_opt)
             msg.add_field('optional', 'uint32', f'{param_name}_length')
             msg.add_field('optional', 'uint32', f'{param_name}_length_override')
             msg.add_comment(f'  ↳ Array with explicit length control')
 
-        # RULE 2: Struct pointer → Handle ID
+        # RULE 2: Dependency / delete semantics → Handle ID (even for i8*/void* buffers).
+        elif has_set_by or has_delete_access:
+            msg.add_field('optional', 'uint32', f'{param_name}_handle')
+            msg.add_comment('  ↳ Handle (set_by/delete) for dependency-aware mutation')
+
+        # RULE 3: Struct pointer → Handle ID (or bytes/scalar depending on mapper)
         elif llvm_type.startswith('%struct.') or llvm_type.endswith('*'):
             proto_type = self.type_mapper.map_llvm_to_proto(llvm_type)
 
@@ -396,12 +423,12 @@ class ProtoGenerator:
                         'optional',
                         'bytes',
                         param_name,
-                        f'[(nanopb).max_size = {self.max_bytes_size}]',
+                        nanopb_bytes_opt,
                     )
                 else:
                     msg.add_field('optional', proto_type, param_name)
 
-        # RULE 3: Primitive types
+        # RULE 4: Primitive types
         else:
             proto_type = self.type_mapper.map_llvm_to_proto(llvm_type)
             if proto_type == 'bytes':
@@ -409,7 +436,7 @@ class ProtoGenerator:
                     'optional',
                     'bytes',
                     param_name,
-                    f'[(nanopb).max_size = {self.max_bytes_size}]',
+                    nanopb_bytes_opt,
                 )
             else:
                 msg.add_field('optional', proto_type, param_name)
@@ -489,6 +516,8 @@ Example:
                         help='Library name (e.g., cjson)')
     parser.add_argument('--schema-mode', choices=['v1', 'v2'], default='v1',
                         help='Schema contract version (default: v1)')
+    parser.add_argument('--mutation-mode', choices=['nanopb', 'lpm'], default='nanopb',
+                        help='Mutation engine (default: nanopb)')
     parser.add_argument('--max-calls-per-api', type=int, default=4,
                         help='Max repeated Params entries per API in FuzzInput (default: 4)')
     parser.add_argument('--max-actions', type=int, default=DEFAULT_MAX_ACTIONS,
@@ -504,6 +533,7 @@ Example:
         Path(args.conditions),
         Path(args.apis),
         schema_mode=args.schema_mode,
+        mutation_mode=args.mutation_mode,
         max_calls_per_api=args.max_calls_per_api,
         max_actions=args.max_actions,
         max_bytes_size=args.max_bytes_size,

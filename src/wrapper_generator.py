@@ -28,12 +28,12 @@ from typing import Any, Dict, List, Optional
 from jinja2 import Environment, FileSystemLoader
 
 try:
-    from contracts import MSG_FUZZ_INPUT, MSG_ACTION, FIELD_ACTIONS, FIELD_ACTION_ONEOF
+    from contracts import MSG_FUZZ_INPUT, MSG_ACTION, FIELD_ACTIONS, FIELD_ACTION_ONEOF, DEFAULT_MAX_ACTIONS
     from utils import load_json, load_text_lines, to_proto_field_name
     from type_mapper import TypeMapper
 except ImportError:
     sys.path.append(os.path.dirname(__file__))
-    from contracts import MSG_FUZZ_INPUT, MSG_ACTION, FIELD_ACTIONS, FIELD_ACTION_ONEOF
+    from contracts import MSG_FUZZ_INPUT, MSG_ACTION, FIELD_ACTIONS, FIELD_ACTION_ONEOF, DEFAULT_MAX_ACTIONS
     from utils import load_json, load_text_lines, to_proto_field_name
     from type_mapper import TypeMapper
 
@@ -132,18 +132,34 @@ def is_void_return(ret: str) -> bool:
     return r == "void"
 
 
-def conditions_return_is_handle(entry: Dict[str, Any], mapper: TypeMapper) -> bool:
+def conditions_return_is_handle(entry: Dict[str, Any], mapper: TypeMapper, *, ret_c_type: Optional[str] = None) -> bool:
     ret = entry.get("return")
     if not isinstance(ret, dict):
         return False
     access_set = ret.get("access_type_set", [])
     if isinstance(access_set, list):
         for a in access_set:
-            if isinstance(a, dict) and a.get("access") == "create":
-                llvm_t = a.get("type_string") or ret.get("type_string") or ""
-                return mapper.map_llvm_to_proto(str(llvm_t)) == "uint32"
+            if not isinstance(a, dict):
+                continue
+            access = a.get("access")
+            llvm_t = a.get("type_string") or ret.get("type_string") or ""
+            if mapper.map_llvm_to_proto(str(llvm_t)) == "uint32":
+                return True
+            if access in ("create", "delete") and "*" in str(llvm_t):
+                # Treat owned pointers (including i8*/void*) as handles so they can be tracked/invalidation-safe.
+                return True
     llvm_t = ret.get("type_string") or ""
-    return mapper.map_llvm_to_proto(str(llvm_t)) == "uint32"
+    if mapper.map_llvm_to_proto(str(llvm_t)) == "uint32":
+        return True
+
+    # Heuristic: allocator-like APIs returning pointers should be tracked as handles even if conditions.json
+    # doesn't include access_type_set for the return (some libraries omit it for malloc-like wrappers).
+    fn = str(entry.get("function_name") or entry.get("functionName") or "")
+    if ret_c_type and "*" in ret_c_type and fn:
+        lowered = fn.lower()
+        if any(x in lowered for x in ("malloc", "realloc", "calloc", "alloc", "new", "create")):
+            return True
+    return False
 
 
 def function_has_deps(entry: Dict[str, Any]) -> bool:
@@ -177,6 +193,9 @@ def classify_param(
         if isinstance(access, list) and access and isinstance(access[0], dict):
             llvm_type = str(access[0].get("type_string") or access[0].get("type") or "")
     is_array = bool(info.get("is_array"))
+    access_set = info.get("access_type_set", [])
+    has_set_by = bool(info.get("set_by", []))
+    has_delete_access = any(isinstance(a, dict) and a.get("access") == "delete" for a in (access_set or []))
     proto_type = mapper.map_llvm_to_proto(llvm_type) if llvm_type else "bytes"
 
     if is_array:
@@ -186,6 +205,14 @@ def classify_param(
             "index": param_index,
             "has_is_null": True,
             "has_length": True,
+        }
+
+    if has_set_by or has_delete_access:
+        return {
+            "kind": "handle",
+            "field": f"{key}_handle",
+            "index": param_index,
+            "has_is_null": True,
         }
 
     if proto_type == "uint32":
@@ -207,6 +234,15 @@ def classify_param(
     return {"kind": "scalar", "field": key, "index": param_index, "has_is_null": False}
 
 
+def get_type_with_const(info: Dict[str, Any], default: str = "int") -> str:
+    raw_type = str(info.get("type_clang") or default)
+    t = normalize_c_type(raw_type)
+    consts = info.get("const")
+    if isinstance(consts, list) and len(consts) > 0 and consts[0]:
+        return f"const {t}"
+    return t
+
+
 class WrapperGenerator:
     """
     Generate C fuzzing harness from protobuf schema + libErator metadata.
@@ -222,6 +258,8 @@ class WrapperGenerator:
         apis_path: Optional[Path] = None,
         package_name: str = "",
         schema_mode: str = "v1",
+        mutation_mode: str = "nanopb",
+        max_actions: int = DEFAULT_MAX_ACTIONS,
         emi_config: Optional[Dict] = None,
         extra_headers: Optional[List[str]] = None,
     ):
@@ -232,13 +270,23 @@ class WrapperGenerator:
         self.api_sigs = build_signature_index(apis_path)
         self.package_name = package_name
         self.schema_mode = schema_mode
+        self.mutation_mode = mutation_mode
+        self.max_actions = int(max_actions)
         self.emi_config = emi_config or {}
         self.extra_headers = extra_headers or []
         self.mapper = TypeMapper()
 
+        if self.mutation_mode == "lpm" and self.schema_mode != "v2":
+            raise ValueError("mutation_mode=lpm currently requires schema_mode=v2")
+
         template_dir = Path(__file__).parent.parent / "templates"
         self.env = Environment(loader=FileSystemLoader(str(template_dir)))
-        template_name = "wrapper_v2.c.j2" if self.schema_mode == "v2" else "wrapper.c.j2"
+        
+        if self.mutation_mode == "lpm":
+            template_name = "wrapper_lpm.cc.j2"
+        else:
+            template_name = "wrapper_v2.c.j2" if self.schema_mode == "v2" else "wrapper.c.j2"
+            
         self.template = self.env.get_template(template_name)
 
     def generate(self, output_path: Path):
@@ -262,8 +310,9 @@ class WrapperGenerator:
         if not isinstance(headers, list):
             headers = []
         headers.extend(self.extra_headers)
-        if not headers:
-            headers = []
+        # Stable de-dupe, preserve order.
+        seen = set()
+        headers = [h for h in headers if isinstance(h, str) and not (h in seen or seen.add(h))]
 
         raw_sequence = self.driver_meta.get("api_sequence", [])
         if not raw_sequence:
@@ -325,7 +374,7 @@ class WrapperGenerator:
                     }
                 )
 
-            returns_handle = conditions_return_is_handle(entry, self.mapper)
+            returns_handle = conditions_return_is_handle(entry, self.mapper, ret_c_type=ret_type)
 
             call = {
                 "name": func_name,
@@ -363,12 +412,22 @@ class WrapperGenerator:
         if not isinstance(headers, list):
             headers = []
         headers.extend(self.extra_headers)
-        if not headers:
-            headers = []
+        # Stable de-dupe, preserve order.
+        seen = set()
+        headers = [h for h in headers if isinstance(h, str) and not (h in seen or seen.add(h))]
 
-        prefix = f"{self.package_name}_" if self.package_name else ""
-        fuzz_input_type = f"{prefix}{MSG_FUZZ_INPUT}"
-        action_type = f"{prefix}{MSG_ACTION}"
+        if self.mutation_mode == "lpm":
+            # C++ Namespace logic
+            # We don't bake the package name into the type name here, 
+            # because the template handles the namespace.
+            prefix = "" 
+            fuzz_input_type = MSG_FUZZ_INPUT
+            action_type = MSG_ACTION
+        else:
+            # Nanopb C struct logic
+            prefix = f"{self.package_name}_" if self.package_name else ""
+            fuzz_input_type = f"{prefix}{MSG_FUZZ_INPUT}"
+            action_type = f"{prefix}{MSG_ACTION}"
 
         sorted_funcs = sorted(self.conditions.keys())
 
@@ -381,10 +440,10 @@ class WrapperGenerator:
             ret_type = "void"
             if sig:
                 ret_info = sig.get("return_info") or {}
-                ret_type = normalize_c_type(str(ret_info.get("type_clang") or "void"))
+                ret_type = get_type_with_const(ret_info, default="void")
                 args_info = sig.get("arguments_info")
                 if isinstance(args_info, list):
-                    arg_types = [normalize_c_type(str(a.get("type_clang") or "int")) for a in args_info]
+                    arg_types = [get_type_with_const(a, default="int") for a in args_info]
 
             argc = len(arg_types) if arg_types else infer_argc_from_conditions(entry)
             if not arg_types:
@@ -409,7 +468,7 @@ class WrapperGenerator:
                     }
                 )
 
-            returns_handle = conditions_return_is_handle(entry, self.mapper)
+            returns_handle = conditions_return_is_handle(entry, self.mapper, ret_c_type=ret_type)
             field_name = to_proto_field_name(func_name)
 
             apis.append(
@@ -431,10 +490,12 @@ class WrapperGenerator:
         return {
             "headers": headers,
             "proto_header": self.proto_path.stem + ".pb.h",
+            "package_name": self.package_name,
             "fuzz_input_type": fuzz_input_type,
             "actions_field": FIELD_ACTIONS,
             "action_type": action_type,
             "action_oneof_field": FIELD_ACTION_ONEOF,
+            "max_actions": self.max_actions,
             "apis": apis,
         }
 
@@ -449,6 +510,8 @@ def main():
     parser.add_argument("--output", required=True, help="Output C harness file path")
     parser.add_argument("--package", default="", help="Protobuf package name prefix")
     parser.add_argument("--schema-mode", choices=["v1", "v2"], default="v1", help="Schema contract version")
+    parser.add_argument("--mutation-mode", choices=["nanopb", "lpm"], default="nanopb", help="Mutation engine")
+    parser.add_argument("--max-actions", type=int, default=DEFAULT_MAX_ACTIONS, help="(v2) Max actions to execute")
     parser.add_argument(
         "--header",
         action="append",
@@ -465,6 +528,8 @@ def main():
         apis_path=Path(args.apis) if args.apis else None,
         package_name=args.package,
         schema_mode=args.schema_mode,
+        mutation_mode=args.mutation_mode,
+        max_actions=args.max_actions,
         extra_headers=args.header,
     )
 
@@ -473,4 +538,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

@@ -56,6 +56,9 @@ def _encode_len_delim(field_number: int, payload: bytes) -> bytes:
 def _encode_uint32(field_number: int, value: int) -> bytes:
     return _encode_key(field_number, WIRE_VARINT) + _encode_varint(value & 0xFFFFFFFF)
 
+def _encode_bool(field_number: int, value: bool) -> bytes:
+    return _encode_key(field_number, WIRE_VARINT) + _encode_varint(1 if value else 0)
+
 
 def _conditions_entries(conditions: Any) -> List[Dict[str, Any]]:
     if isinstance(conditions, list):
@@ -125,17 +128,39 @@ class SeedGenerator:
         self.creators = [fn for fn in self.functions_sorted if _is_creator(self.func_entries[fn])]
         self.destructors = [fn for fn in self.functions_sorted if _is_destructor_name(fn)]
         self.others = [fn for fn in self.functions_sorted if fn not in set(self.creators + self.destructors)]
+        self.handle_consumers = [
+            fn for fn in self.functions_sorted
+            if self._function_has_handle_param(self.func_entries[fn])
+        ]
 
-    def _encode_params_for_function(self, func_name: str) -> bytes:
-        """
-        Best-effort small params message.
+    def _infer_llvm_type(self, param_info: Dict[str, Any]) -> str:
+        t = param_info.get("type_string") or param_info.get("type")
+        if t:
+            return str(t)
+        access = param_info.get("access_type_set", [])
+        if isinstance(access, list) and access:
+            first = access[0]
+            if isinstance(first, dict):
+                return str(first.get("type_string") or first.get("type") or "")
+        return ""
 
-        This tries to seed obvious string/bytes inputs for `param_0` when it's an array-like bytes field
-        to improve early handle creation (e.g., cJSON_Parse).
+    def _function_has_handle_param(self, entry: Dict[str, Any]) -> bool:
+        for k, v in entry.items():
+            if not (isinstance(k, str) and k.startswith("param_") and isinstance(v, dict)):
+                continue
+            llvm_type = self._infer_llvm_type(v)
+            if not llvm_type:
+                continue
+            if self.mapper.map_llvm_to_proto(llvm_type) == "uint32":
+                return True
+        return False
+
+    def _field_numbers_for_entry(self, entry: Dict[str, Any]) -> Dict[str, int]:
         """
-        entry = self.func_entries.get(func_name)
-        if not entry:
-            return b""
+        Mirror `proto_generator.py` field numbering so wire seeds hit the intended fields.
+        """
+        fields: Dict[str, int] = {}
+        field_no = 1
 
         # Deterministic param order: param_0, param_1, ...
         param_infos: List[Tuple[int, Dict[str, Any]]] = []
@@ -149,47 +174,155 @@ class SeedGenerator:
             param_infos.append((idx, v))
         param_infos.sort(key=lambda t: t[0])
 
-        # Recompute field numbers exactly as the schema generator does (for param fields only).
-        # We only seed a very small subset (bytes/array param_0), and omit knobs/length fields.
-        field_no = 0
-        chunks: List[bytes] = []
         for param_idx, info in param_infos:
-            llvm_type = str(info.get("type_string") or info.get("type") or "")
-            if not llvm_type:
-                access = info.get("access_type_set", [])
-                if isinstance(access, list) and access and isinstance(access[0], dict):
-                    llvm_type = str(access[0].get("type_string") or access[0].get("type") or "")
-
-            is_array = bool(info.get("is_array"))
+            param_name = f"param_{param_idx}"
+            llvm_type = self._infer_llvm_type(info)
             proto_type = self.mapper.map_llvm_to_proto(llvm_type) if llvm_type else "bytes"
+            is_array = bool(info.get("is_array"))
 
             if is_array:
-                field_no += 1  # bytes param_N
-                if param_idx == 0:
-                    # Seed a tiny JSON-ish string; safe default for many parsers.
-                    payload = b"{}"
-                    chunks.append(_encode_len_delim(field_no, payload))
-                field_no += 1  # uint32 length
-                field_no += 1  # uint32 length_override
-            elif proto_type == "uint32":
-                field_no += 1  # uint32 param_N_handle
+                fields[param_name] = field_no
+                field_no += 1
+                fields[param_name + "_length"] = field_no
+                field_no += 1
+                fields[param_name + "_length_override"] = field_no
+                field_no += 1
+            elif llvm_type.startswith("%struct.") or llvm_type.endswith("*"):
+                if proto_type == "uint32":
+                    fields[param_name + "_handle"] = field_no
+                    field_no += 1
+                else:
+                    fields[param_name] = field_no
+                    field_no += 1
             else:
-                field_no += 1  # scalar or bytes
-                if proto_type == "bytes" and param_idx == 0:
-                    chunks.append(_encode_len_delim(field_no, b"{}"))
+                fields[param_name] = field_no
+                field_no += 1
 
-            # nullable knob added for arrays/pointers/handles in schema generator; we do not emit it.
+            # Nullable knob (mirrors proto_generator._is_nullable)
             if is_array or llvm_type.endswith("*") or llvm_type.startswith("%struct.") or proto_type == "uint32":
-                field_no += 1  # bool param_N_is_null
+                fields[param_name + "_is_null"] = field_no
+                field_no += 1
 
             if info.get("is_malloc_size"):
-                field_no += 1  # uint32 malloc_override
+                fields[param_name + "_malloc_override"] = field_no
+                field_no += 1
+
+        # Contract violation knobs
+        has_deps = any(
+            isinstance(v, dict) and v.get("set_by")
+            for k, v in entry.items()
+            if isinstance(k, str) and k.startswith("param_")
+        )
+        if has_deps:
+            fields["skip_dependency_check"] = field_no
+            field_no += 1
+        if "return" in entry:
+            fields["allow_double_delete"] = field_no
+            field_no += 1
+
+        return fields
+
+    def _default_payloads_for_function(self, func_name: str) -> List[bytes]:
+        lowered = func_name.lower()
+        if "json" in lowered or "parse" in lowered:
+            return [b"{}", b"[]", b"null", b"true", b"0", b"\"a\"", b"{\"a\":1}"]
+        return [b"", b"A", b"0", b"\x00"]
+
+    def _encode_params_for_function(
+        self,
+        func_name: str,
+        *,
+        set_skip_dependency_check: bool = False,
+        set_allow_double_delete: bool = False,
+        set_first_is_null: bool = False,
+    ) -> bytes:
+        """
+        Best-effort small params message.
+
+        This tries to seed obvious string/bytes inputs for `param_0` when it's an array-like bytes field
+        to improve early handle creation (e.g., cJSON_Parse).
+        """
+        entry = self.func_entries.get(func_name)
+        if not entry:
+            return b""
+
+        field_nums = self._field_numbers_for_entry(entry)
+        chunks: List[bytes] = []
+
+        # Prefer populating the first bytes/array parameter (often input strings/buffers).
+        payloads = self._default_payloads_for_function(func_name)
+        payload = payloads[self.rng.randrange(0, len(payloads))] if payloads else b"{}"
+
+        chosen_param_field: Optional[str] = None
+        chosen_len_override_field: Optional[str] = None
+
+        param_infos: List[Tuple[int, Dict[str, Any]]] = []
+        for k, v in entry.items():
+            if not (isinstance(k, str) and k.startswith("param_") and isinstance(v, dict)):
+                continue
+            try:
+                idx = int(k.split("_", 1)[1])
+            except Exception:
+                continue
+            param_infos.append((idx, v))
+        param_infos.sort(key=lambda t: t[0])
+
+        for param_idx, info in param_infos:
+            llvm_type = self._infer_llvm_type(info)
+            proto_type = self.mapper.map_llvm_to_proto(llvm_type) if llvm_type else "bytes"
+            is_array = bool(info.get("is_array"))
+
+            # Array params are best bytes targets (often "input" strings).
+            if is_array:
+                candidate = f"param_{param_idx}"
+                if candidate in field_nums:
+                    chosen_param_field = candidate
+                    override = candidate + "_length_override"
+                    if override in field_nums:
+                        chosen_len_override_field = override
+                    break
+
+            # Non-handle bytes fields (including i8*/void* etc).
+            candidate = f"param_{param_idx}"
+            if proto_type == "bytes" and candidate in field_nums:
+                chosen_param_field = candidate
+                break
+
+        if chosen_param_field:
+            chunks.append(_encode_len_delim(field_nums[chosen_param_field], payload))
+            if chosen_len_override_field:
+                n = min(len(payload), 32)
+                chunks.append(_encode_uint32(field_nums[chosen_len_override_field], n))
+
+        # Optional: flip a nullable knob for "NULL path" exploration.
+        if set_first_is_null:
+            for key in ("param_0_is_null", "param_1_is_null", "param_2_is_null"):
+                if key in field_nums:
+                    chunks.append(_encode_bool(field_nums[key], True))
+                    break
+
+        if set_skip_dependency_check and "skip_dependency_check" in field_nums:
+            chunks.append(_encode_bool(field_nums["skip_dependency_check"], True))
+        if set_allow_double_delete and "allow_double_delete" in field_nums:
+            chunks.append(_encode_bool(field_nums["allow_double_delete"], True))
 
         return b"".join(chunks)
 
-    def action_for_function(self, func_name: str) -> ActionVariant:
+    def action_for_function(
+        self,
+        func_name: str,
+        *,
+        set_skip_dependency_check: bool = False,
+        set_allow_double_delete: bool = False,
+        set_first_is_null: bool = False,
+    ) -> ActionVariant:
         tag = self.oneof_tag_by_function[func_name]
-        params_bytes = self._encode_params_for_function(func_name)
+        params_bytes = self._encode_params_for_function(
+            func_name,
+            set_skip_dependency_check=set_skip_dependency_check,
+            set_allow_double_delete=set_allow_double_delete,
+            set_first_is_null=set_first_is_null,
+        )
         return ActionVariant(function_name=func_name, oneof_tag=tag, params_bytes=params_bytes)
 
     def encode_action(self, variant: ActionVariant) -> bytes:
@@ -223,11 +356,28 @@ class SeedGenerator:
     def seed_sequences_default(self, num_seeds: int, max_len: int) -> List[List[str]]:
         sequences: List[List[str]] = []
 
+        default_creator = self.creators[0] if self.creators else None
+
         # Deterministic “smoke” seeds: one action per creator (up to num_seeds).
         for fn in self.creators:
             if len(sequences) >= num_seeds:
                 break
             sequences.append([fn])
+
+        # Minimal creator -> destructor seeds (exercise handle lifecycle).
+        if default_creator:
+            for fn in self.destructors:
+                if len(sequences) >= num_seeds:
+                    break
+                sequences.append([default_creator, fn])
+
+            # Minimal creator -> consumer seeds (exercise handle selection + deps).
+            for fn in self.handle_consumers:
+                if len(sequences) >= num_seeds:
+                    break
+                if fn == default_creator:
+                    continue
+                sequences.append([default_creator, fn])
 
         # Random mixes (still deterministic under rng_seed).
         all_funcs = self.functions_sorted
@@ -296,7 +446,22 @@ def main() -> int:
         sequences = gen.seed_sequences_default(args.num_seeds, args.max_len)
 
     for i, seq in enumerate(sequences[: args.num_seeds]):
-        actions = [gen.action_for_function(fn) for fn in seq if fn in gen.oneof_tag_by_function]
+        actions: List[ActionVariant] = []
+        creators_set = set(gen.creators)
+        destructors_set = set(gen.destructors)
+        for j, fn in enumerate(seq):
+            if fn not in gen.oneof_tag_by_function:
+                continue
+            is_first = j == 0
+            is_creator = fn in creators_set
+            actions.append(
+                gen.action_for_function(
+                    fn,
+                    set_skip_dependency_check=(not is_first and not is_creator),
+                    set_allow_double_delete=(fn in destructors_set and not is_first),
+                    set_first_is_null=(fn in destructors_set and not is_first),
+                )
+            )
         data = gen.encode_fuzz_input(actions, global_seed=i)
         (out_dir / f"seed_{i:04d}.bin").write_bytes(data)
 

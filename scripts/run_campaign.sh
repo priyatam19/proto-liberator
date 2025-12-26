@@ -1,0 +1,464 @@
+#!/bin/bash
+set -euo pipefail
+
+# Snapshot-and-exec so edits to this file during a long campaign don't affect
+# the running process (bash reads scripts incrementally).
+if [ -z "${PROTO_LIBERATOR_RUN_CAMPAIGN_SNAPSHOTTED:-}" ]; then
+  export PROTO_LIBERATOR_RUN_CAMPAIGN_SNAPSHOTTED=1
+  export PROTO_LIBERATOR_RUN_CAMPAIGN_ORIG_ROOT="$(
+    cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd
+  )"
+  SNAP="$(mktemp -t run_campaign.XXXXXXXX.sh)"
+  cp "$0" "${SNAP}"
+  chmod +x "${SNAP}"
+  exec bash "${SNAP}" "$@"
+fi
+
+# Run a proto-liberator fuzzing campaign.
+#
+# Supports a small number of build variants (2–3) in parallel for one campaign,
+# each with its own out-dir and (optional) custom compile flags (cc-args).
+#
+# Example (3 variants in parallel):
+#   scripts/run_campaign.sh \
+#     --library cjson \
+#     --conditions /path/to/conditions.json \
+#     --apis /path/to/apis_clang.json \
+#     --out-root workdir/campaigns \
+#     --header cjson/cJSON.h \
+#     --target-include /path/to/include \
+#     --target-lib /path/to/libcjson.a \
+#     --duration-sec 86400 --jobs 2 --workers 2 \
+#     --variant base \
+#     --variant cmp --variant-cc-arg -fsanitize-coverage=trace-cmp \
+#     --variant gep --variant-cc-arg -fsanitize-coverage=trace-gep
+#
+# Notes:
+# - This script uses `src/run_all.py` to generate schema/bindings/harness and to
+#   build BOTH a fuzzer binary and a coverage/profile binary.
+# - Coverage reporting is done via `scripts/collect_coverage.sh` (llvm-cov),
+#   and crash clustering via `scripts/cluster_crashes.sh` (CASR).
+
+usage() {
+  cat <<'EOF'
+Usage:
+  scripts/run_campaign.sh [options]
+
+Required:
+  --library NAME
+  --conditions PATH
+  --apis PATH
+  --out-root DIR
+  --header HEADER
+
+Common options:
+  --driver PATH                 Optional driver.meta (v2 ok without)
+  --schema-mode v2|v1           Default: v2
+  --mutation-mode lpm|nanopb    Default: lpm
+  --max-actions N               Default: 64
+  --target-include DIR          Repeatable
+  --target-lib PATH             Repeatable
+  --extra-src PATH              Repeatable
+  --profile-extra-src PATH      Build *_profile.bin with extra sources (repeatable)
+  --profile-keep-target-lib     Also link --target-lib into *_profile.bin
+  --cc-arg ARG                  Extra compile arg for ALL variants (repeatable)
+
+Fuzz runtime:
+  --duration-sec N              Default: 86400 (24h)
+  --max-len N                   Default: 4096
+  --timeout-sec N               Default: 25
+  --jobs N                      libFuzzer -jobs (default: 1)
+  --workers N                   libFuzzer -workers (default: 1)
+  --keep-going                  Add -ignore_crashes=1 -ignore_timeouts=1 -ignore_ooms=1
+  --live-coverage-interval-sec N  If set, periodically runs *_profile.bin on the current corpus and writes profraw (enables --live coverage)
+  --fuzz-arg ARG                Extra runtime arg for ALL variants (repeatable)
+
+Variants (2–3 recommended):
+  --variant NAME                Start/declare a variant (repeatable)
+  --variant-cc-arg ARG          Compile arg for the CURRENT variant (repeatable)
+  --variant-fuzz-arg ARG        Runtime arg for the CURRENT variant (repeatable)
+
+EOF
+}
+
+if [ -n "${PROTO_LIBERATOR_RUN_CAMPAIGN_ORIG_ROOT:-}" ]; then
+  ROOT_DIR="${PROTO_LIBERATOR_RUN_CAMPAIGN_ORIG_ROOT}"
+  SCRIPT_DIR="${ROOT_DIR}/scripts"
+else
+  SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+  ROOT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
+fi
+
+LIBRARY=""
+CONDITIONS=""
+APIS=""
+DRIVER=""
+OUT_ROOT=""
+HEADER=""
+SCHEMA_MODE="v2"
+MUTATION_MODE="lpm"
+MAX_ACTIONS="64"
+
+DURATION_SEC="86400"
+MAX_LEN="4096"
+TIMEOUT_SEC="25"
+JOBS="1"
+WORKERS="1"
+KEEP_GOING="0"
+LIVE_COVERAGE_INTERVAL_SEC="0"
+
+GLOBAL_CC_ARGS=()
+GLOBAL_FUZZ_ARGS=()
+TARGET_INCLUDES=()
+TARGET_LIBS=()
+EXTRA_SRCS=()
+PROFILE_EXTRA_SRCS=()
+PROFILE_KEEP_TARGET_LIB="0"
+
+declare -a VARIANTS=()
+declare -A VARIANT_CC_ARGS=()
+declare -A VARIANT_FUZZ_ARGS=()
+CURRENT_VARIANT=""
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    --library) LIBRARY="${2:-}"; shift 2;;
+    --conditions) CONDITIONS="${2:-}"; shift 2;;
+    --apis) APIS="${2:-}"; shift 2;;
+    --driver) DRIVER="${2:-}"; shift 2;;
+    --out-root) OUT_ROOT="${2:-}"; shift 2;;
+    --header) HEADER="${2:-}"; shift 2;;
+    --schema-mode) SCHEMA_MODE="${2:-}"; shift 2;;
+    --mutation-mode) MUTATION_MODE="${2:-}"; shift 2;;
+    --max-actions) MAX_ACTIONS="${2:-}"; shift 2;;
+
+    --duration-sec) DURATION_SEC="${2:-}"; shift 2;;
+    --max-len) MAX_LEN="${2:-}"; shift 2;;
+    --timeout-sec) TIMEOUT_SEC="${2:-}"; shift 2;;
+    --jobs) JOBS="${2:-}"; shift 2;;
+    --workers) WORKERS="${2:-}"; shift 2;;
+    --keep-going) KEEP_GOING="1"; shift;;
+    --live-coverage-interval-sec) LIVE_COVERAGE_INTERVAL_SEC="${2:-0}"; shift 2;;
+
+    --cc-arg) GLOBAL_CC_ARGS+=("${2:-}"); shift 2;;
+    --fuzz-arg) GLOBAL_FUZZ_ARGS+=("${2:-}"); shift 2;;
+    --target-include) TARGET_INCLUDES+=("${2:-}"); shift 2;;
+    --target-lib) TARGET_LIBS+=("${2:-}"); shift 2;;
+    --extra-src) EXTRA_SRCS+=("${2:-}"); shift 2;;
+    --profile-extra-src) PROFILE_EXTRA_SRCS+=("${2:-}"); shift 2;;
+    --profile-keep-target-lib) PROFILE_KEEP_TARGET_LIB="1"; shift;;
+
+    --variant)
+      CURRENT_VARIANT="${2:-}"
+      if [ -z "${CURRENT_VARIANT}" ]; then
+        echo "[ERROR] --variant requires a name" >&2
+        exit 2
+      fi
+      VARIANTS+=("${CURRENT_VARIANT}")
+      VARIANT_CC_ARGS["${CURRENT_VARIANT}"]=""
+      VARIANT_FUZZ_ARGS["${CURRENT_VARIANT}"]=""
+      shift 2
+      ;;
+    --variant-cc-arg)
+      if [ -z "${CURRENT_VARIANT}" ]; then
+        echo "[ERROR] --variant-cc-arg must follow a --variant" >&2
+        exit 2
+      fi
+      VARIANT_CC_ARGS["${CURRENT_VARIANT}"]+=$'\n'"${2:-}"
+      shift 2
+      ;;
+    --variant-fuzz-arg)
+      if [ -z "${CURRENT_VARIANT}" ]; then
+        echo "[ERROR] --variant-fuzz-arg must follow a --variant" >&2
+        exit 2
+      fi
+      VARIANT_FUZZ_ARGS["${CURRENT_VARIANT}"]+=$'\n'"${2:-}"
+      shift 2
+      ;;
+    *)
+      echo "[ERROR] Unknown argument: $1" >&2
+      usage >&2
+      exit 2
+      ;;
+  esac
+done
+
+if [ -z "${LIBRARY}" ] || [ -z "${CONDITIONS}" ] || [ -z "${APIS}" ] || [ -z "${OUT_ROOT}" ] || [ -z "${HEADER}" ]; then
+  echo "[ERROR] Missing required args." >&2
+  usage >&2
+  exit 2
+fi
+
+if [ "${#VARIANTS[@]}" -eq 0 ]; then
+  VARIANTS=("default")
+  VARIANT_CC_ARGS["default"]=""
+  VARIANT_FUZZ_ARGS["default"]=""
+fi
+
+STAMP="$(date +%Y%m%d_%H%M%S)"
+CAMPAIGN_DIR="${OUT_ROOT%/}/${LIBRARY}_${STAMP}"
+mkdir -p "${CAMPAIGN_DIR}"
+
+META_JSON="${CAMPAIGN_DIR}/campaign.meta.txt"
+{
+  echo "library=${LIBRARY}"
+  echo "schema_mode=${SCHEMA_MODE}"
+  echo "mutation_mode=${MUTATION_MODE}"
+  echo "max_actions=${MAX_ACTIONS}"
+  echo "duration_sec=${DURATION_SEC}"
+  echo "jobs=${JOBS}"
+  echo "workers=${WORKERS}"
+  echo "timestamp=${STAMP}"
+} > "${META_JSON}"
+
+echo "========================================"
+echo "Proto-libErator Campaign"
+echo "========================================"
+echo "Campaign:   ${CAMPAIGN_DIR}"
+echo "Library:    ${LIBRARY}"
+echo "Variants:   ${#VARIANTS[@]} (${VARIANTS[*]})"
+echo "Duration:   ${DURATION_SEC}s"
+echo "Jobs/Work:  ${JOBS}/${WORKERS}"
+echo "========================================"
+
+build_variant() {
+  local variant="$1"
+  local out_dir="${CAMPAIGN_DIR}/${variant}"
+  mkdir -p "${out_dir}"
+
+  local -a run_all_args=(
+    --library "${LIBRARY}"
+    --conditions "${CONDITIONS}"
+    --apis "${APIS}"
+    --out-dir "${out_dir}"
+    --schema-mode "${SCHEMA_MODE}"
+    --mutation-mode "${MUTATION_MODE}"
+    --max-actions "${MAX_ACTIONS}"
+    --header "${HEADER}"
+    --generate-seeds
+    --build
+    --build-profile
+  )
+
+  if [ -n "${DRIVER}" ]; then
+    run_all_args+=(--driver "${DRIVER}")
+  fi
+
+  for inc in "${TARGET_INCLUDES[@]}"; do
+    run_all_args+=(--target-include "${inc}")
+  done
+  for lib in "${TARGET_LIBS[@]}"; do
+    run_all_args+=(--target-lib "${lib}")
+  done
+  for src in "${EXTRA_SRCS[@]}"; do
+    run_all_args+=(--extra-src "${src}")
+  done
+  for src in "${PROFILE_EXTRA_SRCS[@]}"; do
+    run_all_args+=(--profile-extra-src "${src}")
+  done
+  if [ "${PROFILE_KEEP_TARGET_LIB}" = "1" ]; then
+    run_all_args+=(--profile-keep-target-lib)
+  fi
+  for a in "${GLOBAL_CC_ARGS[@]}"; do
+    # Use --cc-arg=<value> so values starting with '-' are unambiguous to argparse.
+    run_all_args+=(--cc-arg="${a}")
+  done
+
+  # Variant-specific cc args (stored newline-delimited)
+  while IFS= read -r a; do
+    [ -z "${a}" ] && continue
+    run_all_args+=(--cc-arg="${a}")
+  done <<< "${VARIANT_CC_ARGS[${variant}]}"
+
+  echo "[Campaign] Building variant '${variant}' -> ${out_dir}"
+  python3 "${ROOT_DIR}/src/run_all.py" "${run_all_args[@]}"
+}
+
+run_fuzz_variant() {
+  local variant="$1"
+  local out_dir="${CAMPAIGN_DIR}/${variant}"
+  local fuzzer_bin="${out_dir}/${LIBRARY}_fuzzer.bin"
+  local profile_bin="${out_dir}/${LIBRARY}_profile.bin"
+  local corpus_dir="${out_dir}/corpus"
+  local artifacts_dir="${out_dir}/artifacts"
+  local logs_dir="${out_dir}/logs"
+  mkdir -p "${artifacts_dir}" "${logs_dir}"
+
+  local start_ts
+  start_ts="$(date +%s)"
+  local end_ts=$((start_ts + DURATION_SEC))
+  local run_i=0
+
+  local live_cov_pid=""
+  local live_cov_stop="${logs_dir}/.stop_live_coverage"
+  rm -f "${live_cov_stop}" 2>/dev/null || true
+
+  if [ "${LIVE_COVERAGE_INTERVAL_SEC}" -gt 0 ] && [ -f "${profile_bin}" ]; then
+    (
+      mkdir -p "${out_dir}/profraw" 2>/dev/null || true
+      while [ ! -f "${live_cov_stop}" ]; do
+        # Write profraw continuously so `collect_coverage.sh --live` can merge them.
+        export LLVM_PROFILE_FILE="${out_dir}/profraw/live_%m_%p.profraw"
+        timeout 180s "${profile_bin}" "${corpus_dir}" -runs=0 -detect_leaks=0 >/dev/null 2>&1 || true
+        sleep "${LIVE_COVERAGE_INTERVAL_SEC}" || true
+      done
+    ) &
+    live_cov_pid="$!"
+    echo "${live_cov_pid}" > "${logs_dir}/live_coverage.pid"
+  fi
+
+  # Ensure LeakSanitizer doesn't terminate the run in restricted environments.
+  local asan_opts="${ASAN_OPTIONS:-}"
+  if [ -n "${asan_opts}" ]; then
+    asan_opts="${asan_opts}:detect_leaks=0"
+  else
+    asan_opts="detect_leaks=0"
+  fi
+
+  echo "[Campaign] Fuzzing '${variant}'..."
+  : > "${logs_dir}/fuzz.log"
+
+  while true; do
+    local now
+    now="$(date +%s)"
+    local remaining=$((end_ts - now))
+    if [ "${remaining}" -le 0 ]; then
+      break
+    fi
+
+    run_i=$((run_i + 1))
+    {
+      echo ""
+      echo "===== fuzz run ${run_i} (remaining=${remaining}s) ====="
+      date -Is
+    } >> "${logs_dir}/fuzz.log"
+
+    local -a argv=(
+      "${fuzzer_bin}"
+      "${corpus_dir}"
+      "-artifact_prefix=${artifacts_dir}/"
+      "-detect_leaks=0"
+      "-max_total_time=${remaining}"
+      "-max_len=${MAX_LEN}"
+      "-timeout=${TIMEOUT_SEC}"
+      "-print_final_stats=1"
+      "-jobs=${JOBS}"
+      "-workers=${WORKERS}"
+    )
+
+    if [ "${KEEP_GOING}" = "1" ]; then
+      argv+=("-ignore_crashes=1" "-ignore_timeouts=1" "-ignore_ooms=1")
+    fi
+
+    for a in "${GLOBAL_FUZZ_ARGS[@]}"; do
+      argv+=("${a}")
+    done
+
+    while IFS= read -r a; do
+      [ -z "${a}" ] && continue
+      argv+=("${a}")
+    done <<< "${VARIANT_FUZZ_ARGS[${variant}]}"
+
+    set +e
+    (cd "${out_dir}" && env ASAN_OPTIONS="${asan_opts}" "${argv[@]}") >> "${logs_dir}/fuzz.log" 2>&1
+    local rc=$?
+    set -e
+
+    echo "${rc}" > "${logs_dir}/fuzz.exit_code"
+    echo "${run_i} ${rc}" >> "${logs_dir}/fuzz.exit_codes"
+
+    # If we aren't in keep-going mode, don't restart.
+    if [ "${KEEP_GOING}" != "1" ]; then
+      break
+    fi
+
+    # If libFuzzer exited cleanly, we likely hit -max_total_time.
+    if [ "${rc}" -eq 0 ]; then
+      break
+    fi
+  done
+
+  if [ -n "${live_cov_pid}" ]; then
+    touch "${live_cov_stop}" 2>/dev/null || true
+    kill "${live_cov_pid}" 2>/dev/null || true
+    wait "${live_cov_pid}" 2>/dev/null || true
+  fi
+
+  # Do not fail the whole campaign on a non-zero libFuzzer exit; crashes are expected.
+  return 0
+}
+
+postprocess_variant() {
+  local variant="$1"
+  local out_dir="${CAMPAIGN_DIR}/${variant}"
+  local fuzzer_bin="${out_dir}/${LIBRARY}_fuzzer.bin"
+  local profile_bin="${out_dir}/${LIBRARY}_profile.bin"
+  local corpus_dir="${out_dir}/corpus"
+  local corpus_min="${out_dir}/corpus_min"
+  local profraw_dir="${out_dir}/profraw"
+  local coverage_dir="${out_dir}/coverage"
+  local casr_dir="${out_dir}/casr"
+
+  mkdir -p "${profraw_dir}" "${coverage_dir}" "${casr_dir}"
+
+  if [ -f "${fuzzer_bin}" ] && [ -d "${corpus_dir}" ]; then
+    echo "[Campaign] Minimizing corpus for '${variant}'..."
+    rm -rf "${corpus_min}"
+    mkdir -p "${corpus_min}"
+    timeout 30m "${fuzzer_bin}" -merge=1 "${corpus_min}" "${corpus_dir}" >/dev/null 2>&1 || true
+  fi
+
+  if [ -f "${profile_bin}" ] && [ -d "${corpus_min}" ]; then
+    echo "[Campaign] Profiling coverage for '${variant}'..."
+    export LLVM_PROFILE_FILE="${profraw_dir}/%m_%p.profraw"
+    timeout 60m "${profile_bin}" -runs=0 "${corpus_min}" -detect_leaks=0 >/dev/null 2>&1 || true
+  fi
+
+  echo "[Campaign] Coverage report for '${variant}'..."
+  "${ROOT_DIR}/scripts/collect_coverage.sh" "${out_dir}" --final --ignore-file "${ROOT_DIR}/scripts/coverage_ignore_default.txt" \
+    > "${coverage_dir}/coverage_summary.txt" 2>&1 || true
+
+  echo "[Campaign] Crash clustering for '${variant}'..."
+  "${ROOT_DIR}/scripts/cluster_crashes.sh" "${out_dir}" > "${casr_dir}/summary.txt" 2>&1 || true
+}
+
+PIDS=()
+cleanup() {
+  if [ "${#PIDS[@]}" -eq 0 ]; then
+    return 0
+  fi
+  for pid in "${PIDS[@]}"; do
+    [ -n "${pid}" ] || continue
+    kill "${pid}" 2>/dev/null || true
+  done
+}
+trap cleanup EXIT
+
+# Build all variants first (serial, keeps logs simpler and avoids parallel protoc/clang contention).
+for v in "${VARIANTS[@]}"; do
+  build_variant "${v}"
+done
+
+# Run fuzzers in parallel (2–3 variants recommended).
+for v in "${VARIANTS[@]}"; do
+  run_fuzz_variant "${v}" &
+  PIDS+=("$!")
+done
+
+for pid in "${PIDS[@]}"; do
+  wait "${pid}" || true
+done
+
+unset LLVM_PROFILE_FILE || true
+PIDS=()
+
+# Post-process each variant (serial).
+for v in "${VARIANTS[@]}"; do
+  postprocess_variant "${v}"
+done
+
+echo "[Campaign] Done: ${CAMPAIGN_DIR}"

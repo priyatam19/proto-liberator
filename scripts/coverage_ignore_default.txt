@@ -1,0 +1,18 @@
+# Lines are joined with '|' and passed to llvm-cov as -ignore-filename-regex.
+# Keep these patterns broad and platform-agnostic.
+
+# proto-liberator generated harness + bindings
+harness\.c$
+harness\.cc$
+(^|/)bindings/.*\.pb\.(c|cc|h)$
+
+# protobuf / LPM infrastructure
+libprotobuf-mutator
+google/protobuf
+/absl/
+
+# sanitizer / libFuzzer runtime frames that may appear in reports
+LLVMFuzzer
+libFuzzer
+__sanitizer
+__asan
