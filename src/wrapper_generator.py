@@ -22,6 +22,7 @@ import argparse
 import json
 import os
 import sys
+import re
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -30,12 +31,12 @@ from jinja2 import Environment, FileSystemLoader
 try:
     from contracts import MSG_FUZZ_INPUT, MSG_ACTION, FIELD_ACTIONS, FIELD_ACTION_ONEOF, DEFAULT_MAX_ACTIONS
     from utils import load_json, load_text_lines, to_proto_field_name
-    from type_mapper import TypeMapper
+    from type_mapper import TypeMapper, TypeContext
 except ImportError:
     sys.path.append(os.path.dirname(__file__))
     from contracts import MSG_FUZZ_INPUT, MSG_ACTION, FIELD_ACTIONS, FIELD_ACTION_ONEOF, DEFAULT_MAX_ACTIONS
     from utils import load_json, load_text_lines, to_proto_field_name
-    from type_mapper import TypeMapper
+    from type_mapper import TypeMapper, TypeContext
 
 
 def load_jsonl(path: Path) -> List[Dict[str, Any]]:
@@ -117,6 +118,12 @@ def is_char_ptr(c_type: str) -> bool:
     t = c_type.replace("const", "").strip()
     return ("char" in t) and ("*" in t) and ("**" not in t.replace(" ", ""))
 
+def is_char_ptr_ptr(c_type: str) -> bool:
+    # Matches: char **, const char **, char* const*, etc (best-effort).
+    t = c_type.replace("const", "")
+    t = "".join(t.split())
+    return "char**" in t
+
 
 def is_void_ptr(c_type: str) -> bool:
     t = c_type.replace("const", "").strip()
@@ -143,10 +150,11 @@ def conditions_return_is_handle(entry: Dict[str, Any], mapper: TypeMapper, *, re
                 continue
             access = a.get("access")
             llvm_t = a.get("type_string") or ret.get("type_string") or ""
+            # Only treat struct-pointer returns as handles by default.
             if mapper.map_llvm_to_proto(str(llvm_t)) == "uint32":
                 return True
-            if access in ("create", "delete") and "*" in str(llvm_t):
-                # Treat owned pointers (including i8*/void*) as handles so they can be tracked/invalidation-safe.
+            # Avoid treating owned i8*/void* as handles (e.g., error strings / print buffers).
+            if access in ("create", "delete") and "%struct." in str(llvm_t):
                 return True
     llvm_t = ret.get("type_string") or ""
     if mapper.map_llvm_to_proto(str(llvm_t)) == "uint32":
@@ -155,7 +163,7 @@ def conditions_return_is_handle(entry: Dict[str, Any], mapper: TypeMapper, *, re
     # Heuristic: allocator-like APIs returning pointers should be tracked as handles even if conditions.json
     # doesn't include access_type_set for the return (some libraries omit it for malloc-like wrappers).
     fn = str(entry.get("function_name") or entry.get("functionName") or "")
-    if ret_c_type and "*" in ret_c_type and fn:
+    if ret_c_type and "*" in ret_c_type and "%struct." in llvm_t and fn:
         lowered = fn.lower()
         if any(x in lowered for x in ("malloc", "realloc", "calloc", "alloc", "new", "create")):
             return True
@@ -181,6 +189,9 @@ def classify_param(
     entry: Dict[str, Any],
     param_index: int,
     mapper: TypeMapper,
+    *,
+    context: Optional[TypeContext] = None,
+    managed_struct_names: Optional[set] = None,
 ) -> Dict[str, Any]:
     key = f"param_{param_index}"
     info = entry.get(key)
@@ -196,23 +207,99 @@ def classify_param(
     access_set = info.get("access_type_set", [])
     has_set_by = bool(info.get("set_by", []))
     has_delete_access = any(isinstance(a, dict) and a.get("access") == "delete" for a in (access_set or []))
+    len_depends_on = str(info.get("len_depends_on") or "")
+    len_depends_on_index: Optional[int] = None
+    if len_depends_on.startswith("param_"):
+        try:
+            len_depends_on_index = int(len_depends_on.split("_", 1)[1])
+        except Exception:
+            len_depends_on_index = None
     proto_type = mapper.map_llvm_to_proto(llvm_type) if llvm_type else "bytes"
+    is_ptr_like = bool(
+        is_array
+        or llvm_type.endswith("*")
+        or llvm_type.startswith("%struct.")
+        or proto_type in ("bytes", "uint32")
+    )
+    classification = mapper.classify_llvm_type(
+        llvm_type,
+        context=context,
+        is_array=is_array and not (llvm_type.startswith("%struct.") or llvm_type.endswith("*") and llvm_type.replace("const ", "").strip().startswith("%struct.")),
+    )
 
-    if is_array:
+    is_struct_ptr = llvm_type.startswith("%struct.") or (
+        llvm_type.endswith("*") and llvm_type.replace("const ", "").strip().startswith("%struct.")
+    )
+
+    # Struct pointers: struct blob when layout is known and not dependency-handle; else handle.
+    if is_struct_ptr:
+        struct_size = classification.struct_size
+        struct_name = classification.struct_name
+        if managed_struct_names and struct_name and struct_name in managed_struct_names:
+            struct_size = None
+        if has_set_by or has_delete_access or proto_type == "uint32" and struct_size is None:
+            return {
+                "kind": "handle",
+                "field": f"{key}_handle",
+                "index": param_index,
+                "has_is_null": True,
+                "type_key": mapper.type_key(llvm_type),
+                "len_depends_on": len_depends_on,
+                "len_depends_on_index": len_depends_on_index,
+            }
+        if struct_size:
+            return {
+                "kind": "struct_blob",
+                "field": f"{key}_blob",
+                "index": param_index,
+                "has_is_null": True,
+                "type_key": mapper.type_key(llvm_type),
+                "struct_name": struct_name,
+                "struct_size": int(struct_size),
+                "len_depends_on": len_depends_on,
+                "len_depends_on_index": len_depends_on_index,
+            }
+        return {
+            "kind": "handle",
+            "field": f"{key}_handle",
+            "index": param_index,
+            "has_is_null": True,
+            "type_key": mapper.type_key(llvm_type),
+            "len_depends_on": len_depends_on,
+            "len_depends_on_index": len_depends_on_index,
+        }
+
+    if classification.kind == "bytes_array":
         return {
             "kind": "bytes_array",
             "field": key,
             "index": param_index,
             "has_is_null": True,
             "has_length": True,
+            "type_key": mapper.type_key(llvm_type),
+            "len_depends_on": len_depends_on,
+            "len_depends_on_index": len_depends_on_index,
         }
 
     if has_set_by or has_delete_access:
+        if is_ptr_like:
+            return {
+                "kind": "handle",
+                "field": f"{key}_handle",
+                "index": param_index,
+                "has_is_null": True,
+                "type_key": mapper.type_key(llvm_type),
+                "len_depends_on": len_depends_on,
+                "len_depends_on_index": len_depends_on_index,
+            }
         return {
-            "kind": "handle",
-            "field": f"{key}_handle",
+            "kind": "scalar",
+            "field": key,
             "index": param_index,
-            "has_is_null": True,
+            "has_is_null": False,
+            "type_key": mapper.type_key(llvm_type),
+            "len_depends_on": len_depends_on,
+            "len_depends_on_index": len_depends_on_index,
         }
 
     if proto_type == "uint32":
@@ -221,6 +308,9 @@ def classify_param(
             "field": f"{key}_handle",
             "index": param_index,
             "has_is_null": True,
+            "type_key": mapper.type_key(llvm_type),
+            "len_depends_on": len_depends_on,
+            "len_depends_on_index": len_depends_on_index,
         }
 
     if proto_type == "bytes":
@@ -229,9 +319,20 @@ def classify_param(
             "field": key,
             "index": param_index,
             "has_is_null": True,
+            "type_key": mapper.type_key(llvm_type),
+            "len_depends_on": len_depends_on,
+            "len_depends_on_index": len_depends_on_index,
         }
 
-    return {"kind": "scalar", "field": key, "index": param_index, "has_is_null": False}
+    return {
+        "kind": "scalar",
+        "field": key,
+        "index": param_index,
+        "has_is_null": False,
+        "type_key": mapper.type_key(llvm_type),
+        "len_depends_on": len_depends_on,
+        "len_depends_on_index": len_depends_on_index,
+    }
 
 
 def get_type_with_const(info: Dict[str, Any], default: str = "int") -> str:
@@ -256,25 +357,30 @@ class WrapperGenerator:
         conditions_path: Path,
         *,
         apis_path: Optional[Path] = None,
+        minimum_apis: Optional[List[str]] = None,
         package_name: str = "",
         schema_mode: str = "v1",
         mutation_mode: str = "nanopb",
         max_actions: int = DEFAULT_MAX_ACTIONS,
         emi_config: Optional[Dict] = None,
         extra_headers: Optional[List[str]] = None,
+        apipass_dir: Optional[Path] = None,
     ):
         self.proto_path = proto_path
         self.driver_meta = load_json(driver_meta_path)
         self.conditions_raw = load_json(conditions_path)
         self.conditions = index_conditions(self.conditions_raw)
         self.api_sigs = build_signature_index(apis_path)
+        self.mapper = TypeMapper()
+        self.type_context = TypeContext.from_apipass_dir(apipass_dir or conditions_path.parent)
+        self.minimum_apis = set(str(x) for x in (minimum_apis or []) if str(x).strip())
+        self.managed_struct_names = self._infer_managed_struct_names()
         self.package_name = package_name
         self.schema_mode = schema_mode
         self.mutation_mode = mutation_mode
         self.max_actions = int(max_actions)
         self.emi_config = emi_config or {}
         self.extra_headers = extra_headers or []
-        self.mapper = TypeMapper()
 
         if self.mutation_mode == "lpm" and self.schema_mode != "v2":
             raise ValueError("mutation_mode=lpm currently requires schema_mode=v2")
@@ -296,6 +402,30 @@ class WrapperGenerator:
         with open(output_path, "w") as f:
             f.write(wrapper_code)
         print(f"[Wrapper-Gen] ✓ Generated: {output_path}")
+
+    def _infer_managed_struct_names(self) -> set:
+        """
+        Heuristic: treat struct pointer types returned by any API as "managed objects"
+        and represent them as handles (not struct blobs).
+        """
+        out: set = set()
+        for _, entry in self.conditions.items():
+            if not isinstance(entry, dict):
+                continue
+            if not conditions_return_is_handle(entry, self.mapper):
+                continue
+            ret = entry.get("return")
+            if not isinstance(ret, dict):
+                continue
+            llvm_t = str(ret.get("type_string") or ret.get("type") or "")
+            if not llvm_t:
+                access = ret.get("access_type_set", [])
+                if isinstance(access, list) and access and isinstance(access[0], dict):
+                    llvm_t = str(access[0].get("type_string") or access[0].get("type") or "")
+            name = self.mapper.extract_struct_name(llvm_t)
+            if name:
+                out.add(name)
+        return out
 
     def _prepare_context(self) -> Dict:
         if self.schema_mode == "v2":
@@ -338,6 +468,8 @@ class WrapperGenerator:
             if func_name not in self.conditions:
                 print(f"[Wrapper-Gen] Warning: Function {func_name} in sequence but not in conditions.json")
                 continue
+            if self.minimum_apis and func_name not in self.minimum_apis:
+                continue
 
             entry = self.conditions[func_name]
             sig = self.api_sigs.get(func_name)
@@ -361,7 +493,16 @@ class WrapperGenerator:
 
             args: List[Dict[str, Any]] = []
             for i in range(argc):
-                param_desc = classify_param(entry, i, self.mapper)
+                param_desc = classify_param(
+                    entry,
+                    i,
+                    self.mapper,
+                    context=self.type_context,
+                    managed_struct_names=self.managed_struct_names,
+                )
+                dep = param_desc.get("len_depends_on_index") if isinstance(param_desc, dict) else None
+                if isinstance(dep, int) and dep >= argc:
+                    param_desc["len_depends_on_index"] = None
                 c_type = arg_types[i] if i < len(arg_types) else "int"
                 args.append(
                     {
@@ -369,6 +510,7 @@ class WrapperGenerator:
                         "c_type": c_type,
                         "param": param_desc,
                         "is_char_ptr": is_char_ptr(c_type),
+                        "is_char_ptr_ptr": is_char_ptr_ptr(c_type),
                         "is_void_ptr": is_void_ptr(c_type),
                         "is_pointer": is_pointer_type(c_type),
                     }
@@ -430,8 +572,11 @@ class WrapperGenerator:
             action_type = f"{prefix}{MSG_ACTION}"
 
         sorted_funcs = sorted(self.conditions.keys())
+        if self.minimum_apis:
+            sorted_funcs = [fn for fn in sorted_funcs if fn in self.minimum_apis]
 
         apis = []
+        handle_type_keys: List[str] = []
         for func_name in sorted_funcs:
             entry = self.conditions[func_name]
             sig = self.api_sigs.get(func_name)
@@ -455,21 +600,37 @@ class WrapperGenerator:
 
             args: List[Dict[str, Any]] = []
             for i in range(argc):
-                param_desc = classify_param(entry, i, self.mapper)
+                param_desc = classify_param(
+                    entry,
+                    i,
+                    self.mapper,
+                    context=self.type_context,
+                    managed_struct_names=self.managed_struct_names,
+                )
+                dep = param_desc.get("len_depends_on_index") if isinstance(param_desc, dict) else None
+                if isinstance(dep, int) and dep >= argc:
+                    param_desc["len_depends_on_index"] = None
                 c_type = arg_types[i] if i < len(arg_types) else "int"
+                if param_desc.get("kind") == "handle":
+                    handle_type_keys.append(str(param_desc.get("type_key") or ""))
                 args.append(
                     {
                         "i": i,
                         "c_type": c_type,
                         "param": param_desc,
                         "is_char_ptr": is_char_ptr(c_type),
+                        "is_char_ptr_ptr": is_char_ptr_ptr(c_type),
                         "is_void_ptr": is_void_ptr(c_type),
                         "is_pointer": is_pointer_type(c_type),
                     }
                 )
 
             returns_handle = conditions_return_is_handle(entry, self.mapper, ret_c_type=ret_type)
+            return_type_key = self.mapper.type_key(str(entry.get("return", {}).get("type_string") or "")) if returns_handle else ""
+            if returns_handle and return_type_key:
+                handle_type_keys.append(return_type_key)
             field_name = to_proto_field_name(func_name)
+            unsupported_vararg = self.mapper.is_unsupported_vararg(func_name, context=self.type_context)
 
             apis.append(
                 {
@@ -481,11 +642,41 @@ class WrapperGenerator:
                     "return_type": ret_type,
                     "return_is_void": is_void_return(ret_type),
                     "returns_handle": returns_handle,
+                    "return_type_key": return_type_key,
                     "has_skip_dependency_check": function_has_deps(entry),
                     "has_allow_double_delete": "return" in entry,
                     "is_destructor": is_destructor_name(func_name),
+                    "unsupported_vararg": unsupported_vararg,
                 }
             )
+
+        # Stable handle-type list for typed-handle tables.
+        uniq: List[str] = []
+        seen = set()
+        for k in handle_type_keys:
+            if not k or k in seen:
+                continue
+            seen.add(k)
+            uniq.append(k)
+        if not uniq:
+            uniq = ["default"]
+
+        def _ident(s: str) -> str:
+            out = re.sub(r"[^A-Za-z0-9_]+", "_", s)
+            if not out or out[0].isdigit():
+                out = "_" + out
+            return out
+
+        handle_types = [{"id": i, "key": k, "ident": _ident(k)} for i, k in enumerate(uniq)]
+        key_to_id = {h["key"]: h["id"] for h in handle_types}
+
+        for api in apis:
+            for a in api.get("args", []):
+                p = a.get("param") or {}
+                if isinstance(p, dict) and p.get("kind") == "handle":
+                    p["type_id"] = key_to_id.get(p.get("type_key", ""), 0)
+            if api.get("returns_handle"):
+                api["return_type_id"] = key_to_id.get(api.get("return_type_key", ""), 0)
 
         return {
             "headers": headers,
@@ -497,6 +688,7 @@ class WrapperGenerator:
             "action_oneof_field": FIELD_ACTION_ONEOF,
             "max_actions": self.max_actions,
             "apis": apis,
+            "handle_types": handle_types,
         }
 
 
@@ -507,11 +699,16 @@ def main():
     parser.add_argument("--driver", required=True, help="Path to libErator driver.meta file")
     parser.add_argument("--conditions", required=True, help="Path to conditions.json")
     parser.add_argument("--apis", help="Path to apis_clang.json (JSONL) for accurate arg counts")
+    parser.add_argument("--minimum-apis", help="Optional apis_minimized.txt (one function per line) to restrict harness APIs")
     parser.add_argument("--output", required=True, help="Output C harness file path")
     parser.add_argument("--package", default="", help="Protobuf package name prefix")
     parser.add_argument("--schema-mode", choices=["v1", "v2"], default="v1", help="Schema contract version")
     parser.add_argument("--mutation-mode", choices=["nanopb", "lpm"], default="nanopb", help="Mutation engine")
     parser.add_argument("--max-actions", type=int, default=DEFAULT_MAX_ACTIONS, help="(v2) Max actions to execute")
+    parser.add_argument(
+        "--apipass-dir",
+        help="Optional apipass directory (defaults to parent of conditions.json)",
+    )
     parser.add_argument(
         "--header",
         action="append",
@@ -526,11 +723,13 @@ def main():
         Path(args.driver),
         Path(args.conditions),
         apis_path=Path(args.apis) if args.apis else None,
+        minimum_apis=load_text_lines(Path(args.minimum_apis)) if args.minimum_apis else None,
         package_name=args.package,
         schema_mode=args.schema_mode,
         mutation_mode=args.mutation_mode,
         max_actions=args.max_actions,
         extra_headers=args.header,
+        apipass_dir=Path(args.apipass_dir) if args.apipass_dir else None,
     )
 
     generator.generate(Path(args.output))

@@ -11,10 +11,12 @@ set -euo pipefail
 #   ./scripts/cluster_crashes.sh <workdir> --crash-dir <dir> --out-dir <dir>
 #   ./scripts/cluster_crashes.sh <workdir> --ignore <casr-ignore-file>
 #   ./scripts/cluster_crashes.sh <workdir> --docker-image <image-with-casr>
+#   ./scripts/cluster_crashes.sh <workdir> --cluster-only
 #
 # Notes:
 # - Requires `casr-libfuzzer` + `casr-cluster` in PATH, OR `--docker-image`.
 # - By default it searches for crashes under: artifacts/, crashes/, crash-*, leak-*, timeout-*, oom-*.
+# - CASR ignore file uses regex syntax (not glob).
 
 usage() {
   cat <<'EOF'
@@ -27,6 +29,7 @@ Options:
   --ignore FILE          CASR cluster ignore file (default: auto-generate proto-liberator filter)
   --fuzzer-bin PATH      Fuzzer binary (default: first <workdir>/*_fuzzer.bin)
   --docker-image IMAGE   Run CASR inside docker image (must contain casr-libfuzzer/casr-cluster)
+  --cluster-only         Skip triage; reuse existing casr/triage directory
   -h, --help             Show this help
 EOF
 }
@@ -44,6 +47,7 @@ OUT_DIR=""
 IGNORE_FILE=""
 FUZZ_BIN=""
 DOCKER_IMAGE=""
+CLUSTER_ONLY=0
 
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -67,6 +71,10 @@ while [ $# -gt 0 ]; do
       DOCKER_IMAGE="${2:-}"
       shift 2
       ;;
+    --cluster-only)
+      CLUSTER_ONLY=1
+      shift 1
+      ;;
     -h|--help)
       usage
       exit 0
@@ -84,12 +92,14 @@ if [ ! -d "${WORKDIR}" ]; then
   exit 2
 fi
 
-if [ -z "${FUZZ_BIN}" ]; then
-  FUZZ_BIN="$(ls -1 "${WORKDIR}"/*_fuzzer.bin 2>/dev/null | head -n 1 || true)"
-fi
-if [ -z "${FUZZ_BIN}" ] || [ ! -f "${FUZZ_BIN}" ]; then
-  echo "[ERROR] fuzzer binary not found (expected ${WORKDIR}/*_fuzzer.bin). Use --fuzzer-bin." >&2
-  exit 2
+if [ "${CLUSTER_ONLY}" -eq 0 ]; then
+  if [ -z "${FUZZ_BIN}" ]; then
+    FUZZ_BIN="$(ls -1 "${WORKDIR}"/*_fuzzer.bin 2>/dev/null | head -n 1 || true)"
+  fi
+  if [ -z "${FUZZ_BIN}" ] || [ ! -f "${FUZZ_BIN}" ]; then
+    echo "[ERROR] fuzzer binary not found (expected ${WORKDIR}/*_fuzzer.bin). Use --fuzzer-bin." >&2
+    exit 2
+  fi
 fi
 
 if [ -z "${OUT_DIR}" ]; then
@@ -105,57 +115,63 @@ mkdir -p "${TRIAGE_DIR}" "${CLUSTERS_DIR}" "${LOGS_DIR}"
 TMP_DIR="${OUT_DIR}/_tmp"
 mkdir -p "${TMP_DIR}"
 
-if [ -z "${CRASH_DIR}" ]; then
-  # Prefer proto-liberator's artifact_prefix directory if present.
-  if [ -d "${WORKDIR}/artifacts" ]; then
-    CRASH_DIR="${WORKDIR}/artifacts"
-  elif [ -d "${WORKDIR}/crashes" ]; then
-    CRASH_DIR="${WORKDIR}/crashes"
-  else
-    CRASH_DIR="${TMP_DIR}/crashes"
-    mkdir -p "${CRASH_DIR}"
-    # Collect crash files directly under workdir (and common subdirs).
-    found_any=0
-    for pattern in "${WORKDIR}/crash-"* "${WORKDIR}/leak-"* "${WORKDIR}/timeout-"* "${WORKDIR}/oom-"*; do
-      for f in $pattern; do
-        if [ -f "$f" ]; then
-          ln -sf "$f" "${CRASH_DIR}/$(basename "$f")"
-          found_any=1
-        fi
-      done
-    done
-    for d in "${WORKDIR}/artifacts" "${WORKDIR}/crashes"; do
-      if [ -d "$d" ]; then
-        for f in "$d"/*; do
+if [ "${CLUSTER_ONLY}" -eq 0 ]; then
+  if [ -z "${CRASH_DIR}" ]; then
+    # Prefer proto-liberator's artifact_prefix directory if present.
+    if [ -d "${WORKDIR}/artifacts" ]; then
+      CRASH_DIR="${WORKDIR}/artifacts"
+    elif [ -d "${WORKDIR}/crashes" ]; then
+      CRASH_DIR="${WORKDIR}/crashes"
+    else
+      CRASH_DIR="${TMP_DIR}/crashes"
+      mkdir -p "${CRASH_DIR}"
+      # Collect crash files directly under workdir (and common subdirs).
+      found_any=0
+      for pattern in "${WORKDIR}/crash-"* "${WORKDIR}/leak-"* "${WORKDIR}/timeout-"* "${WORKDIR}/oom-"*; do
+        for f in $pattern; do
           if [ -f "$f" ]; then
             ln -sf "$f" "${CRASH_DIR}/$(basename "$f")"
             found_any=1
           fi
         done
+      done
+      for d in "${WORKDIR}/artifacts" "${WORKDIR}/crashes"; do
+        if [ -d "$d" ]; then
+          for f in "$d"/*; do
+            if [ -f "$f" ]; then
+              ln -sf "$f" "${CRASH_DIR}/$(basename "$f")"
+              found_any=1
+            fi
+          done
+        fi
+      done
+      if [ "${found_any}" -eq 0 ]; then
+        echo "[INFO] no crash files found under ${WORKDIR}" >&2
+        exit 0
       fi
-    done
-    if [ "${found_any}" -eq 0 ]; then
-      echo "[INFO] no crash files found under ${WORKDIR}" >&2
-      exit 0
     fi
   fi
-fi
 
-if [ ! -d "${CRASH_DIR}" ]; then
-  echo "[ERROR] crash dir not found: ${CRASH_DIR}" >&2
-  exit 2
+  if [ ! -d "${CRASH_DIR}" ]; then
+    echo "[ERROR] crash dir not found: ${CRASH_DIR}" >&2
+    exit 2
+  fi
+else
+  if [ -z "${CRASH_DIR}" ]; then
+    CRASH_DIR="(skipped)"
+  fi
 fi
 
 if [ -z "${IGNORE_FILE}" ]; then
   IGNORE_FILE="${OUT_DIR}/cluster_filter.txt"
   cat > "${IGNORE_FILE}" <<'EOF'
 FILES
-*/harness.c
-*/harness.cc
-*/bindings/*.pb.*
-*/external/libprotobuf-mutator/*
-*/google/protobuf/*
-*/absl/*
+.*/harness\.c
+.*/harness\.cc
+.*/bindings/.*\.pb\..*
+.*/external/libprotobuf-mutator/.*
+.*/google/protobuf/.*
+.*/absl/.*
 FUNCTIONS
 LLVMFuzzerTestOneInput
 LLVMFuzzerCustomMutator
@@ -188,22 +204,50 @@ run_casr() {
   local casr_libfuzzer="$1"
   local casr_cluster="$2"
 
-  echo "[CASR] Triaging crashes..."
-  "${casr_libfuzzer}" -i "${CRASH_DIR}" -o "${TRIAGE_DIR}" -- "${FUZZ_BIN}" \
-    > "${LOGS_DIR}/casr-libfuzzer.log" 2>&1 || true
+  if [ "${CLUSTER_ONLY}" -eq 0 ]; then
+    echo "[CASR] Triaging crashes..."
+    rm -rf "${TRIAGE_DIR}"
+    mkdir -p "${TRIAGE_DIR}"
+    "${casr_libfuzzer}" -i "${CRASH_DIR}" -o "${TRIAGE_DIR}" -- "${FUZZ_BIN}" \
+      > "${LOGS_DIR}/casr-libfuzzer.log" 2>&1 || true
+  else
+    echo "[CASR] Skipping triage (cluster-only)."
+  fi
 
   echo "[CASR] Clustering..."
+  local casrep_flat_dir="${TMP_DIR}/casrep_flat"
+  rm -rf "${casrep_flat_dir}"
+  mkdir -p "${casrep_flat_dir}"
+  local casrep_count=0
+  while IFS= read -r -d '' f; do
+    local safe_name
+    safe_name="$(printf '%s' "$f" | sed 's#/#_#g')"
+    ln -sf "$f" "${casrep_flat_dir}/${safe_name}"
+    casrep_count=$((casrep_count + 1))
+  done < <(find "${TRIAGE_DIR}" -type f -name '*.casrep' ! -path '*/clerr/*' -print0)
+
+  if [ "${casrep_count}" -eq 0 ]; then
+    echo "[WARN] no .casrep files found under ${TRIAGE_DIR} (excluding clerr); skipping clustering." \
+      > "${LOGS_DIR}/casr-cluster.log"
+    return
+  fi
+
   rm -rf "${CLUSTERS_DIR}"
   mkdir -p "${CLUSTERS_DIR}"
-  "${casr_cluster}" --ignore "${IGNORE_FILE}" -c "${TRIAGE_DIR}" "${CLUSTERS_DIR}" \
+  "${casr_cluster}" --ignore "${IGNORE_FILE}" -c "${casrep_flat_dir}" "${CLUSTERS_DIR}" \
     > "${LOGS_DIR}/casr-cluster.log" 2>&1 || true
 }
 
 if [ -z "${DOCKER_IMAGE}" ]; then
-  CASR_LIBFUZZER="$(command -v casr-libfuzzer 2>/dev/null || true)"
   CASR_CLUSTER="$(command -v casr-cluster 2>/dev/null || true)"
 
-  if [ -z "${CASR_LIBFUZZER}" ] || [ -z "${CASR_CLUSTER}" ]; then
+  if [ "${CLUSTER_ONLY}" -eq 0 ]; then
+    CASR_LIBFUZZER="$(command -v casr-libfuzzer 2>/dev/null || true)"
+  else
+    CASR_LIBFUZZER=""
+  fi
+
+  if [ -z "${CASR_CLUSTER}" ] || ([ "${CLUSTER_ONLY}" -eq 0 ] && [ -z "${CASR_LIBFUZZER}" ]); then
     cat <<EOF >&2
 [ERROR] casr tools not found in PATH.
 
@@ -227,13 +271,15 @@ else
   # If crash/ignore inputs live outside WORKDIR, copy them under OUT_DIR first so they are mount-visible.
   WORKDIR_REAL="$(cd "${WORKDIR}" && pwd)"
 
-  if ! realpath --relative-to="${WORKDIR_REAL}" "${CRASH_DIR}" >/dev/null 2>&1; then
-    echo "[WARN] crash dir is outside workdir; copying crashes under ${TMP_DIR} for docker run."
-    DOCKER_CRASH_DIR="${TMP_DIR}/crashes_docker"
-    rm -rf "${DOCKER_CRASH_DIR}"
-    mkdir -p "${DOCKER_CRASH_DIR}"
-    find "${CRASH_DIR}" -maxdepth 1 -type f -print0 2>/dev/null | xargs -0 -I{} cp "{}" "${DOCKER_CRASH_DIR}/" || true
-    CRASH_DIR="${DOCKER_CRASH_DIR}"
+  if [ "${CLUSTER_ONLY}" -eq 0 ]; then
+    if ! realpath --relative-to="${WORKDIR_REAL}" "${CRASH_DIR}" >/dev/null 2>&1; then
+      echo "[WARN] crash dir is outside workdir; copying crashes under ${TMP_DIR} for docker run."
+      DOCKER_CRASH_DIR="${TMP_DIR}/crashes_docker"
+      rm -rf "${DOCKER_CRASH_DIR}"
+      mkdir -p "${DOCKER_CRASH_DIR}"
+      find "${CRASH_DIR}" -maxdepth 1 -type f -print0 2>/dev/null | xargs -0 -I{} cp "{}" "${DOCKER_CRASH_DIR}/" || true
+      CRASH_DIR="${DOCKER_CRASH_DIR}"
+    fi
   fi
 
   if ! realpath --relative-to="${WORKDIR_REAL}" "${IGNORE_FILE}" >/dev/null 2>&1; then
@@ -242,17 +288,19 @@ else
     IGNORE_FILE="${OUT_DIR}/cluster_filter.external.txt"
   fi
 
-  CRASH_DIR_REL="$(realpath --relative-to="${WORKDIR_REAL}" "${CRASH_DIR}")"
-  FUZZ_BIN_REL="$(realpath --relative-to="${WORKDIR_REAL}" "${FUZZ_BIN}")"
   OUT_DIR_REL="$(realpath --relative-to="${WORKDIR_REAL}" "${OUT_DIR}")"
   IGNORE_FILE_REL="$(realpath --relative-to="${WORKDIR_REAL}" "${IGNORE_FILE}")"
 
-  docker run --rm \
-    -v "${WORKDIR}:/workdir" \
-    -w "/workdir" \
-    "${DOCKER_IMAGE}" \
-    bash -lc "$(printf '%q ' casr-libfuzzer -i "/workdir/${CRASH_DIR_REL}" -o "/workdir/${OUT_DIR_REL}/triage" -- "/workdir/${FUZZ_BIN_REL}")" \
-    > "${LOGS_DIR}/casr-libfuzzer.docker.log" 2>&1 || true
+  if [ "${CLUSTER_ONLY}" -eq 0 ]; then
+    CRASH_DIR_REL="$(realpath --relative-to="${WORKDIR_REAL}" "${CRASH_DIR}")"
+    FUZZ_BIN_REL="$(realpath --relative-to="${WORKDIR_REAL}" "${FUZZ_BIN}")"
+    docker run --rm \
+      -v "${WORKDIR}:/workdir" \
+      -w "/workdir" \
+      "${DOCKER_IMAGE}" \
+      bash -lc "$(printf '%q ' casr-libfuzzer -i "/workdir/${CRASH_DIR_REL}" -o "/workdir/${OUT_DIR_REL}/triage" -- "/workdir/${FUZZ_BIN_REL}")" \
+      > "${LOGS_DIR}/casr-libfuzzer.docker.log" 2>&1 || true
+  fi
 
   docker run --rm \
     -v "${WORKDIR}:/workdir" \

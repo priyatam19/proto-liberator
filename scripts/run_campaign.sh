@@ -49,13 +49,16 @@ Required:
   --conditions PATH
   --apis PATH
   --out-root DIR
-  --header HEADER
+  --header HEADER               Repeatable
 
 Common options:
   --driver PATH                 Optional driver.meta (v2 ok without)
   --schema-mode v2|v1           Default: v2
   --mutation-mode lpm|nanopb    Default: lpm
   --max-actions N               Default: 64
+  --num-seeds N                 Default: 64
+  --seed-max-len N              Default: 16
+  --seed-rng N                  Default: 0
   --target-include DIR          Repeatable
   --target-lib PATH             Repeatable
   --extra-src PATH              Repeatable
@@ -94,10 +97,13 @@ CONDITIONS=""
 APIS=""
 DRIVER=""
 OUT_ROOT=""
-HEADER=""
+declare -a HEADERS=()
 SCHEMA_MODE="v2"
 MUTATION_MODE="lpm"
 MAX_ACTIONS="64"
+NUM_SEEDS="64"
+SEED_MAX_LEN="16"
+SEED_RNG="0"
 
 DURATION_SEC="86400"
 MAX_LEN="4096"
@@ -131,10 +137,13 @@ while [ $# -gt 0 ]; do
     --apis) APIS="${2:-}"; shift 2;;
     --driver) DRIVER="${2:-}"; shift 2;;
     --out-root) OUT_ROOT="${2:-}"; shift 2;;
-    --header) HEADER="${2:-}"; shift 2;;
+    --header) HEADERS+=("${2:-}"); shift 2;;
     --schema-mode) SCHEMA_MODE="${2:-}"; shift 2;;
     --mutation-mode) MUTATION_MODE="${2:-}"; shift 2;;
     --max-actions) MAX_ACTIONS="${2:-}"; shift 2;;
+    --num-seeds) NUM_SEEDS="${2:-}"; shift 2;;
+    --seed-max-len) SEED_MAX_LEN="${2:-}"; shift 2;;
+    --seed-rng) SEED_RNG="${2:-}"; shift 2;;
 
     --duration-sec) DURATION_SEC="${2:-}"; shift 2;;
     --max-len) MAX_LEN="${2:-}"; shift 2;;
@@ -187,10 +196,18 @@ while [ $# -gt 0 ]; do
   esac
 done
 
-if [ -z "${LIBRARY}" ] || [ -z "${CONDITIONS}" ] || [ -z "${APIS}" ] || [ -z "${OUT_ROOT}" ] || [ -z "${HEADER}" ]; then
+if [ -z "${LIBRARY}" ] || [ -z "${CONDITIONS}" ] || [ -z "${APIS}" ] || [ -z "${OUT_ROOT}" ] || [ "${#HEADERS[@]}" -eq 0 ]; then
   echo "[ERROR] Missing required args." >&2
   usage >&2
   exit 2
+fi
+
+# Normalize key paths to absolute to avoid issues when the script changes directories.
+OUT_ROOT="$(cd "${OUT_ROOT}" && pwd)"
+CONDITIONS="$(cd "$(dirname "${CONDITIONS}")" && pwd)/$(basename "${CONDITIONS}")"
+APIS="$(cd "$(dirname "${APIS}")" && pwd)/$(basename "${APIS}")"
+if [ -n "${DRIVER}" ]; then
+  DRIVER="$(cd "$(dirname "${DRIVER}")" && pwd)/$(basename "${DRIVER}")"
 fi
 
 if [ "${#VARIANTS[@]}" -eq 0 ]; then
@@ -238,11 +255,17 @@ build_variant() {
     --schema-mode "${SCHEMA_MODE}"
     --mutation-mode "${MUTATION_MODE}"
     --max-actions "${MAX_ACTIONS}"
-    --header "${HEADER}"
+    --num-seeds "${NUM_SEEDS}"
+    --seed-max-len "${SEED_MAX_LEN}"
+    --seed-rng "${SEED_RNG}"
     --generate-seeds
     --build
     --build-profile
   )
+
+  for h in "${HEADERS[@]}"; do
+    run_all_args+=(--header "${h}")
+  done
 
   if [ -n "${DRIVER}" ]; then
     run_all_args+=(--driver "${DRIVER}")
@@ -276,6 +299,18 @@ build_variant() {
 
   echo "[Campaign] Building variant '${variant}' -> ${out_dir}"
   python3 "${ROOT_DIR}/src/run_all.py" "${run_all_args[@]}"
+
+  # Save a best-effort list of library sources for llvm-cov -show-functions.
+  # (llvm-cov requires explicit source paths for -show-functions.)
+  local sources_file="${out_dir}/coverage.sources.txt"
+  : > "${sources_file}"
+  for src in "${PROFILE_EXTRA_SRCS[@]}"; do
+    [ -n "${src}" ] || continue
+    abs="$(readlink -f "${src}" 2>/dev/null || true)"
+    if [ -n "${abs}" ]; then
+      echo "${abs}" >> "${sources_file}"
+    fi
+  done
 }
 
 run_fuzz_variant() {
@@ -300,10 +335,32 @@ run_fuzz_variant() {
   if [ "${LIVE_COVERAGE_INTERVAL_SEC}" -gt 0 ] && [ -f "${profile_bin}" ]; then
     (
       mkdir -p "${out_dir}/profraw" 2>/dev/null || true
+      mkdir -p "${out_dir}/corpus_min" 2>/dev/null || true
       while [ ! -f "${live_cov_stop}" ]; do
-        # Write profraw continuously so `collect_coverage.sh --live` can merge them.
-        export LLVM_PROFILE_FILE="${out_dir}/profraw/live_%m_%p.profraw"
-        timeout 180s "${profile_bin}" "${corpus_dir}" -runs=0 -detect_leaks=0 >/dev/null 2>&1 || true
+        # Liberator-style live coverage:
+        #   1) minimize corpus (merge=1) -> corpus_min
+        #   2) run *_profile.bin on corpus_min to collect profraw
+        #   3) merge+report via llvm-cov, filtering harness/bindings/etc.
+        #
+        # We prefer a minimized corpus so coverage replay finishes quickly and doesn't
+        # get stuck (or crash) on a huge corpus. We also reset profraw/profdata each
+        # interval to avoid stale metrics if a previous profile run failed.
+
+        # Best-effort corpus minimization (incremental).
+        merge_timeout="${PROTO_LIBERATOR_LIVE_COVERAGE_MERGE_TIMEOUT_SEC:-120}"
+        timeout "${merge_timeout}s" "${fuzzer_bin}" -merge=1 "${out_dir}/corpus_min" "${corpus_dir}" -detect_leaks=0 >/dev/null 2>&1 || true
+
+        cov_corpus="${out_dir}/corpus_min"
+        if [ ! -d "${cov_corpus}" ] || [ -z "$(ls -A "${cov_corpus}" 2>/dev/null || true)" ]; then
+          cov_corpus="${corpus_dir}"
+        fi
+
+        # Update a live coverage timeline CSV (appends to coverage/coverage_timeline.csv).
+        timeout 300s "${ROOT_DIR}/scripts/collect_coverage.sh" "${out_dir}" --live --reset \
+          --corpus-dir "${cov_corpus}" \
+          --sources-file "${out_dir}/coverage.sources.txt" \
+          --ignore-file "${ROOT_DIR}/scripts/coverage_ignore_default.txt" \
+          >> "${logs_dir}/coverage_live.log" 2>&1 || true
         sleep "${LIVE_COVERAGE_INTERVAL_SEC}" || true
       done
     ) &
@@ -414,12 +471,26 @@ postprocess_variant() {
 
   if [ -f "${profile_bin}" ] && [ -d "${corpus_min}" ]; then
     echo "[Campaign] Profiling coverage for '${variant}'..."
-    export LLVM_PROFILE_FILE="${profraw_dir}/%m_%p.profraw"
-    timeout 60m "${profile_bin}" -runs=0 "${corpus_min}" -detect_leaks=0 >/dev/null 2>&1 || true
+    export LLVM_PROFILE_FILE="${profraw_dir}/final_%m_%p.profraw"
+
+    # Final replay budget controls (wall timeout + per-input timeout inside libFuzzer).
+    # Keep these conservative so final coverage completes reliably even on large corpora.
+    local final_wall_timeout_sec="${PROTO_LIBERATOR_FINAL_COVERAGE_WALL_TIMEOUT_SEC:-1800}"  # 30m
+    local final_input_timeout_sec="${PROTO_LIBERATOR_FINAL_COVERAGE_INPUT_TIMEOUT_SEC:-${TIMEOUT_SEC}}"
+
+    timeout "${final_wall_timeout_sec}s" "${profile_bin}" "${corpus_min}" -runs=0 \
+      -detect_leaks=0 \
+      -timeout="${final_input_timeout_sec}" \
+      -fork=1 \
+      -ignore_crashes=1 -ignore_timeouts=1 -ignore_ooms=1 \
+      -error_exitcode=0 \
+      >/dev/null 2>&1 || true
   fi
 
   echo "[Campaign] Coverage report for '${variant}'..."
-  "${ROOT_DIR}/scripts/collect_coverage.sh" "${out_dir}" --final --ignore-file "${ROOT_DIR}/scripts/coverage_ignore_default.txt" \
+  "${ROOT_DIR}/scripts/collect_coverage.sh" "${out_dir}" --final \
+    --sources-file "${out_dir}/coverage.sources.txt" \
+    --ignore-file "${ROOT_DIR}/scripts/coverage_ignore_default.txt" \
     > "${coverage_dir}/coverage_summary.txt" 2>&1 || true
 
   echo "[Campaign] Crash clustering for '${variant}'..."

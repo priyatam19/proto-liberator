@@ -8,6 +8,7 @@ set -euo pipefail
 #   ./collect_coverage.sh <workdir>
 #   ./collect_coverage.sh <workdir> --final
 #   ./collect_coverage.sh <workdir> --live
+#   ./collect_coverage.sh <workdir> --live --reset --corpus-dir <dir>
 #
 # Library-only reporting (like Liberator):
 #   ./collect_coverage.sh <workdir> --final --ignore-regex '<regex>'
@@ -15,11 +16,14 @@ set -euo pipefail
 #
 # Explicit binary selection:
 #   ./collect_coverage.sh <workdir> --final --binary <path/to/*_profile.bin>
+#
+# Function-level coverage (requires specifying sources for llvm-cov -show-functions):
+#   ./collect_coverage.sh <workdir> --final --sources-file <file-with-source-paths>
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 if [ "${1:-}" = "-h" ] || [ "${1:-}" = "--help" ] || [ $# -lt 1 ]; then
-    echo "Usage: $0 <workdir> [--final|--live] [--binary BIN] [--ignore-regex REGEX] [--ignore-file FILE]"
+    echo "Usage: $0 <workdir> [--final|--live] [--binary BIN] [--corpus-dir DIR] [--reset] [--sources-file FILE] [--ignore-regex REGEX] [--ignore-file FILE]"
     exit 0
 fi
 
@@ -28,8 +32,11 @@ shift
 
 MODE="--final"
 BIN_OVERRIDE=""
+CORPUS_DIR_OVERRIDE=""
 IGNORE_REGEX=""
 IGNORE_FILE=""
+LIVE_RESET="0"
+SOURCES_FILE=""
 
 while [ $# -gt 0 ]; do
     case "$1" in
@@ -41,6 +48,18 @@ while [ $# -gt 0 ]; do
             BIN_OVERRIDE="${2:-}"
             shift 2
             ;;
+        --corpus-dir)
+            CORPUS_DIR_OVERRIDE="${2:-}"
+            shift 2
+            ;;
+        --reset)
+            LIVE_RESET="1"
+            shift
+            ;;
+        --sources-file)
+            SOURCES_FILE="${2:-}"
+            shift 2
+            ;;
         --ignore-regex)
             IGNORE_REGEX="${2:-}"
             shift 2
@@ -50,12 +69,12 @@ while [ $# -gt 0 ]; do
             shift 2
             ;;
         -h|--help)
-            echo "Usage: $0 <workdir> [--final|--live] [--binary BIN] [--ignore-regex REGEX] [--ignore-file FILE]"
+            echo "Usage: $0 <workdir> [--final|--live] [--binary BIN] [--corpus-dir DIR] [--reset] [--sources-file FILE] [--ignore-regex REGEX] [--ignore-file FILE]"
             exit 0
             ;;
         *)
             echo "[ERROR] Unknown argument: $1"
-            echo "Usage: $0 <workdir> [--final|--live] [--binary BIN] [--ignore-regex REGEX] [--ignore-file FILE]"
+            echo "Usage: $0 <workdir> [--final|--live] [--binary BIN] [--corpus-dir DIR] [--reset] [--sources-file FILE] [--ignore-regex REGEX] [--ignore-file FILE]"
             exit 2
             ;;
     esac
@@ -114,14 +133,34 @@ PROFDATA_FINAL="${COVERAGE_DIR}/merged.profdata"
 
 mkdir -p "${COVERAGE_DIR}"
 
+if [ -n "${CORPUS_DIR_OVERRIDE}" ]; then
+    if [ ! -d "${CORPUS_DIR_OVERRIDE}" ]; then
+        echo "[ERROR] corpus dir not found: ${CORPUS_DIR_OVERRIDE}"
+        exit 2
+    fi
+    CORPUS_DIR="${CORPUS_DIR_OVERRIDE}"
+fi
+
+if [ -n "${SOURCES_FILE}" ] && [ ! -f "${SOURCES_FILE}" ]; then
+    echo "[ERROR] sources file not found: ${SOURCES_FILE}"
+    exit 2
+fi
+
 echo "========================================"
 echo "Proto-libErator Coverage Collection"
 echo "========================================"
 echo "Workdir:    ${WORKDIR}"
 echo "Fuzzer:     ${FUZZ_BIN}"
 echo "Mode:       ${MODE}"
+echo "Corpus:     ${CORPUS_DIR}"
+if [ "${MODE}" = "--live" ] && [ "${LIVE_RESET}" = "1" ]; then
+    echo "Live:       reset=1"
+fi
 if [ -n "${IGNORE_REGEX}" ]; then
     echo "Ignore:     ${IGNORE_REGEX}"
+fi
+if [ -n "${SOURCES_FILE}" ]; then
+    echo "Sources:    ${SOURCES_FILE}"
 fi
 echo "========================================"
 
@@ -209,12 +248,18 @@ generate_report() {
         "${ignore_args[@]}" \
         > "${report_dir}/coverage.lcov" 2>/dev/null || true
     
-    # Function-level coverage
-    "${LLVM_COV}" report "${FUZZ_BIN}" \
-        -instr-profile="${profdata}" \
-        -show-functions \
-        "${ignore_args[@]}" \
-        > "${report_dir}/functions.txt" 2>/dev/null || true
+    # Function-level coverage (requires sources; matches Liberator usage).
+    if [ -n "${SOURCES_FILE}" ]; then
+        mapfile -t sources_list < <(grep -vE '^\s*(#|$)' "${SOURCES_FILE}" 2>/dev/null || true)
+        if [ "${#sources_list[@]}" -gt 0 ]; then
+            "${LLVM_COV}" report "${FUZZ_BIN}" \
+                -instr-profile="${profdata}" \
+                -show-functions \
+                "${ignore_args[@]}" \
+                "${sources_list[@]}" \
+                > "${report_dir}/functions.txt" 2>/dev/null || true
+        fi
+    fi
     
     echo "[Coverage] Reports written to: ${report_dir}"
 }
@@ -335,20 +380,55 @@ run_corpus_dir_once() {
     return 1
 }
 
+# Live-mode helper: generate *some* profraw quickly even when the corpus is huge or contains crashy inputs.
+# We rely on libFuzzer exiting cleanly due to -max_total_time so the profile runtime flushes the profraw.
+run_corpus_dir_once_limited() {
+    local corpus_dir="$1"
+    local profraw_output_dir="$2"
+
+    if [ ! -d "${corpus_dir}" ]; then
+        echo "[Coverage] Corpus directory not found: ${corpus_dir}"
+        return 1
+    fi
+
+    mkdir -p "${profraw_output_dir}"
+
+    local live_max_total_time="${PROTO_LIBERATOR_LIVE_COVERAGE_MAX_TOTAL_TIME:-20}"
+    local live_timeout="${PROTO_LIBERATOR_LIVE_COVERAGE_TIMEOUT_SEC:-10}"
+
+    export LLVM_PROFILE_FILE="${profraw_output_dir}/%m_%p.profraw"
+    timeout 120s "${FUZZ_BIN}" "${corpus_dir}" -runs=0 \
+        -max_total_time="${live_max_total_time}" \
+        -timeout="${live_timeout}" \
+        -fork=1 \
+        -ignore_crashes=1 -ignore_timeouts=1 -ignore_ooms=1 \
+        -error_exitcode=0 \
+        >/dev/null 2>&1 || true
+
+    local count_after
+    count_after=$(find "${profraw_output_dir}" -name "*.profraw" 2>/dev/null | wc -l)
+    if [ "${count_after}" -gt 0 ]; then
+        echo "[Coverage] Generated ${count_after} profraw files (limited corpus replay: max_total_time=${live_max_total_time}s)"
+        return 0
+    fi
+    return 1
+}
+
 # Main logic based on mode
 case "${MODE}" in
     --live)
-        # Live mode: merge existing profraw, update live profdata
+        # Live mode: (optionally) reset, then collect fresh profraw and generate a report.
+        # This avoids producing stale metrics when a profile run crashes/times out.
         echo "[Coverage] Live mode: updating coverage_live.profdata..."
-        
-        if ! merge_profraw "${PROFDATA_LIVE}" 1; then
-            # If nothing is old enough yet, try a best-effort corpus run once to generate profraw,
-            # then merge everything (including very recent profraw).
-            run_corpus_dir_once "${CORPUS_DIR}" "${PROFRAW_DIR}" || true
-            merge_profraw "${PROFDATA_LIVE}" 0 || true
+
+        if [ "${LIVE_RESET}" = "1" ]; then
+            rm -f "${PROFRAW_DIR}"/*.profraw 2>/dev/null || true
+            rm -f "${PROFDATA_LIVE}" 2>/dev/null || true
         fi
 
-        if [ -f "${PROFDATA_LIVE}" ]; then
+        run_corpus_dir_once_limited "${CORPUS_DIR}" "${PROFRAW_DIR}" || true
+
+        if merge_profraw "${PROFDATA_LIVE}" 0; then
             generate_report "${PROFDATA_LIVE}" "${COVERAGE_DIR}/live"
             extract_metrics "${COVERAGE_DIR}/live/report_full.txt" "${COVERAGE_DIR}/coverage_timeline.csv"
         fi

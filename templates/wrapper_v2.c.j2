@@ -4,6 +4,7 @@
  */
 
 #include <stdint.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -136,6 +137,36 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
                     }
                     arg{{ arg.i }} = ({{ arg.c_type }})ptr;
                 }
+                {% elif arg.param.kind == "struct_blob" %}
+                {
+                    bool is_null = false;
+                    {% if arg.param.has_is_null %}
+                    if (params->has_param_{{ arg.i }}_is_null && params->param_{{ arg.i }}_is_null) is_null = true;
+                    {% endif %}
+
+                    typedef union {
+                        max_align_t _align;
+                        uint8_t bytes[{{ arg.param.struct_size }}];
+                    } blob_storage_{{ arg.i }}_t;
+
+                    blob_storage_{{ arg.i }}_t blob_{{ arg.i }};
+                    memset(blob_{{ arg.i }}.bytes, 0, sizeof(blob_{{ arg.i }}.bytes));
+
+                    const pb_bytes_array_t *b = NULL;
+                    if (params->has_{{ arg.param.field }} && !is_null) {
+                        b = (const pb_bytes_array_t*)(const void*)&params->{{ arg.param.field }};
+                    }
+                    if (b) {
+                        const size_t n = MIN((size_t)b->size, (size_t)sizeof(blob_{{ arg.i }}.bytes));
+                        if (n) memcpy(blob_{{ arg.i }}.bytes, b->bytes, n);
+                    }
+
+                    if ({{ "true" if arg.is_pointer else "false" }}) {
+                        arg{{ arg.i }} = ({{ arg.c_type }})(is_null ? NULL : (void*)blob_{{ arg.i }}.bytes);
+                    } else {
+                        /* non-pointer blob -> 0 */
+                    }
+                }
                 {% elif arg.param.kind == "bytes_array" or arg.param.kind == "bytes" %}
                 {
                     bool is_null = false;
@@ -161,6 +192,39 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
                         arg{{ arg.i }} = ({{ arg.c_type }})(b ? (void*)b->bytes : NULL);
                     } else {
                         /* non-pointer bytes -> 0 */
+                    }
+                }
+                {% endif %}
+                {% endfor %}
+
+                /* Enforce len_depends_on for bytes_array: clamp lengths to available bytes, and infer missing lengths. */
+                {% for arg in api.args %}
+                {% if arg.param.kind == "bytes_array" and arg.param.len_depends_on_index is not none %}
+                {
+                    const int dep = {{ arg.param.len_depends_on_index }};
+                    (void)dep;
+
+                    size_t avail = 0;
+                    if (params->has_param_{{ arg.i }}) {
+                        avail = (size_t)params->param_{{ arg.i }}.size;
+                    }
+
+                    size_t desired = avail;
+                    if (params->has_param_{{ arg.i }}_length_override && params->param_{{ arg.i }}_length_override) {
+                        desired = (size_t)params->param_{{ arg.i }}_length_override;
+                    } else if (params->has_param_{{ arg.i }}_length && params->param_{{ arg.i }}_length) {
+                        desired = (size_t)params->param_{{ arg.i }}_length;
+                    }
+
+                    if (params->has_param_{{ arg.param.len_depends_on_index }}) {
+                        desired = (size_t)arg{{ arg.param.len_depends_on_index }};
+                    } else {
+                        arg{{ arg.param.len_depends_on_index }} = ({{ api.args[arg.param.len_depends_on_index].c_type }})desired;
+                    }
+
+                    if (desired > avail) {
+                        desired = avail;
+                        arg{{ arg.param.len_depends_on_index }} = ({{ api.args[arg.param.len_depends_on_index].c_type }})desired;
                     }
                 }
                 {% endif %}

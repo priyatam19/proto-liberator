@@ -17,6 +17,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import shlex
 import subprocess
 import sys
@@ -109,6 +110,16 @@ def main() -> int:
     parser.add_argument("--library", required=True, help="Library name (e.g., cjson)")
     parser.add_argument("--conditions", required=True, help="Path to libErator conditions.json")
     parser.add_argument("--apis", required=True, help="Path to libErator apis_clang.json (JSONL)")
+    parser.add_argument(
+        "--minimum-apis",
+        default=None,
+        help="Optional apis_minimized.txt (one function per line) to restrict schema/harness/seeds",
+    )
+    parser.add_argument(
+        "--apipass-dir",
+        default=None,
+        help="Optional apipass directory (defaults to parent of conditions.json)",
+    )
     parser.add_argument("--driver", help="Path to libErator driver.meta (required for v1; optional for v2)")
     parser.add_argument("--out-dir", required=True, help="Output directory (created if missing)")
 
@@ -131,12 +142,22 @@ def main() -> int:
     parser.add_argument("--num-seeds", type=int, default=64, help="(v2) number of seeds")
     parser.add_argument("--seed-max-len", type=int, default=16, help="(v2) max actions per seed")
     parser.add_argument("--seed-rng", type=int, default=0, help="(v2) deterministic RNG seed")
+    parser.add_argument(
+        "--seed-constants-json",
+        default=None,
+        help="Optional JSON mapping function -> {field_name: value} for seed generation",
+    )
 
     parser.add_argument("--build", action="store_true", help="Compile a libFuzzer binary")
     parser.add_argument(
         "--build-profile",
         action="store_true",
         help="Compile a coverage-instrumented binary for llvm-cov (writes <out-dir>/<library>_profile.bin)",
+    )
+    parser.add_argument(
+        "--profile-no-bitcode",
+        action="store_true",
+        help="Do not prefer `*.a.bc` when building *_profile.bin (useful when the bitcode requires unsupported CPU features).",
     )
     parser.add_argument("--fuzz", action="store_true", help="Run the fuzzer after build")
     parser.add_argument(
@@ -172,7 +193,10 @@ def main() -> int:
         out_dir.mkdir(parents=True, exist_ok=True)
 
     python = _resolve_python(args.python)
-    package = args.package or f"{args.library}_fuzzer"
+    safe_lib = re.sub(r"[^A-Za-z0-9_]+", "_", str(args.library))
+    if not safe_lib or safe_lib[0].isdigit():
+        safe_lib = f"lib_{safe_lib}"
+    package = args.package or f"{safe_lib}_fuzzer"
 
     conditions = Path(args.conditions).resolve()
     apis = Path(args.apis).resolve()
@@ -205,31 +229,33 @@ def main() -> int:
     _write_json(driver_meta_path, wrapper_meta, dry_run=args.dry_run)
 
     # 1) Schema
-    schema_cmd = Cmd(
-        [
-            python,
-            str(src_dir / "proto_generator.py"),
-            "--conditions",
-            str(conditions),
-            "--apis",
-            str(apis),
-            "--output",
-            str(schema_proto),
-            "--library",
-            args.library,
-            "--schema-mode",
-            args.schema_mode,
-            "--mutation-mode",
-            args.mutation_mode,
-            "--max-bytes-size",
-            str(args.max_bytes_size),
-            "--max-calls-per-api",
-            str(args.max_calls_per_api),
-            "--max-actions",
-            str(args.max_actions),
-        ]
-    )
-    _run(schema_cmd, dry_run=args.dry_run)
+    schema_argv: List[str] = [
+        python,
+        str(src_dir / "proto_generator.py"),
+        "--conditions",
+        str(conditions),
+        "--apis",
+        str(apis),
+        "--output",
+        str(schema_proto),
+        "--library",
+        args.library,
+        "--schema-mode",
+        args.schema_mode,
+        "--mutation-mode",
+        args.mutation_mode,
+        "--max-bytes-size",
+        str(args.max_bytes_size),
+        "--max-calls-per-api",
+        str(args.max_calls_per_api),
+        "--max-actions",
+        str(args.max_actions),
+    ]
+    if args.minimum_apis:
+        schema_argv += ["--minimum-apis", str(Path(args.minimum_apis).resolve())]
+    if args.apipass_dir:
+        schema_argv += ["--apipass-dir", str(Path(args.apipass_dir).resolve())]
+    _run(Cmd(schema_argv), dry_run=args.dry_run)
 
     # 2) Bindings
     if not args.dry_run:
@@ -264,59 +290,65 @@ def main() -> int:
     _run(bindings_cmd, dry_run=args.dry_run)
 
     # 3) Harness
-    wrapper_cmd = Cmd(
-        [
-            python,
-            str(src_dir / "wrapper_generator.py"),
-            "--proto",
-            str(schema_proto),
-            "--driver",
-            str(driver_meta_path),
-            "--conditions",
-            str(conditions),
-            "--apis",
-            str(apis),
-            "--output",
-            str(harness_c),
-            "--package",
-            package,
-            "--schema-mode",
-            args.schema_mode,
-            "--mutation-mode",
-            args.mutation_mode,
-            "--max-actions",
-            str(args.max_actions),
-            *sum([["--header", h] for h in args.header], []),
-        ]
-    )
-    _run(wrapper_cmd, dry_run=args.dry_run)
+    wrapper_argv: List[str] = [
+        python,
+        str(src_dir / "wrapper_generator.py"),
+        "--proto",
+        str(schema_proto),
+        "--driver",
+        str(driver_meta_path),
+        "--conditions",
+        str(conditions),
+        "--apis",
+        str(apis),
+        "--output",
+        str(harness_c),
+        "--package",
+        package,
+        "--schema-mode",
+        args.schema_mode,
+        "--mutation-mode",
+        args.mutation_mode,
+        "--max-actions",
+        str(args.max_actions),
+        *sum([["--header", h] for h in args.header], []),
+    ]
+    if args.minimum_apis:
+        wrapper_argv += ["--minimum-apis", str(Path(args.minimum_apis).resolve())]
+    if args.apipass_dir:
+        wrapper_argv += ["--apipass-dir", str(Path(args.apipass_dir).resolve())]
+    _run(Cmd(wrapper_argv), dry_run=args.dry_run)
 
     # 4) Seeds (v2)
     seeds_dir = Path(args.seeds_dir).resolve() if args.seeds_dir else (out_dir / "corpus")
     if args.generate_seeds:
         if args.schema_mode != "v2":
             raise SystemExit("--generate-seeds is only supported for --schema-mode v2")
-        seed_cmd = Cmd(
-            [
-                python,
-                str(src_dir / "seed_generator.py"),
-                "--conditions",
-                str(conditions),
-                "--output-dir",
-                str(seeds_dir),
-                "--num-seeds",
-                str(args.num_seeds),
-                "--max-len",
-                str(args.seed_max_len),
-                "--rng-seed",
-                str(args.seed_rng),
-                "--driver",
-                str(driver_meta_path),
-                "--mode",
-                "wire",
-            ]
-        )
-        _run(seed_cmd, dry_run=args.dry_run)
+        seed_argv: List[str] = [
+            python,
+            str(src_dir / "seed_generator.py"),
+            "--conditions",
+            str(conditions),
+            "--output-dir",
+            str(seeds_dir),
+            "--num-seeds",
+            str(args.num_seeds),
+            "--max-len",
+            str(args.seed_max_len),
+            "--rng-seed",
+            str(args.seed_rng),
+            "--driver",
+            str(driver_meta_path),
+            "--mode",
+            "wire",
+        ]
+        if args.minimum_apis:
+            seed_argv += ["--minimum-apis", str(Path(args.minimum_apis).resolve())]
+        if args.apipass_dir:
+            seed_argv += ["--apipass-dir", str(Path(args.apipass_dir).resolve())]
+        if args.seed_constants_json:
+            seed_argv += ["--constants-json", str(Path(args.seed_constants_json).resolve())]
+        _run(Cmd(seed_argv), dry_run=args.dry_run)
 
     # 5) Build
     if args.fuzz:
@@ -325,7 +357,9 @@ def main() -> int:
     profile_bin = out_dir / f"{args.library}_profile.bin"
 
     if args.build or args.build_profile:
-        target_libs_profile = _target_libs_for_profile(list(args.target_lib))
+        target_libs_profile = (
+            list(args.target_lib) if args.profile_no_bitcode else _target_libs_for_profile(list(args.target_lib))
+        )
         if args.mutation_mode == "lpm":
             # LPM Build
             pb_cc = bindings_dir / f"{args.library}.{args.schema_mode}.pb.cc"

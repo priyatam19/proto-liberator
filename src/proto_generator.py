@@ -6,12 +6,13 @@ Transforms libErator's conditions.json to .proto files using rule-based logic
 
 import json
 import argparse
+import re
 from pathlib import Path
 from typing import Dict, List, Set, Tuple, Optional
 from dataclasses import dataclass
 
 # Import local modules
-from type_mapper import TypeMapper
+from type_mapper import TypeMapper, TypeContext
 from contracts import DEFAULT_MAX_ACTIONS
 from utils import load_json, load_text_lines, save_file, to_proto_field_name
 
@@ -177,15 +178,51 @@ class ProtoGenerator:
         max_calls_per_api: int = 4,
         max_actions: int = DEFAULT_MAX_ACTIONS,
         max_bytes_size: int = 65536,
+        minimum_apis: Optional[Set[str]] = None,
+        apipass_dir: Optional[Path] = None,
     ):
         self.conditions = load_json(conditions_path)
         self.apis = self.load_apis(apis_path)
         self.type_mapper = TypeMapper()
+        # Default apipass dir is the parent directory of conditions.json (libErator convention).
+        self.type_context = TypeContext.from_apipass_dir(apipass_dir or conditions_path.parent)
+        self.managed_struct_names = self._infer_managed_struct_names()
         self.schema_mode = schema_mode
         self.mutation_mode = mutation_mode
         self.max_calls_per_api = max_calls_per_api
         self.max_actions = max_actions
         self.max_bytes_size = max_bytes_size
+        self.minimum_apis = set(minimum_apis or [])
+
+    def _infer_managed_struct_names(self) -> Set[str]:
+        """
+        Heuristic: treat struct pointer types returned by any API as "managed objects"
+        and represent them as handles (not struct blobs).
+
+        This avoids blob-initializing opaque library objects such as `cJSON*`.
+        """
+        out: Set[str] = set()
+        if not isinstance(self.conditions, list):
+            return out
+        for entry in self.conditions:
+            if not isinstance(entry, dict):
+                continue
+            ret = entry.get("return")
+            if not isinstance(ret, dict):
+                continue
+            llvm_t = str(ret.get("type_string") or ret.get("type") or "")
+            if not llvm_t:
+                access = ret.get("access_type_set", [])
+                if isinstance(access, list) and access and isinstance(access[0], dict):
+                    llvm_t = str(access[0].get("type_string") or access[0].get("type") or "")
+            if not llvm_t:
+                continue
+            if self.type_mapper.map_llvm_to_proto(llvm_t) != "uint32":
+                continue
+            name = self.type_mapper.extract_struct_name(llvm_t)
+            if name:
+                out.add(name)
+        return out
 
     @staticmethod
     def load_apis(apis_path: Path) -> List[Dict]:
@@ -229,7 +266,11 @@ class ProtoGenerator:
         Returns:
             Complete ProtoSchema object
         """
-        schema = ProtoSchema(f'{library_name}_fuzzer', mutation_mode=self.mutation_mode)
+        # Proto packages must be valid identifiers; library names can include '-', '.' etc.
+        safe_lib = re.sub(r"[^A-Za-z0-9_]+", "_", str(library_name))
+        if not safe_lib or safe_lib[0].isdigit():
+            safe_lib = f"lib_{safe_lib}"
+        schema = ProtoSchema(f"{safe_lib}_fuzzer", mutation_mode=self.mutation_mode)
 
         # Generate parameter message for each API function (stable ordering)
         func_entries = sorted(
@@ -241,6 +282,8 @@ class ProtoGenerator:
         for func_entry in func_entries:
             func_name = func_entry.get("function_name") or func_entry.get("functionName")
             if not func_name:
+                continue
+            if self.minimum_apis and func_name not in self.minimum_apis:
                 continue
             function_names.append(func_name)
             schema.add_message(self.generate_param_message(func_name, func_entry))
@@ -399,36 +442,61 @@ class ProtoGenerator:
         nanopb_bytes_opt = f'[(nanopb).max_size = {self.max_bytes_size}]' if self.mutation_mode == "nanopb" else ""
 
         # RULE 1: Array parameters
-        if param_info.get('is_array'):
+        # NOTE: Some targets mark struct pointers as `is_array`. Prefer struct-pointer handling in that case.
+        is_struct_ptr = llvm_type.startswith("%struct.") or (
+            llvm_type.endswith("*") and llvm_type.replace("const ", "").strip().startswith("%struct.")
+        )
+        if param_info.get('is_array') and not is_struct_ptr:
             msg.add_field('optional', 'bytes', param_name, nanopb_bytes_opt)
             msg.add_field('optional', 'uint32', f'{param_name}_length')
             msg.add_field('optional', 'uint32', f'{param_name}_length_override')
             msg.add_comment(f'  ↳ Array with explicit length control')
 
-        # RULE 2: Dependency / delete semantics → Handle ID (even for i8*/void* buffers).
+        # RULE 2: Dependency / delete semantics → Handle ID (even for i8*/void* buffers),
+        # but only when the underlying value is pointer-like.
         elif has_set_by or has_delete_access:
-            msg.add_field('optional', 'uint32', f'{param_name}_handle')
-            msg.add_comment('  ↳ Handle (set_by/delete) for dependency-aware mutation')
-
-        # RULE 3: Struct pointer → Handle ID (or bytes/scalar depending on mapper)
-        elif llvm_type.startswith('%struct.') or llvm_type.endswith('*'):
             proto_type = self.type_mapper.map_llvm_to_proto(llvm_type)
+            is_ptr_like = bool(
+                llvm_type.endswith("*")
+                or llvm_type.startswith("%struct.")
+                or proto_type in ("bytes", "uint32")
+            )
+            if is_ptr_like:
+                msg.add_field('optional', 'uint32', f'{param_name}_handle')
+                msg.add_comment('  ↳ Handle (set_by/delete) for dependency-aware mutation')
+            else:
+                # Keep scalars as scalars even if libErator reported set_by/write artifacts.
+                msg.add_field('optional', proto_type, param_name)
+                msg.add_comment('  ↳ Scalar (deps ignored for schema shape)')
 
-            if proto_type == 'uint32':  # Handle to object
+        # RULE 3: Struct pointer → Struct blob (if layout known) else Handle.
+        elif is_struct_ptr:
+            struct_name = self.type_mapper.extract_struct_name(llvm_type)
+            struct_size = self.type_context.struct_size_for(struct_name) if struct_name else None
+            if struct_name and struct_name in self.managed_struct_names:
                 msg.add_field('optional', 'uint32', f'{param_name}_handle')
                 msg.add_comment(f'  ↳ Handle to {llvm_type} object')
+            elif struct_size:
+                opt = (
+                    f'[(nanopb).max_size = {struct_size}]'
+                    if self.mutation_mode == "nanopb"
+                    else ""
+                )
+                msg.add_field('optional', 'bytes', f'{param_name}_blob', opt)
+                msg.add_comment(f'  ↳ Struct blob init (size={struct_size})')
             else:
-                if proto_type == 'bytes':
-                    msg.add_field(
-                        'optional',
-                        'bytes',
-                        param_name,
-                        nanopb_bytes_opt,
-                    )
-                else:
-                    msg.add_field('optional', proto_type, param_name)
+                msg.add_field('optional', 'uint32', f'{param_name}_handle')
+                msg.add_comment(f'  ↳ Handle to {llvm_type} object')
 
-        # RULE 4: Primitive types
+        # RULE 4: Non-struct pointer → bytes/scalar depending on mapper.
+        elif llvm_type.endswith('*'):
+            proto_type = self.type_mapper.map_llvm_to_proto(llvm_type)
+            if proto_type == 'bytes':
+                msg.add_field('optional', 'bytes', param_name, nanopb_bytes_opt)
+            else:
+                msg.add_field('optional', proto_type, param_name)
+
+        # RULE 5: Primitive types
         else:
             proto_type = self.type_mapper.map_llvm_to_proto(llvm_type)
             if proto_type == 'bytes':
@@ -486,6 +554,9 @@ class ProtoGenerator:
             return True
         if llvm_type.endswith("*") or llvm_type.startswith("%struct."):
             return True
+        # Some libErator outputs omit a usable type string; we treat that sentinel as pointer-like.
+        if llvm_type == "bytes":
+            return True
         if self.type_mapper.is_handle_type(llvm_type):
             return True
         return False
@@ -524,6 +595,16 @@ Example:
                         help=f'Max Action entries in v2 FuzzInput (default: {DEFAULT_MAX_ACTIONS})')
     parser.add_argument('--max-bytes-size', type=int, default=65536,
                         help='Nanopb max_size for bytes fields (default: 65536)')
+    parser.add_argument(
+        '--minimum-apis',
+        default=None,
+        help='Optional apis_minimized.txt (one function per line) to filter schema generation',
+    )
+    parser.add_argument(
+        '--apipass-dir',
+        default=None,
+        help='Optional apipass directory (defaults to parent of conditions.json)',
+    )
 
     args = parser.parse_args()
 
@@ -537,6 +618,8 @@ Example:
         max_calls_per_api=args.max_calls_per_api,
         max_actions=args.max_actions,
         max_bytes_size=args.max_bytes_size,
+        minimum_apis=set(load_text_lines(Path(args.minimum_apis))) if args.minimum_apis else None,
+        apipass_dir=Path(args.apipass_dir) if args.apipass_dir else None,
     )
     schema = generator.generate_schema(args.library)
 

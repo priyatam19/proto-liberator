@@ -30,40 +30,75 @@ extern "C" {
 #include "{{ header }}"
 {% endfor %}
 
-// Handle table implementation
+// Typed handle tables (prevent cross-type mixing).
 static const size_t MAX_HANDLES = 1024;
-static void* g_handles[MAX_HANDLES];
-static bool g_handle_valid[MAX_HANDLES];
-static uint32_t g_handle_count = 0;
 
-static uint32_t handle_register(void *ptr) {
+enum HandleTypeId {
+{% for ht in handle_types %}
+    HT_{{ ht.ident }} = {{ ht.id }},
+{% endfor %}
+    HT__COUNT = {{ handle_types|length }}
+};
+
+struct HandleTable {
+    void* handles[MAX_HANDLES];
+    bool valid[MAX_HANDLES];
+    uint32_t count;
+};
+
+static HandleTable g_tables[HT__COUNT];
+
+static void handles_reset() {
+    for (size_t t = 0; t < (size_t)HT__COUNT; t++) {
+        g_tables[t].count = 0;
+        std::memset(g_tables[t].handles, 0, sizeof(g_tables[t].handles));
+        std::memset(g_tables[t].valid, 0, sizeof(g_tables[t].valid));
+    }
+}
+
+static uint32_t handle_register(uint32_t type_id, void *ptr) {
     if (!ptr) return 0;
-    if (g_handle_count + 1 >= MAX_HANDLES) return 0;
-    uint32_t id = ++g_handle_count;
-    g_handles[id] = ptr;
-    g_handle_valid[id] = true;
+    if (type_id >= (uint32_t)HT__COUNT) return 0;
+    HandleTable& tab = g_tables[type_id];
+    if (tab.count + 1 >= MAX_HANDLES) return 0;
+    uint32_t id = ++tab.count;
+    tab.handles[id] = ptr;
+    tab.valid[id] = true;
     return id;
 }
 
-static uint32_t handle_select(uint32_t requested) {
-    if (g_handle_count == 0) return 0;
-    if (requested == 0) return g_handle_count; /* latest */
-    uint32_t idx = requested % g_handle_count;
-    if (idx == 0) idx = g_handle_count;
+static uint32_t handle_select(uint32_t type_id, uint32_t requested) {
+    if (type_id >= (uint32_t)HT__COUNT) return 0;
+    HandleTable& tab = g_tables[type_id];
+    if (tab.count == 0) return 0;
+    if (requested == 0) return tab.count; /* latest */
+    uint32_t idx = requested % tab.count;
+    if (idx == 0) idx = tab.count;
     return idx;
 }
 
-static void *handle_get(uint32_t requested, bool allow_stale, uint32_t *out_selected) {
-    uint32_t idx = handle_select(requested);
+static void *handle_get(uint32_t type_id, uint32_t requested, bool allow_stale, uint32_t *out_selected) {
+    uint32_t idx = handle_select(type_id, requested);
     if (out_selected) *out_selected = idx;
     if (idx == 0) return NULL;
-    if (allow_stale || g_handle_valid[idx]) return g_handles[idx];
+    if (type_id >= (uint32_t)HT__COUNT) return NULL;
+    HandleTable& tab = g_tables[type_id];
+    if (allow_stale || tab.valid[idx]) return tab.handles[idx];
     return NULL;
 }
 
-static void handle_invalidate(uint32_t selected) {
-    if (selected == 0 || selected > g_handle_count) return;
-    g_handle_valid[selected] = false;
+static void handle_invalidate(uint32_t type_id, uint32_t selected) {
+    if (type_id >= (uint32_t)HT__COUNT) return;
+    HandleTable& tab = g_tables[type_id];
+    if (selected == 0 || selected > tab.count) return;
+    tab.valid[selected] = false;
+}
+
+static void* align_up(void* p, size_t align) {
+    uintptr_t v = (uintptr_t)p;
+    uintptr_t a = (uintptr_t)align;
+    v = (v + (a - 1)) & ~(a - 1);
+    return (void*)v;
 }
 
 static size_t choose_n_override(
@@ -86,9 +121,7 @@ static size_t choose_n_override(
 
 DEFINE_BINARY_PROTO_FUZZER(const {{ package_name }}::{{ fuzz_input_type }}& input) {
     // Reset handles
-    g_handle_count = 0;
-    std::memset(g_handles, 0, sizeof(g_handles));
-    std::memset(g_handle_valid, 0, sizeof(g_handle_valid));
+    handles_reset();
 
     const int actions_n = std::min<int>(input.{{ actions_field }}_size(), (int){{ max_actions }});
     for (int action_idx = 0; action_idx < actions_n; action_idx++) {
@@ -100,6 +133,11 @@ DEFINE_BINARY_PROTO_FUZZER(const {{ package_name }}::{{ fuzz_input_type }}& inpu
             // e.g. cjson_parse -> kCjsonParse
             case {{ package_name }}::{{ action_type }}::k{{ api.field_name.replace('_', ' ').title().replace(' ', '') }}: {
                 const auto& params = action.{{ api.field_name }}();
+
+                {% if api.unsupported_vararg %}
+                (void)params;
+                break;
+                {% endif %}
 
                 bool should_skip_call = false;
                 bool allow_stale = false;
@@ -119,40 +157,50 @@ DEFINE_BINARY_PROTO_FUZZER(const {{ package_name }}::{{ fuzz_input_type }}& inpu
                 // Prepare arguments
                 {% for arg in api.args %}
                 std::remove_const<{{ arg.c_type }}>::type arg_{{ arg.i }} = {};
+                {% if arg.param.kind == "handle" %}
+                uint32_t sel_{{ arg.i }} = 0;
+                {% elif arg.param.kind == "bytes" or arg.param.kind == "bytes_array" %}
+                std::vector<uint8_t> storage_{{ arg.i }};
+                size_t n_{{ arg.i }} = 0;
+                bool is_null_{{ arg.i }} = false;
+                {% if arg.is_char_ptr_ptr %}
+                std::vector<const char*> cstrs_{{ arg.i }};
+                {% endif %}
+                {% elif arg.param.kind == "struct_blob" %}
+                std::vector<uint8_t> storage_{{ arg.i }};
+                uint8_t* blob_{{ arg.i }} = nullptr;
+                bool is_null_{{ arg.i }} = false;
+                {% endif %}
+                {% endfor %}
+
+                // Decode/scalar-first: parse scalar and handle selectors without allocating pointer buffers.
+                {% for arg in api.args %}
                 {% if arg.param.kind == "scalar" %}
                 if (params.has_param_{{ arg.i }}()) {
                     arg_{{ arg.i }} = ({{ arg.c_type }})params.param_{{ arg.i }}();
                 }
                 {% elif arg.param.kind == "handle" %}
-                uint32_t sel_{{ arg.i }} = 0;
                 {
                     bool is_null = false;
                     {% if arg.param.has_is_null %}
                     if (params.has_param_{{ arg.i }}_is_null() && params.param_{{ arg.i }}_is_null()) is_null = true;
                     {% endif %}
-
                     uint32_t hid = params.has_param_{{ arg.i }}_handle() ? params.param_{{ arg.i }}_handle() : 0;
                     void *ptr = nullptr;
                     if (!is_null) {
-                        ptr = handle_get(hid, allow_stale, &sel_{{ arg.i }});
+                        ptr = handle_get({{ arg.param.type_id }}, hid, allow_stale, &sel_{{ arg.i }});
                         if (ptr == nullptr) should_skip_call = true;
                     }
                     arg_{{ arg.i }} = ({{ arg.c_type }})ptr;
                 }
                 {% elif arg.param.kind == "bytes" or arg.param.kind == "bytes_array" %}
-                std::vector<uint8_t> storage_{{ arg.i }};
                 {
-                    bool is_null = false;
                     {% if arg.param.has_is_null %}
-                    if (params.has_param_{{ arg.i }}_is_null() && params.param_{{ arg.i }}_is_null()) is_null = true;
+                    if (params.has_param_{{ arg.i }}_is_null() && params.param_{{ arg.i }}_is_null()) is_null_{{ arg.i }} = true;
                     {% endif %}
-
-                    if (is_null || !params.has_param_{{ arg.i }}()) {
-                        arg_{{ arg.i }} = ({{ arg.c_type }})nullptr;
-                    } else if ({{ "true" if arg.is_pointer else "false" }}) {
+                    if (!is_null_{{ arg.i }} && params.has_param_{{ arg.i }}()) {
                         const auto& bytes_{{ arg.i }} = params.param_{{ arg.i }}();
                         size_t n = bytes_{{ arg.i }}.size();
-
                         {% if arg.param.kind == "bytes_array" and arg.param.has_length %}
                         n = choose_n_override(
                             bytes_{{ arg.i }}.size(),
@@ -162,17 +210,120 @@ DEFINE_BINARY_PROTO_FUZZER(const {{ package_name }}::{{ fuzz_input_type }}& inpu
                             params.param_{{ arg.i }}_length()
                         );
                         {% endif %}
-
                         storage_{{ arg.i }}.assign(bytes_{{ arg.i }}.begin(), bytes_{{ arg.i }}.begin() + n);
+                        n_{{ arg.i }} = n;
+                    }
+                }
+                {% elif arg.param.kind == "struct_blob" %}
+                {
+                    {% if arg.param.has_is_null %}
+                    if (params.has_param_{{ arg.i }}_is_null() && params.param_{{ arg.i }}_is_null()) is_null_{{ arg.i }} = true;
+                    {% endif %}
+                    const size_t blob_size = (size_t){{ arg.param.struct_size }};
+                    storage_{{ arg.i }}.resize(blob_size + 16);
+                    blob_{{ arg.i }} = (uint8_t*)align_up(storage_{{ arg.i }}.data(), 16);
+                    if (!is_null_{{ arg.i }} && params.has_param_{{ arg.i }}_blob()) {
+                        const auto& bytes_{{ arg.i }} = params.param_{{ arg.i }}_blob();
+                        const size_t n = std::min((size_t)bytes_{{ arg.i }}.size(), blob_size);
+                        if (n) std::memcpy(blob_{{ arg.i }}, bytes_{{ arg.i }}.data(), n);
+                    }
+                }
+                {% endif %}
+                {% endfor %}
 
-                        {% if arg.is_char_ptr %}
-                        storage_{{ arg.i }}.push_back(0);
+                // Enforce len_depends_on: clamp buffers to dependent length, and infer missing lengths.
+                {% for arg in api.args %}
+                {% if arg.param.kind == "bytes_array" and arg.param.len_depends_on_index is not none and not arg.is_char_ptr_ptr %}
+                {
+                    const int dep = {{ arg.param.len_depends_on_index }};
+                    (void)dep;
+                    size_t desired = n_{{ arg.i }};
+                    if (params.has_param_{{ arg.param.len_depends_on_index }}()) {
+                        desired = (size_t)arg_{{ arg.param.len_depends_on_index }};
+                    } else {
+                        // Infer missing length from provided buffer.
+                        arg_{{ arg.param.len_depends_on_index }} = (decltype(arg_{{ arg.param.len_depends_on_index }}))desired;
+                    }
+                    if (desired < n_{{ arg.i }}) {
+                        storage_{{ arg.i }}.resize(desired);
+                        n_{{ arg.i }} = desired;
+                    }
+                }
+                {% endif %}
+                {% endfor %}
+
+                // Finalize pointer arguments from storage (after potential clamps/resizes).
+                {% for arg in api.args %}
+                {% if arg.param.kind == "bytes" or arg.param.kind == "bytes_array" %}
+                if ({{ "true" if arg.is_pointer else "false" }}) {
+                    if (is_null_{{ arg.i }} || storage_{{ arg.i }}.empty()) {
+                        arg_{{ arg.i }} = ({{ arg.c_type }})nullptr;
+                    } else {
+                        {% if arg.is_char_ptr_ptr %}
+                        // For `char **`-style args, interpret bytes as NUL-separated strings and build a pointer array.
+                        // This avoids reinterpreting raw bytes as pointers (which is extremely crash-prone).
+                        storage_{{ arg.i }}.resize(n_{{ arg.i }} + 1);
+                        storage_{{ arg.i }}[n_{{ arg.i }}] = 0;
+                        const char* base_{{ arg.i }} = (const char*)storage_{{ arg.i }}.data();
+                        const char* end_{{ arg.i }} = base_{{ arg.i }} + (ptrdiff_t)n_{{ arg.i }} + 1;
+
+                        size_t max_strings_{{ arg.i }} = 16;
+                        {% if arg.param.len_depends_on_index is not none %}
+                        if (params.has_param_{{ arg.param.len_depends_on_index }}()) {
+                            long long desired = (long long)arg_{{ arg.param.len_depends_on_index }};
+                            if (desired < 0) desired = 0;
+                            max_strings_{{ arg.i }} = (size_t)desired;
+                        }
+                        {% endif %}
+                        if (max_strings_{{ arg.i }} > 256) max_strings_{{ arg.i }} = 256;
+
+                        cstrs_{{ arg.i }}.clear();
+                        if (max_strings_{{ arg.i }} > 0) {
+                            cstrs_{{ arg.i }}.reserve(max_strings_{{ arg.i }});
+                            const char* p = base_{{ arg.i }};
+                            cstrs_{{ arg.i }}.push_back(p);
+                            while (cstrs_{{ arg.i }}.size() < max_strings_{{ arg.i }}) {
+                                const void* z = std::memchr(p, 0, (size_t)(end_{{ arg.i }} - p));
+                                if (!z) break;
+                                p = (const char*)z + 1;
+                                if (p >= end_{{ arg.i }}) break;
+                                cstrs_{{ arg.i }}.push_back(p);
+                            }
+                        }
+
+                        {% if arg.param.len_depends_on_index is not none %}
+                        // If the length/count wasn't provided, infer it. Otherwise clamp it.
+                        if (!params.has_param_{{ arg.param.len_depends_on_index }}()) {
+                            arg_{{ arg.param.len_depends_on_index }} =
+                                (decltype(arg_{{ arg.param.len_depends_on_index }}))cstrs_{{ arg.i }}.size();
+                        } else {
+                            long long desired = (long long)arg_{{ arg.param.len_depends_on_index }};
+                            if (desired < 0) desired = 0;
+                            if ((size_t)desired > cstrs_{{ arg.i }}.size()) {
+                                arg_{{ arg.param.len_depends_on_index }} =
+                                    (decltype(arg_{{ arg.param.len_depends_on_index }}))cstrs_{{ arg.i }}.size();
+                            }
+                        }
                         {% endif %}
 
-                        arg_{{ arg.i }} = ({{ arg.c_type }})(storage_{{ arg.i }}.empty() ? nullptr : storage_{{ arg.i }}.data());
-                    } else {
-                        /* non-pointer bytes -> 0 */
+                        arg_{{ arg.i }} = ({{ arg.c_type }})(cstrs_{{ arg.i }}.empty() ? nullptr : cstrs_{{ arg.i }}.data());
+                        {% elif arg.is_char_ptr %}
+                        // Ensure NUL termination after clamping.
+                        storage_{{ arg.i }}.resize(n_{{ arg.i }} + 1);
+                        storage_{{ arg.i }}[n_{{ arg.i }}] = 0;
+                        {% endif %}
+                        {% if not arg.is_char_ptr_ptr %}
+                        arg_{{ arg.i }} = ({{ arg.c_type }})(storage_{{ arg.i }}.data());
+                        {% endif %}
                     }
+                } else {
+                    /* non-pointer bytes -> 0 */
+                }
+                {% elif arg.param.kind == "struct_blob" %}
+                if (is_null_{{ arg.i }} || blob_{{ arg.i }} == nullptr) {
+                    arg_{{ arg.i }} = ({{ arg.c_type }})nullptr;
+                } else {
+                    arg_{{ arg.i }} = ({{ arg.c_type }})blob_{{ arg.i }};
                 }
                 {% endif %}
                 {% endfor %}
@@ -194,7 +345,7 @@ DEFINE_BINARY_PROTO_FUZZER(const {{ package_name }}::{{ fuzz_input_type }}& inpu
 
                 // Handle return
                 {% if api.returns_handle %}
-                handle_register((void*)ret);
+                handle_register({{ api.return_type_id }}, (void*)ret);
                 {% endif %}
 
                 // Handle destruction
@@ -208,7 +359,7 @@ DEFINE_BINARY_PROTO_FUZZER(const {{ package_name }}::{{ fuzz_input_type }}& inpu
                 {% endfor %}
                 {% if ns.first_handle is not none %}
                 if (!allow_double_delete) {
-                    handle_invalidate(sel_{{ ns.first_handle }});
+                    handle_invalidate({{ api.args[ns.first_handle].param.type_id }}, sel_{{ ns.first_handle }});
                 }
                 {% endif %}
                 {% endif %}
