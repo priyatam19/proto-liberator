@@ -55,6 +55,8 @@ Common options:
   --driver PATH                 Optional driver.meta (v2 ok without)
   --schema-mode v2|v1           Default: v2
   --mutation-mode lpm|nanopb    Default: lpm
+  --fork N                      Default: 1
+  --harness-style strict|simple Default: simple
   --max-actions N               Default: 64
   --num-seeds N                 Default: 64
   --seed-max-len N              Default: 16
@@ -65,6 +67,10 @@ Common options:
   --profile-extra-src PATH      Build *_profile.bin with extra sources (repeatable)
   --profile-keep-target-lib     Also link --target-lib into *_profile.bin
   --cc-arg ARG                  Extra compile arg for ALL variants (repeatable)
+  --with-lenient                Add a second "lenient" variant (if no variants specified)
+  --lenient-env KEY=VAL         Env override for lenient variant (repeatable)
+  --with-lenient-resize         Add a third "lenient-resize" variant
+  --lenient-resize-env KEY=VAL  Env override for lenient-resize variant (repeatable)
 
 Fuzz runtime:
   --duration-sec N              Default: 86400 (24h)
@@ -72,7 +78,9 @@ Fuzz runtime:
   --timeout-sec N               Default: 25
   --jobs N                      libFuzzer -jobs (default: 1)
   --workers N                   libFuzzer -workers (default: 1)
-  --keep-going                  Add -ignore_crashes=1 -ignore_timeouts=1 -ignore_ooms=1
+  --fork N                      libFuzzer -fork (default: 1)
+  --keep-going                  Add -ignore_crashes=1 -ignore_timeouts=1 -ignore_ooms=1 (default)
+  --stop-on-crash               Disable --keep-going behaviour
   --live-coverage-interval-sec N  If set, periodically runs *_profile.bin on the current corpus and writes profraw (enables --live coverage)
   --fuzz-arg ARG                Extra runtime arg for ALL variants (repeatable)
 
@@ -80,6 +88,7 @@ Variants (2–3 recommended):
   --variant NAME                Start/declare a variant (repeatable)
   --variant-cc-arg ARG          Compile arg for the CURRENT variant (repeatable)
   --variant-fuzz-arg ARG        Runtime arg for the CURRENT variant (repeatable)
+  --variant-env KEY=VAL         Env override for the CURRENT variant (repeatable)
 
 EOF
 }
@@ -104,14 +113,18 @@ MAX_ACTIONS="64"
 NUM_SEEDS="64"
 SEED_MAX_LEN="16"
 SEED_RNG="0"
+HARNESS_STYLE="simple"
 
 DURATION_SEC="86400"
 MAX_LEN="4096"
 TIMEOUT_SEC="25"
 JOBS="1"
 WORKERS="1"
-KEEP_GOING="0"
+FORK="1"
+KEEP_GOING="1"
 LIVE_COVERAGE_INTERVAL_SEC="0"
+WITH_LENIENT="0"
+WITH_LENIENT_RESIZE="0"
 
 GLOBAL_CC_ARGS=()
 GLOBAL_FUZZ_ARGS=()
@@ -124,6 +137,9 @@ PROFILE_KEEP_TARGET_LIB="0"
 declare -a VARIANTS=()
 declare -A VARIANT_CC_ARGS=()
 declare -A VARIANT_FUZZ_ARGS=()
+declare -A VARIANT_ENVS=()
+declare -a LENIENT_ENV=()
+declare -a LENIENT_RESIZE_ENV=()
 CURRENT_VARIANT=""
 
 while [ $# -gt 0 ]; do
@@ -144,6 +160,7 @@ while [ $# -gt 0 ]; do
     --num-seeds) NUM_SEEDS="${2:-}"; shift 2;;
     --seed-max-len) SEED_MAX_LEN="${2:-}"; shift 2;;
     --seed-rng) SEED_RNG="${2:-}"; shift 2;;
+    --harness-style) HARNESS_STYLE="${2:-}"; shift 2;;
 
     --duration-sec) DURATION_SEC="${2:-}"; shift 2;;
     --max-len) MAX_LEN="${2:-}"; shift 2;;
@@ -151,7 +168,11 @@ while [ $# -gt 0 ]; do
     --jobs) JOBS="${2:-}"; shift 2;;
     --workers) WORKERS="${2:-}"; shift 2;;
     --keep-going) KEEP_GOING="1"; shift;;
+    --stop-on-crash) KEEP_GOING="0"; shift;;
+    --fork) FORK="${2:-}"; shift 2;;
     --live-coverage-interval-sec) LIVE_COVERAGE_INTERVAL_SEC="${2:-0}"; shift 2;;
+    --with-lenient) WITH_LENIENT="1"; shift;;
+    --with-lenient-resize) WITH_LENIENT_RESIZE="1"; shift;;
 
     --cc-arg) GLOBAL_CC_ARGS+=("${2:-}"); shift 2;;
     --fuzz-arg) GLOBAL_FUZZ_ARGS+=("${2:-}"); shift 2;;
@@ -170,6 +191,7 @@ while [ $# -gt 0 ]; do
       VARIANTS+=("${CURRENT_VARIANT}")
       VARIANT_CC_ARGS["${CURRENT_VARIANT}"]=""
       VARIANT_FUZZ_ARGS["${CURRENT_VARIANT}"]=""
+      VARIANT_ENVS["${CURRENT_VARIANT}"]=""
       shift 2
       ;;
     --variant-cc-arg)
@@ -186,6 +208,22 @@ while [ $# -gt 0 ]; do
         exit 2
       fi
       VARIANT_FUZZ_ARGS["${CURRENT_VARIANT}"]+=$'\n'"${2:-}"
+      shift 2
+      ;;
+    --variant-env)
+      if [ -z "${CURRENT_VARIANT}" ]; then
+        echo "[ERROR] --variant-env must follow a --variant" >&2
+        exit 2
+      fi
+      VARIANT_ENVS["${CURRENT_VARIANT}"]+=$'\n'"${2:-}"
+      shift 2
+      ;;
+    --lenient-env)
+      LENIENT_ENV+=("${2:-}")
+      shift 2
+      ;;
+    --lenient-resize-env)
+      LENIENT_RESIZE_ENV+=("${2:-}")
       shift 2
       ;;
     *)
@@ -210,11 +248,65 @@ if [ -n "${DRIVER}" ]; then
   DRIVER="$(cd "$(dirname "${DRIVER}")" && pwd)/$(basename "${DRIVER}")"
 fi
 
+LENIENT_DEFAULTS=$'PROTO_LIBERATOR_NULL_BUDGET=4\nPROTO_LIBERATOR_NULL_PROB_NUM=1\nPROTO_LIBERATOR_NULL_PROB_DEN=8\nPROTO_LIBERATOR_STALE_BUDGET=1\nPROTO_LIBERATOR_STALE_PROB_NUM=1\nPROTO_LIBERATOR_STALE_PROB_DEN=32\nPROTO_LIBERATOR_CHARPP_FALLBACK=1'
+
 if [ "${#VARIANTS[@]}" -eq 0 ]; then
-  VARIANTS=("default")
-  VARIANT_CC_ARGS["default"]=""
-  VARIANT_FUZZ_ARGS["default"]=""
+  if [ "${WITH_LENIENT}" = "1" ] || [ "${WITH_LENIENT_RESIZE}" = "1" ]; then
+    VARIANTS=("strict")
+    VARIANT_CC_ARGS["strict"]=""
+    VARIANT_FUZZ_ARGS["strict"]=""
+    VARIANT_ENVS["strict"]=""
+    if [ "${WITH_LENIENT}" = "1" ]; then
+      VARIANTS+=("lenient")
+      VARIANT_CC_ARGS["lenient"]=""
+      VARIANT_FUZZ_ARGS["lenient"]=""
+      VARIANT_ENVS["lenient"]=""
+    fi
+    if [ "${WITH_LENIENT_RESIZE}" = "1" ]; then
+      VARIANTS+=("lenient-resize")
+      VARIANT_CC_ARGS["lenient-resize"]=""
+      VARIANT_FUZZ_ARGS["lenient-resize"]=""
+      VARIANT_ENVS["lenient-resize"]=""
+    fi
+  else
+    VARIANTS=("default")
+    VARIANT_CC_ARGS["default"]=""
+    VARIANT_FUZZ_ARGS["default"]=""
+    VARIANT_ENVS["default"]=""
+  fi
 fi
+
+add_variant_if_missing() {
+  local name="$1"
+  for v in "${VARIANTS[@]}"; do
+    if [ "${v}" = "${name}" ]; then
+      return
+    fi
+  done
+  VARIANTS+=("${name}")
+  VARIANT_CC_ARGS["${name}"]=""
+  VARIANT_FUZZ_ARGS["${name}"]=""
+  VARIANT_ENVS["${name}"]=""
+}
+
+if [ "${WITH_LENIENT}" = "1" ]; then
+  add_variant_if_missing "lenient"
+  VARIANT_ENVS["lenient"]+=$'\n'"${LENIENT_DEFAULTS}"
+fi
+
+if [ "${WITH_LENIENT_RESIZE}" = "1" ]; then
+  add_variant_if_missing "lenient-resize"
+  VARIANT_ENVS["lenient-resize"]+=$'\n'"${LENIENT_DEFAULTS}"
+  VARIANT_ENVS["lenient-resize"]+=$'\n'"PROTO_LIBERATOR_RESIZE_BYTES=1"
+fi
+
+for kv in "${LENIENT_ENV[@]}"; do
+  VARIANT_ENVS["lenient"]+=$'\n'"${kv}"
+done
+
+for kv in "${LENIENT_RESIZE_ENV[@]}"; do
+  VARIANT_ENVS["lenient-resize"]+=$'\n'"${kv}"
+done
 
 STAMP="$(date +%Y%m%d_%H%M%S)"
 CAMPAIGN_DIR="${OUT_ROOT%/}/${LIBRARY}_${STAMP}"
@@ -259,6 +351,7 @@ build_variant() {
     --seed-max-len "${SEED_MAX_LEN}"
     --seed-rng "${SEED_RNG}"
     --generate-seeds
+    --harness-style "${HARNESS_STYLE}"
     --build
     --build-profile
   )
@@ -320,8 +413,15 @@ run_fuzz_variant() {
   local profile_bin="${out_dir}/${LIBRARY}_profile.bin"
   local corpus_dir="${out_dir}/corpus"
   local artifacts_dir="${out_dir}/artifacts"
+  local api_stats_dir="${out_dir}/api_stats"
   local logs_dir="${out_dir}/logs"
-  mkdir -p "${artifacts_dir}" "${logs_dir}"
+  mkdir -p "${artifacts_dir}" "${logs_dir}" "${api_stats_dir}"
+
+  local -a env_kv=()
+  while IFS= read -r kv; do
+    [ -z "${kv}" ] && continue
+    env_kv+=("${kv}")
+  done <<< "${VARIANT_ENVS[${variant}]:-}"
 
   local start_ts
   start_ts="$(date +%s)"
@@ -348,7 +448,9 @@ run_fuzz_variant() {
 
         # Best-effort corpus minimization (incremental).
         merge_timeout="${PROTO_LIBERATOR_LIVE_COVERAGE_MERGE_TIMEOUT_SEC:-120}"
-        timeout "${merge_timeout}s" "${fuzzer_bin}" -merge=1 "${out_dir}/corpus_min" "${corpus_dir}" -detect_leaks=0 >/dev/null 2>&1 || true
+        PROTO_LIBERATOR_API_STATS="${api_stats_dir}/api_stats_live.json" \
+          "${env_kv[@]}" \
+          timeout "${merge_timeout}s" "${fuzzer_bin}" -merge=1 "${out_dir}/corpus_min" "${corpus_dir}" -detect_leaks=0 >/dev/null 2>&1 || true
 
         cov_corpus="${out_dir}/corpus_min"
         if [ ! -d "${cov_corpus}" ] || [ -z "$(ls -A "${cov_corpus}" 2>/dev/null || true)" ]; then
@@ -356,7 +458,9 @@ run_fuzz_variant() {
         fi
 
         # Update a live coverage timeline CSV (appends to coverage/coverage_timeline.csv).
-        timeout 300s "${ROOT_DIR}/scripts/collect_coverage.sh" "${out_dir}" --live --reset \
+        PROTO_LIBERATOR_API_STATS="${api_stats_dir}/api_stats_live.json" \
+          "${env_kv[@]}" \
+          timeout 300s "${ROOT_DIR}/scripts/collect_coverage.sh" "${out_dir}" --live --reset \
           --corpus-dir "${cov_corpus}" \
           --sources-file "${out_dir}/coverage.sources.txt" \
           --ignore-file "${ROOT_DIR}/scripts/coverage_ignore_default.txt" \
@@ -399,6 +503,7 @@ run_fuzz_variant() {
       "${corpus_dir}"
       "-artifact_prefix=${artifacts_dir}/"
       "-detect_leaks=0"
+      "-fork=${FORK}"
       "-max_total_time=${remaining}"
       "-max_len=${MAX_LEN}"
       "-timeout=${TIMEOUT_SEC}"
@@ -421,7 +526,10 @@ run_fuzz_variant() {
     done <<< "${VARIANT_FUZZ_ARGS[${variant}]}"
 
     set +e
-    (cd "${out_dir}" && env ASAN_OPTIONS="${asan_opts}" "${argv[@]}") >> "${logs_dir}/fuzz.log" 2>&1
+    (cd "${out_dir}" && env ASAN_OPTIONS="${asan_opts}" \
+      PROTO_LIBERATOR_API_STATS="${api_stats_dir}/api_stats.json" \
+      "${env_kv[@]}" \
+      "${argv[@]}") >> "${logs_dir}/fuzz.log" 2>&1
     local rc=$?
     set -e
 
@@ -458,9 +566,16 @@ postprocess_variant() {
   local corpus_min="${out_dir}/corpus_min"
   local profraw_dir="${out_dir}/profraw"
   local coverage_dir="${out_dir}/coverage"
+  local api_stats_dir="${out_dir}/api_stats"
   local casr_dir="${out_dir}/casr"
 
-  mkdir -p "${profraw_dir}" "${coverage_dir}" "${casr_dir}"
+  mkdir -p "${profraw_dir}" "${coverage_dir}" "${casr_dir}" "${api_stats_dir}"
+
+  local -a env_kv=()
+  while IFS= read -r kv; do
+    [ -z "${kv}" ] && continue
+    env_kv+=("${kv}")
+  done <<< "${VARIANT_ENVS[${variant}]:-}"
 
   if [ -f "${fuzzer_bin}" ] && [ -d "${corpus_dir}" ]; then
     echo "[Campaign] Minimizing corpus for '${variant}'..."
@@ -478,7 +593,9 @@ postprocess_variant() {
     local final_wall_timeout_sec="${PROTO_LIBERATOR_FINAL_COVERAGE_WALL_TIMEOUT_SEC:-1800}"  # 30m
     local final_input_timeout_sec="${PROTO_LIBERATOR_FINAL_COVERAGE_INPUT_TIMEOUT_SEC:-${TIMEOUT_SEC}}"
 
-    timeout "${final_wall_timeout_sec}s" "${profile_bin}" "${corpus_min}" -runs=0 \
+    PROTO_LIBERATOR_API_STATS="${api_stats_dir}/api_stats_profile.json" \
+      "${env_kv[@]}" \
+      timeout "${final_wall_timeout_sec}s" "${profile_bin}" "${corpus_min}" -runs=0 \
       -detect_leaks=0 \
       -timeout="${final_input_timeout_sec}" \
       -fork=1 \
@@ -492,6 +609,14 @@ postprocess_variant() {
     --sources-file "${out_dir}/coverage.sources.txt" \
     --ignore-file "${ROOT_DIR}/scripts/coverage_ignore_default.txt" \
     > "${coverage_dir}/coverage_summary.txt" 2>&1 || true
+
+  if [ -d "${api_stats_dir}" ]; then
+    echo "[Campaign] Merging API stats for '${variant}'..."
+    "${ROOT_DIR}/scripts/merge_api_stats.py" \
+      --input-dir "${api_stats_dir}" \
+      --output "${api_stats_dir}/merged_api_stats.json" \
+      > "${api_stats_dir}/merge_api_stats.log" 2>&1 || true
+  fi
 
   echo "[Campaign] Crash clustering for '${variant}'..."
   "${ROOT_DIR}/scripts/cluster_crashes.sh" "${out_dir}" > "${casr_dir}/summary.txt" 2>&1 || true

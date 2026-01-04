@@ -139,6 +139,114 @@ def is_void_return(ret: str) -> bool:
     return r == "void"
 
 
+def is_integral_c_type(c_type: str) -> bool:
+    t = normalize_c_type(c_type)
+    t = t.replace("const", "").replace("volatile", "").strip()
+    if "*" in t:
+        return False
+    if re.search(r"\b(bool|_Bool)\b", t):
+        return False
+    if re.search(r"\b(float|double)\b", t):
+        return False
+    if re.search(r"\b(size_t|ssize_t|ptrdiff_t|uintptr_t|intptr_t)\b", t):
+        return True
+    if re.search(r"\b(u?int(8|16|32|64)_t)\b", t):
+        return True
+    if re.search(r"\b(short|int|long|signed|unsigned)\b", t):
+        return True
+    return False
+
+
+def is_size_like_c_type(c_type: str) -> bool:
+    t = normalize_c_type(c_type)
+    t = t.replace("const", "").replace("volatile", "").strip()
+    if "*" in t:
+        return False
+    return bool(re.search(r"\b(size_t|ssize_t|ptrdiff_t|uintptr_t|intptr_t|u?int(8|16|32|64)_t)\b", t))
+
+
+def infer_len_depends_on_index(args: List[Dict[str, Any]], index: int) -> Optional[int]:
+    candidates: List[Dict[str, Any]] = []
+    for arg in args:
+        if arg.get("i") == index:
+            continue
+        param = arg.get("param") if isinstance(arg.get("param"), dict) else {}
+        if param.get("kind") != "scalar":
+            continue
+        if arg.get("is_pointer"):
+            continue
+        c_type = str(arg.get("c_type") or "")
+        if not is_integral_c_type(c_type):
+            continue
+        candidates.append(
+            {
+                "index": int(arg.get("i")),
+                "is_const": "const" in c_type,
+                "is_size": is_size_like_c_type(c_type),
+            }
+        )
+
+    if not candidates:
+        return None
+
+    def adjacent(cands: List[Dict[str, Any]]) -> Optional[int]:
+        for idx in (index + 1, index - 1):
+            for cand in cands:
+                if cand["index"] == idx:
+                    return idx
+        return None
+
+    size_candidates = [c for c in candidates if c["is_size"]]
+    adj = adjacent(size_candidates)
+    if adj is not None:
+        return adj
+    if len(size_candidates) == 1:
+        return size_candidates[0]["index"]
+
+    const_candidates = [c for c in candidates if c["is_const"]]
+    adj = adjacent(const_candidates)
+    if adj is not None:
+        return adj
+    if len(const_candidates) == 1:
+        return const_candidates[0]["index"]
+
+    adj = adjacent(candidates)
+    if adj is not None:
+        return adj
+
+    best = None
+    best_dist = None
+    for ci in candidates:
+        idx = ci["index"]
+        dist = abs(idx - index)
+        if dist > 2:
+            continue
+        if best is None or dist < best_dist or (dist == best_dist and idx > index):
+            best = idx
+            best_dist = dist
+    return best
+
+
+def apply_len_depends_on_heuristics(args: List[Dict[str, Any]]) -> None:
+    for arg in args:
+        param = arg.get("param")
+        if not isinstance(param, dict):
+            continue
+        if param.get("kind") not in ("bytes", "bytes_array"):
+            continue
+        if not arg.get("is_pointer"):
+            continue
+        if param.get("len_depends_on_index") is not None:
+            continue
+        idx = int(arg.get("i"))
+        inferred = infer_len_depends_on_index(args, idx)
+        if inferred is None or inferred == idx:
+            continue
+        if inferred < 0 or inferred >= len(args):
+            continue
+        param["len_depends_on_index"] = inferred
+
+
 def conditions_return_is_handle(entry: Dict[str, Any], mapper: TypeMapper, *, ret_c_type: Optional[str] = None) -> bool:
     ret = entry.get("return")
     if not isinstance(ret, dict):
@@ -365,6 +473,7 @@ class WrapperGenerator:
         emi_config: Optional[Dict] = None,
         extra_headers: Optional[List[str]] = None,
         apipass_dir: Optional[Path] = None,
+        harness_style: str = "strict",
     ):
         self.proto_path = proto_path
         self.driver_meta = load_json(driver_meta_path)
@@ -381,9 +490,12 @@ class WrapperGenerator:
         self.max_actions = int(max_actions)
         self.emi_config = emi_config or {}
         self.extra_headers = extra_headers or []
+        self.harness_style = harness_style
 
         if self.mutation_mode == "lpm" and self.schema_mode != "v2":
             raise ValueError("mutation_mode=lpm currently requires schema_mode=v2")
+        if self.harness_style not in ("strict", "simple"):
+            raise ValueError(f"Unsupported harness style: {self.harness_style}")
 
         template_dir = Path(__file__).parent.parent / "templates"
         self.env = Environment(loader=FileSystemLoader(str(template_dir)))
@@ -516,6 +628,8 @@ class WrapperGenerator:
                     }
                 )
 
+            apply_len_depends_on_heuristics(args)
+
             returns_handle = conditions_return_is_handle(entry, self.mapper, ret_c_type=ret_type)
 
             call = {
@@ -544,6 +658,7 @@ class WrapperGenerator:
             "fuzz_input_type": fuzz_input_type,
             "unique_apis": unique_apis,
             "api_sequence": api_sequence,
+            "harness_style": self.harness_style,
         }
 
     def _prepare_context_v2(self) -> Dict:
@@ -625,6 +740,8 @@ class WrapperGenerator:
                     }
                 )
 
+            apply_len_depends_on_heuristics(args)
+
             returns_handle = conditions_return_is_handle(entry, self.mapper, ret_c_type=ret_type)
             return_type_key = self.mapper.type_key(str(entry.get("return", {}).get("type_string") or "")) if returns_handle else ""
             if returns_handle and return_type_key:
@@ -689,6 +806,7 @@ class WrapperGenerator:
             "max_actions": self.max_actions,
             "apis": apis,
             "handle_types": handle_types,
+            "harness_style": self.harness_style,
         }
 
 
@@ -715,6 +833,12 @@ def main():
         default=[],
         help="Extra header to include (repeatable), e.g. cjson/cJSON.h",
     )
+    parser.add_argument(
+        "--harness-style",
+        choices=["strict", "simple"],
+        default="strict",
+        help="Validation strictness for generated harness",
+    )
 
     args = parser.parse_args()
 
@@ -730,6 +854,7 @@ def main():
         max_actions=args.max_actions,
         extra_headers=args.header,
         apipass_dir=Path(args.apipass_dir) if args.apipass_dir else None,
+        harness_style=args.harness_style,
     )
 
     generator.generate(Path(args.output))

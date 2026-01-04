@@ -9,7 +9,11 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
 #include <vector>
+#include <climits>
 #include <type_traits>
 
 #include "src/libfuzzer/libfuzzer_macro.h"
@@ -94,6 +98,90 @@ static void handle_invalidate(uint32_t type_id, uint32_t selected) {
     tab.valid[selected] = false;
 }
 
+// -----------------------------------------------------------------------------
+// API stats (per-process; orchestrator merges api_stats.*.json)
+// -----------------------------------------------------------------------------
+
+static const size_t API_COUNT = {{ apis|length }};
+static uint64_t g_api_seen[{{ apis|length }}];
+static uint64_t g_api_executed[{{ apis|length }}];
+static uint64_t g_api_skipped[{{ apis|length }}];
+
+static void ensure_dir_recursive(const char* dir) {
+    if (!dir || !dir[0]) return;
+    char tmp[4096];
+    std::snprintf(tmp, sizeof(tmp), "%s", dir);
+    size_t len = std::strlen(tmp);
+    if (len == 0) return;
+    if (tmp[len - 1] == '/') tmp[len - 1] = 0;
+    for (char* p = tmp + 1; *p; ++p) {
+        if (*p == '/') {
+            *p = 0;
+            mkdir(tmp, 0755);
+            *p = '/';
+        }
+    }
+    mkdir(tmp, 0755);
+}
+
+static void ensure_parent_dir(const char* path) {
+    if (!path) return;
+    const char* slash = std::strrchr(path, '/');
+    if (!slash) return;
+    size_t len = (size_t)(slash - path);
+    if (len == 0 || len >= 4096) return;
+    char dir[4096];
+    std::memcpy(dir, path, len);
+    dir[len] = 0;
+    ensure_dir_recursive(dir);
+}
+
+static void api_stats_path(char* out, size_t out_sz) {
+    const char* base = std::getenv("PROTO_LIBERATOR_API_STATS");
+    if (!base || !base[0]) base = "api_stats/api_stats.json";
+    pid_t pid = getpid();
+
+    const char* dot = std::strrchr(base, '.');
+    if (dot && std::strcmp(dot, ".json") == 0) {
+        int prefix_len = (int)(dot - base);
+        std::snprintf(out, out_sz, "%.*s.%d.json", prefix_len, base, (int)pid);
+        return;
+    }
+    std::snprintf(out, out_sz, "%s.%d.json", base, (int)pid);
+}
+
+static void write_api_stats() {
+    if (API_COUNT == 0) return;
+    char path[4096];
+    api_stats_path(path, sizeof(path));
+    ensure_parent_dir(path);
+    FILE* f = std::fopen(path, "w");
+    if (!f) return;
+
+    std::fprintf(f, "{\n  \"apis\": [\n");
+    {% for api in apis %}
+    {
+        size_t idx = {{ loop.index0 }};
+        std::fprintf(
+            f,
+            "    {\"name\":\"%s\",\"seen\":%llu,\"executed\":%llu,\"skipped\":%llu}%s\n",
+            "{{ api.name }}",
+            (unsigned long long)g_api_seen[idx],
+            (unsigned long long)g_api_executed[idx],
+            (unsigned long long)g_api_skipped[idx],
+            "{{ "," if not loop.last else "" }}"
+        );
+    }
+    {% endfor %}
+    std::fprintf(f, "  ]\n}\n");
+    std::fclose(f);
+}
+
+struct ApiStatsAutoInit {
+    ApiStatsAutoInit() { std::atexit(write_api_stats); }
+};
+static ApiStatsAutoInit g_api_stats_autoinit;
+
 static void* align_up(void* p, size_t align) {
     uintptr_t v = (uintptr_t)p;
     uintptr_t a = (uintptr_t)align;
@@ -119,9 +207,99 @@ static size_t choose_n_override(
     return std::min(n, available);
 }
 
+static int env_int(const char* name, int def_val) {
+    const char* val = std::getenv(name);
+    if (!val || !val[0]) return def_val;
+    char* end = nullptr;
+    long parsed = std::strtol(val, &end, 10);
+    if (end == val) return def_val;
+    if (parsed < 0) return 0;
+    if (parsed > INT_MAX) return INT_MAX;
+    return static_cast<int>(parsed);
+}
+
+static bool env_allowlist_has(const char* list, const char* name) {
+    if (!list || !list[0] || !name || !name[0]) return false;
+    size_t name_len = std::strlen(name);
+    const char* p = list;
+    while (*p) {
+        while (*p == ',' || *p == ' ' || *p == '\t' || *p == '\n') p++;
+        if (!*p) break;
+        const char* start = p;
+        while (*p && *p != ',' && *p != ' ' && *p != '\t' && *p != '\n') p++;
+        size_t len = (size_t)(p - start);
+        if (len == name_len && std::strncmp(start, name, len) == 0) {
+            return true;
+        }
+        if (*p == ',') p++;
+    }
+    return false;
+}
+
+static bool allow_for_api(const char* list, const char* api_name) {
+    if (!list || !list[0]) return true;
+    return env_allowlist_has(list, api_name);
+}
+
+static uint32_t mix_u32(uint32_t x) {
+    x ^= x >> 16;
+    x *= 0x7feb352dU;
+    x ^= x >> 15;
+    x *= 0x846ca68bU;
+    x ^= x >> 16;
+    return x;
+}
+
+static bool allow_with_budget(int* budget, int prob_num, int prob_den, uint32_t salt) {
+    if (!budget || *budget <= 0) return false;
+    if (prob_den <= 0 || prob_num <= 0) return false;
+    uint32_t v = mix_u32(salt);
+    if ((int)(v % (uint32_t)prob_den) >= prob_num) return false;
+    --(*budget);
+    return true;
+}
+
+static const bool kSimpleHarness = {{ "true" if harness_style == "simple" else "false" }};
+
 DEFINE_BINARY_PROTO_FUZZER(const {{ package_name }}::{{ fuzz_input_type }}& input) {
     // Reset handles
     handles_reset();
+    int null_budget_default = env_int("PROTO_LIBERATOR_NULL_BUDGET", kSimpleHarness ? INT_MAX : 1);
+    int stale_budget_default = env_int("PROTO_LIBERATOR_STALE_BUDGET", kSimpleHarness ? INT_MAX : 0);
+    int null_prob_num_default = env_int("PROTO_LIBERATOR_NULL_PROB_NUM", 1);
+    int null_prob_den_default = env_int("PROTO_LIBERATOR_NULL_PROB_DEN", kSimpleHarness ? 1 : 16);
+    int stale_prob_num_default = env_int("PROTO_LIBERATOR_STALE_PROB_NUM", 1);
+    int stale_prob_den_default = env_int("PROTO_LIBERATOR_STALE_PROB_DEN", kSimpleHarness ? 1 : 64);
+    int charpp_fallback_default = env_int("PROTO_LIBERATOR_CHARPP_FALLBACK", kSimpleHarness ? 1 : 0);
+    int resize_bytes_default = env_int("PROTO_LIBERATOR_RESIZE_BYTES", kSimpleHarness ? 1 : 0);
+    const char* null_allowlist = std::getenv("PROTO_LIBERATOR_NULL_ALLOWLIST");
+    const char* stale_allowlist = std::getenv("PROTO_LIBERATOR_STALE_ALLOWLIST");
+
+    int null_budget_api[API_COUNT];
+    int stale_budget_api[API_COUNT];
+    int null_prob_num_api[API_COUNT];
+    int null_prob_den_api[API_COUNT];
+    int stale_prob_num_api[API_COUNT];
+    int stale_prob_den_api[API_COUNT];
+    bool charpp_fallback_api[API_COUNT];
+    bool resize_bytes_api[API_COUNT];
+    bool allow_null_api[API_COUNT];
+    bool allow_stale_api[API_COUNT];
+
+    {% for api in apis %}
+    null_budget_api[{{ loop.index0 }}] = env_int("PROTO_LIBERATOR_NULL_BUDGET_{{ api.field_name.upper() }}", null_budget_default);
+    stale_budget_api[{{ loop.index0 }}] = env_int("PROTO_LIBERATOR_STALE_BUDGET_{{ api.field_name.upper() }}", stale_budget_default);
+    null_prob_num_api[{{ loop.index0 }}] = env_int("PROTO_LIBERATOR_NULL_PROB_NUM_{{ api.field_name.upper() }}", null_prob_num_default);
+    null_prob_den_api[{{ loop.index0 }}] = env_int("PROTO_LIBERATOR_NULL_PROB_DEN_{{ api.field_name.upper() }}", null_prob_den_default);
+    stale_prob_num_api[{{ loop.index0 }}] = env_int("PROTO_LIBERATOR_STALE_PROB_NUM_{{ api.field_name.upper() }}", stale_prob_num_default);
+    stale_prob_den_api[{{ loop.index0 }}] = env_int("PROTO_LIBERATOR_STALE_PROB_DEN_{{ api.field_name.upper() }}", stale_prob_den_default);
+    charpp_fallback_api[{{ loop.index0 }}] =
+        env_int("PROTO_LIBERATOR_CHARPP_FALLBACK_{{ api.field_name.upper() }}", charpp_fallback_default) != 0;
+    resize_bytes_api[{{ loop.index0 }}] =
+        env_int("PROTO_LIBERATOR_RESIZE_BYTES_{{ api.field_name.upper() }}", resize_bytes_default) != 0;
+    allow_null_api[{{ loop.index0 }}] = allow_for_api(null_allowlist, "{{ api.field_name }}");
+    allow_stale_api[{{ loop.index0 }}] = allow_for_api(stale_allowlist, "{{ api.field_name }}");
+    {% endfor %}
 
     const int actions_n = std::min<int>(input.{{ actions_field }}_size(), (int){{ max_actions }});
     for (int action_idx = 0; action_idx < actions_n; action_idx++) {
@@ -133,36 +311,63 @@ DEFINE_BINARY_PROTO_FUZZER(const {{ package_name }}::{{ fuzz_input_type }}& inpu
             // e.g. cjson_parse -> kCjsonParse
             case {{ package_name }}::{{ action_type }}::k{{ api.field_name.replace('_', ' ').title().replace(' ', '') }}: {
                 const auto& params = action.{{ api.field_name }}();
+                const size_t api_idx = {{ loop.index0 }};
+                g_api_seen[api_idx]++;
+                int* null_budget = &null_budget_api[api_idx];
+                int* stale_budget = &stale_budget_api[api_idx];
+                int null_prob_num = null_prob_num_api[api_idx];
+                int null_prob_den = null_prob_den_api[api_idx];
+                int stale_prob_num = stale_prob_num_api[api_idx];
+                int stale_prob_den = stale_prob_den_api[api_idx];
+                bool charpp_fallback = charpp_fallback_api[api_idx];
+                bool resize_bytes = resize_bytes_api[api_idx];
+                bool allow_null = allow_null_api[api_idx];
+                bool allow_stale_api_call = allow_stale_api[api_idx];
 
                 {% if api.unsupported_vararg %}
                 (void)params;
+                g_api_skipped[api_idx]++;
                 break;
                 {% endif %}
 
                 bool should_skip_call = false;
                 bool allow_stale = false;
                 bool allow_double_delete = false;
+                bool allow_stale_request = false;
                 {% if api.has_skip_dependency_check %}
                 if (params.has_skip_dependency_check() && params.skip_dependency_check()) {
-                    allow_stale = true;
+                    allow_stale_request = true;
                 }
                 {% endif %}
                 {% if api.has_allow_double_delete %}
                 if (params.has_allow_double_delete() && params.allow_double_delete()) {
                     allow_double_delete = true;
-                    allow_stale = true;
+                    allow_stale_request = true;
                 }
                 {% endif %}
+                if (allow_stale_request && allow_stale_api_call) {
+                    if (kSimpleHarness) {
+                        allow_stale = true;
+                    } else {
+                        uint32_t salt = (uint32_t)action_idx ^ (uint32_t){{ loop.index0 }};
+                        allow_stale = allow_with_budget(stale_budget, stale_prob_num, stale_prob_den, salt);
+                    }
+                }
 
                 // Prepare arguments
                 {% for arg in api.args %}
                 std::remove_const<{{ arg.c_type }}>::type arg_{{ arg.i }} = {};
                 {% if arg.param.kind == "handle" %}
                 uint32_t sel_{{ arg.i }} = 0;
+                {% if arg.is_char_ptr_ptr %}
+                std::remove_pointer<{{ arg.c_type }}>::type charpp_value_{{ arg.i }} = nullptr;
+                {{ arg.c_type }} charpp_out_{{ arg.i }} = &charpp_value_{{ arg.i }};
+                {% endif %}
                 {% elif arg.param.kind == "bytes" or arg.param.kind == "bytes_array" %}
                 std::vector<uint8_t> storage_{{ arg.i }};
                 size_t n_{{ arg.i }} = 0;
                 bool is_null_{{ arg.i }} = false;
+                bool has_param_{{ arg.i }} = false;
                 {% if arg.is_char_ptr_ptr %}
                 std::vector<const char*> cstrs_{{ arg.i }};
                 {% endif %}
@@ -187,11 +392,36 @@ DEFINE_BINARY_PROTO_FUZZER(const {{ package_name }}::{{ fuzz_input_type }}& inpu
                     {% endif %}
                     uint32_t hid = params.has_param_{{ arg.i }}_handle() ? params.param_{{ arg.i }}_handle() : 0;
                     void *ptr = nullptr;
-                    if (!is_null) {
+                    if (is_null) {
+                        if (!allow_null) {
+                            should_skip_call = true;
+                        } else if (!kSimpleHarness) {
+                            uint32_t salt = (uint32_t)action_idx ^ (uint32_t){{ arg.i }} ^ (hid << 1);
+                            if (!allow_with_budget(null_budget, null_prob_num, null_prob_den, salt)) {
+                                should_skip_call = true;
+                            }
+                        }
+                    } else {
                         ptr = handle_get({{ arg.param.type_id }}, hid, allow_stale, &sel_{{ arg.i }});
-                        if (ptr == nullptr) should_skip_call = true;
+                        if (ptr == nullptr) {
+                            {% if arg.is_char_ptr_ptr %}
+                            if (charpp_fallback) {
+                                arg_{{ arg.i }} = ({{ arg.c_type }})charpp_out_{{ arg.i }};
+                            } else {
+                                should_skip_call = true;
+                            }
+                            {% else %}
+                            should_skip_call = true;
+                            {% endif %}
+                        }
                     }
-                    arg_{{ arg.i }} = ({{ arg.c_type }})ptr;
+                    if (!should_skip_call) {
+                        if (is_null) {
+                            arg_{{ arg.i }} = ({{ arg.c_type }})nullptr;
+                        } else if (ptr != nullptr) {
+                            arg_{{ arg.i }} = ({{ arg.c_type }})ptr;
+                        }
+                    }
                 }
                 {% elif arg.param.kind == "bytes" or arg.param.kind == "bytes_array" %}
                 {
@@ -199,16 +429,19 @@ DEFINE_BINARY_PROTO_FUZZER(const {{ package_name }}::{{ fuzz_input_type }}& inpu
                     if (params.has_param_{{ arg.i }}_is_null() && params.param_{{ arg.i }}_is_null()) is_null_{{ arg.i }} = true;
                     {% endif %}
                     if (!is_null_{{ arg.i }} && params.has_param_{{ arg.i }}()) {
+                        has_param_{{ arg.i }} = true;
                         const auto& bytes_{{ arg.i }} = params.param_{{ arg.i }}();
                         size_t n = bytes_{{ arg.i }}.size();
                         {% if arg.param.kind == "bytes_array" and arg.param.has_length %}
-                        n = choose_n_override(
-                            bytes_{{ arg.i }}.size(),
-                            params.has_param_{{ arg.i }}_length_override(),
-                            params.param_{{ arg.i }}_length_override(),
-                            params.has_param_{{ arg.i }}_length(),
-                            params.param_{{ arg.i }}_length()
-                        );
+                        if (!kSimpleHarness) {
+                            n = choose_n_override(
+                                bytes_{{ arg.i }}.size(),
+                                params.has_param_{{ arg.i }}_length_override(),
+                                params.param_{{ arg.i }}_length_override(),
+                                params.has_param_{{ arg.i }}_length(),
+                                params.param_{{ arg.i }}_length()
+                            );
+                        }
                         {% endif %}
                         storage_{{ arg.i }}.assign(bytes_{{ arg.i }}.begin(), bytes_{{ arg.i }}.begin() + n);
                         n_{{ arg.i }} = n;
@@ -230,19 +463,31 @@ DEFINE_BINARY_PROTO_FUZZER(const {{ package_name }}::{{ fuzz_input_type }}& inpu
                 }
                 {% endif %}
                 {% endfor %}
-
+                {% if harness_style != "simple" %}
                 // Enforce len_depends_on: clamp buffers to dependent length, and infer missing lengths.
                 {% for arg in api.args %}
-                {% if arg.param.kind == "bytes_array" and arg.param.len_depends_on_index is not none and not arg.is_char_ptr_ptr %}
+                {% if (arg.param.kind == "bytes" or arg.param.kind == "bytes_array") and arg.param.len_depends_on_index is not none and not arg.is_char_ptr_ptr %}
                 {
                     const int dep = {{ arg.param.len_depends_on_index }};
                     (void)dep;
                     size_t desired = n_{{ arg.i }};
                     if (params.has_param_{{ arg.param.len_depends_on_index }}()) {
-                        desired = (size_t)arg_{{ arg.param.len_depends_on_index }};
+                        long long desired_ll = (long long)arg_{{ arg.param.len_depends_on_index }};
+                        if (desired_ll < 0) desired_ll = 0;
+                        desired = (size_t)desired_ll;
                     } else {
                         // Infer missing length from provided buffer.
                         arg_{{ arg.param.len_depends_on_index }} = (decltype(arg_{{ arg.param.len_depends_on_index }}))desired;
+                    }
+                    if (desired > n_{{ arg.i }}) {
+                        if (resize_bytes && has_param_{{ arg.i }} && !is_null_{{ arg.i }}) {
+                            storage_{{ arg.i }}.resize(desired, 0);
+                            n_{{ arg.i }} = desired;
+                        } else {
+                            desired = n_{{ arg.i }};
+                            arg_{{ arg.param.len_depends_on_index }} =
+                                (decltype(arg_{{ arg.param.len_depends_on_index }}))desired;
+                        }
                     }
                     if (desired < n_{{ arg.i }}) {
                         storage_{{ arg.i }}.resize(desired);
@@ -251,6 +496,7 @@ DEFINE_BINARY_PROTO_FUZZER(const {{ package_name }}::{{ fuzz_input_type }}& inpu
                 }
                 {% endif %}
                 {% endfor %}
+                {% endif %}
 
                 // Finalize pointer arguments from storage (after potential clamps/resizes).
                 {% for arg in api.args %}
@@ -329,6 +575,7 @@ DEFINE_BINARY_PROTO_FUZZER(const {{ package_name }}::{{ fuzz_input_type }}& inpu
                 {% endfor %}
 
                 if (should_skip_call) {
+                    g_api_skipped[api_idx]++;
                     break;
                 }
 
@@ -347,6 +594,7 @@ DEFINE_BINARY_PROTO_FUZZER(const {{ package_name }}::{{ fuzz_input_type }}& inpu
                 {% if api.returns_handle %}
                 handle_register({{ api.return_type_id }}, (void*)ret);
                 {% endif %}
+                g_api_executed[api_idx]++;
 
                 // Handle destruction
                 {% if api.is_destructor %}

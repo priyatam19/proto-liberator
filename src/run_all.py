@@ -131,6 +131,12 @@ def main() -> int:
 
     parser.add_argument("--package", default=None, help="Protobuf package prefix for generated C structs")
     parser.add_argument("--header", action="append", default=[], help="Extra header include (repeatable)")
+    parser.add_argument(
+        "--harness-style",
+        choices=["strict", "simple"],
+        default="strict",
+        help="Validation strictness for generated harness",
+    )
 
     parser.add_argument("--python", default=None, help="Python interpreter for generator scripts")
     parser.add_argument("--dry-run", action="store_true", help="Print commands without running them")
@@ -311,6 +317,8 @@ def main() -> int:
         args.mutation_mode,
         "--max-actions",
         str(args.max_actions),
+        "--harness-style",
+        args.harness_style,
         *sum([["--header", h] for h in args.header], []),
     ]
     if args.minimum_apis:
