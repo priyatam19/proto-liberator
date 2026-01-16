@@ -1,0 +1,26 @@
+htp_multipart_type_t
+htp_url_encoding_handling_t
+(unnamed enum at /usr/include/x86_64-linux-gnu/bits/confname.h:24:1)
+htp_tx_req_progress_t
+htp_tx_res_progress_t
+htp_base64_decodestep
+htp_server_personality_t
+htp_log_level_t
+htp_content_encoding_t
+htp_method_t
+htp_stream_state_t
+htp_auth_type_t
+htp_alloc_strategy_t
+__itimer_which
+htp_data_source_t
+htp_unwanted_t
+idtype_t
+htp_file_source_t
+ELzmaStatus
+htp_transfer_coding_t
+ESzSeek
+htp_decoder_ctx_t
+(unnamed enum at /usr/include/x86_64-linux-gnu/bits/confname.h:533:1)
+(unnamed enum at /usr/include/x86_64-linux-gnu/bits/confname.h:71:1)
+htp_parser_id_t
+ELzmaFinishMode

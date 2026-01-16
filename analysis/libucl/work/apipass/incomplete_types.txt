@@ -1,0 +1,7 @@
+%_IO_codecvt
+%ucl_parser
+%obstack
+%_IO_wide_data
+%_IO_lock_t
+%_IO_marker
+%__locale_data

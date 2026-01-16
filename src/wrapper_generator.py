@@ -111,7 +111,9 @@ def build_signature_index(apis_path: Optional[Path]) -> Dict[str, Dict[str, Any]
 def normalize_c_type(type_str: str) -> str:
     if not type_str:
         return "int"
-    return " ".join(type_str.strip().split())
+    sanitized = type_str.replace("__va_list_tag", "va_list").replace("__gnuc_va_list", "va_list")
+    sanitized = sanitized.replace("va_list *", "va_list")
+    return " ".join(sanitized.strip().split())
 
 
 def is_char_ptr(c_type: str) -> bool:
@@ -311,6 +313,13 @@ def classify_param(
         access = info.get("access_type_set", [])
         if isinstance(access, list) and access and isinstance(access[0], dict):
             llvm_type = str(access[0].get("type_string") or access[0].get("type") or "")
+    if "__va_list_tag" in llvm_type or "__gnuc_va_list" in llvm_type or "va_list" in llvm_type:
+        return {
+            "kind": "va_list",
+            "field": key,
+            "index": param_index,
+            "has_is_null": False,
+        }
     is_array = bool(info.get("is_array"))
     access_set = info.get("access_type_set", [])
     has_set_by = bool(info.get("set_by", []))

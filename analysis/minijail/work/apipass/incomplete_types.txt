@@ -1,0 +1,2 @@
+%minijail
+%sock_fprog

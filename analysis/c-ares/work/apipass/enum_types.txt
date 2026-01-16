@@ -1,0 +1,25 @@
+ares_dns_rr_key_t
+__socket_type
+ares_dns_opcode_t
+(unnamed enum at /usr/include/netinet/in.h:99:1)
+(unnamed enum at /usr/include/netinet/in.h:122:1)
+ares_evsys_t
+ares_dns_rcode_t
+(unnamed enum at /usr/include/x86_64-linux-gnu/bits/socket.h:200:1)
+(unnamed enum at /usr/include/netinet/in.h:40:1)
+ares_tlsa_usage_t
+ares_dns_opt_datatype_t
+ares_status_t
+ares_bool_t
+(unnamed enum at /usr/include/x86_64-linux-gnu/sys/socket.h:41:1)
+ares_dns_parse_flags_t
+ares_dns_datatype_t
+ares_svcb_param_t
+ares_tlsa_match_t
+(unnamed enum at /usr/include/x86_64-linux-gnu/bits/socket.h:332:1)
+ares_dns_section_t
+ares_tlsa_selector_t
+ares_dns_class_t
+ares_dns_rec_type_t
+ares_dns_flags_t
+ares_opt_param_t

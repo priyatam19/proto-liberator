@@ -97,10 +97,20 @@ def _target_libs_for_profile(target_libs: List[str]) -> List[str]:
     """
     out: List[str] = []
     for p in target_libs:
-        if p.endswith(".a") and os.path.exists(p + ".bc"):
-            out.append(p + ".bc")
-        else:
-            out.append(p)
+        if p.endswith(".a"):
+            # Prefer a dedicated coverage archive if available (e.g., libfoo_profile.a),
+            # otherwise fall back to a bitcode sibling, then to the original archive.
+            profile_variant = f"{p[:-2]}_profile.a"
+            if os.path.exists(profile_variant):
+                out.append(profile_variant)
+                continue
+
+            bc_variant = p + ".bc"
+            if os.path.exists(bc_variant):
+                out.append(bc_variant)
+                continue
+
+        out.append(p)
     return out
 
 

@@ -1,0 +1,3 @@
+(unnamed enum at /usr/include/x86_64-linux-gnu/bits/confname.h:71:1)
+(unnamed enum at /usr/include/x86_64-linux-gnu/bits/confname.h:533:1)
+(unnamed enum at /usr/include/x86_64-linux-gnu/bits/confname.h:24:1)

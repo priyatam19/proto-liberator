@@ -60,6 +60,8 @@ Common options:
   --max-actions N               Default: 64
   --num-seeds N                 Default: 64
   --seed-max-len N              Default: 16
+  --minimum-apis PATH           Optional apis_minimized.txt to restrict APIs
+  --minimum-apis PATH           Optional apis_minimized.txt to restrict APIs
   --seed-rng N                  Default: 0
   --target-include DIR          Repeatable
   --target-lib PATH             Repeatable
@@ -122,6 +124,7 @@ JOBS="1"
 WORKERS="1"
 FORK="1"
 KEEP_GOING="1"
+GENERATE_SEEDS="1"
 LIVE_COVERAGE_INTERVAL_SEC="0"
 WITH_LENIENT="0"
 WITH_LENIENT_RESIZE="0"
@@ -133,6 +136,8 @@ TARGET_LIBS=()
 EXTRA_SRCS=()
 PROFILE_EXTRA_SRCS=()
 PROFILE_KEEP_TARGET_LIB="0"
+MINIMUM_APIS=""
+MINIMUM_APIS=""
 
 declare -a VARIANTS=()
 declare -A VARIANT_CC_ARGS=()
@@ -168,6 +173,7 @@ while [ $# -gt 0 ]; do
     --jobs) JOBS="${2:-}"; shift 2;;
     --workers) WORKERS="${2:-}"; shift 2;;
     --keep-going) KEEP_GOING="1"; shift;;
+    --no-seed-gen) GENERATE_SEEDS="0"; shift;;
     --stop-on-crash) KEEP_GOING="0"; shift;;
     --fork) FORK="${2:-}"; shift 2;;
     --live-coverage-interval-sec) LIVE_COVERAGE_INTERVAL_SEC="${2:-0}"; shift 2;;
@@ -178,6 +184,7 @@ while [ $# -gt 0 ]; do
     --fuzz-arg) GLOBAL_FUZZ_ARGS+=("${2:-}"); shift 2;;
     --target-include) TARGET_INCLUDES+=("${2:-}"); shift 2;;
     --target-lib) TARGET_LIBS+=("${2:-}"); shift 2;;
+    --minimum-apis) MINIMUM_APIS="${2:-}"; shift 2;;
     --extra-src) EXTRA_SRCS+=("${2:-}"); shift 2;;
     --profile-extra-src) PROFILE_EXTRA_SRCS+=("${2:-}"); shift 2;;
     --profile-keep-target-lib) PROFILE_KEEP_TARGET_LIB="1"; shift;;
@@ -244,6 +251,9 @@ fi
 OUT_ROOT="$(cd "${OUT_ROOT}" && pwd)"
 CONDITIONS="$(cd "$(dirname "${CONDITIONS}")" && pwd)/$(basename "${CONDITIONS}")"
 APIS="$(cd "$(dirname "${APIS}")" && pwd)/$(basename "${APIS}")"
+if [ -n "${MINIMUM_APIS}" ]; then
+  MINIMUM_APIS="$(cd "$(dirname "${MINIMUM_APIS}")" && pwd)/$(basename "${MINIMUM_APIS}")"
+fi
 if [ -n "${DRIVER}" ]; then
   DRIVER="$(cd "$(dirname "${DRIVER}")" && pwd)/$(basename "${DRIVER}")"
 fi
@@ -350,7 +360,6 @@ build_variant() {
     --num-seeds "${NUM_SEEDS}"
     --seed-max-len "${SEED_MAX_LEN}"
     --seed-rng "${SEED_RNG}"
-    --generate-seeds
     --harness-style "${HARNESS_STYLE}"
     --build
     --build-profile
@@ -359,6 +368,10 @@ build_variant() {
   for h in "${HEADERS[@]}"; do
     run_all_args+=(--header "${h}")
   done
+
+  if [ "${GENERATE_SEEDS}" = "1" ]; then
+    run_all_args+=(--generate-seeds)
+  fi
 
   if [ -n "${DRIVER}" ]; then
     run_all_args+=(--driver "${DRIVER}")
@@ -370,6 +383,9 @@ build_variant() {
   for lib in "${TARGET_LIBS[@]}"; do
     run_all_args+=(--target-lib "${lib}")
   done
+  if [ -n "${MINIMUM_APIS}" ]; then
+    run_all_args+=(--minimum-apis "${MINIMUM_APIS}")
+  fi
   for src in "${EXTRA_SRCS[@]}"; do
     run_all_args+=(--extra-src "${src}")
   done

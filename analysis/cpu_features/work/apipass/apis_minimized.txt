@@ -1,0 +1,7 @@
+FillX86BrandString
+GetX86CacheInfo
+GetX86FeaturesEnumName
+GetX86FeaturesEnumValue
+GetX86Info
+GetX86Microarchitecture
+GetX86MicroarchitectureName

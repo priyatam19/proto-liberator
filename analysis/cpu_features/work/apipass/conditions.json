@@ -1,0 +1,282 @@
+[
+  {
+    "function_name": "FillX86BrandString",
+    "param_0": {
+      "access_type_set": [
+        {
+          "access": "read",
+          "fields": [],
+          "parent": 0,
+          "type": "8b336322cb5b10c8b7dac308c85cff15",
+          "type_string": "i8*"
+        },
+        {
+          "access": "write",
+          "fields": [],
+          "parent": 0,
+          "type": "8b336322cb5b10c8b7dac308c85cff15",
+          "type_string": "i8*"
+        }
+      ],
+      "is_array": true,
+      "is_file_path": false,
+      "is_malloc_size": false,
+      "len_depends_on": "",
+      "set_by": []
+    },
+    "return": {
+      "access_type_set": [],
+      "is_array": false,
+      "is_file_path": false,
+      "is_malloc_size": false,
+      "len_depends_on": "",
+      "set_by": []
+    }
+  },
+  {
+    "function_name": "GetX86CacheInfo",
+    "return": {
+      "access_type_set": [],
+      "is_array": false,
+      "is_file_path": false,
+      "is_malloc_size": false,
+      "len_depends_on": "",
+      "set_by": []
+    }
+  },
+  {
+    "function_name": "GetX86FeaturesEnumName",
+    "param_0": {
+      "access_type_set": [
+        {
+          "access": "read",
+          "fields": [],
+          "parent": 0,
+          "type": "c86ee0d9d7ed3e7b4fdbf486fa6c0ebb",
+          "type_string": "i32"
+        }
+      ],
+      "is_array": false,
+      "is_file_path": false,
+      "is_malloc_size": false,
+      "len_depends_on": "",
+      "set_by": []
+    },
+    "return": {
+      "access_type_set": [
+        {
+          "access": "read",
+          "fields": [],
+          "parent": 0,
+          "type": "8b336322cb5b10c8b7dac308c85cff15",
+          "type_string": "i8*"
+        },
+        {
+          "access": "write",
+          "fields": [],
+          "parent": 0,
+          "type": "8b336322cb5b10c8b7dac308c85cff15",
+          "type_string": "i8*"
+        }
+      ],
+      "is_array": false,
+      "is_file_path": false,
+      "is_malloc_size": false,
+      "len_depends_on": "",
+      "set_by": []
+    }
+  },
+  {
+    "function_name": "GetX86FeaturesEnumValue",
+    "param_0": {
+      "access_type_set": [
+        {
+          "access": "read",
+          "fields": [],
+          "parent": 0,
+          "type": "8f5039e6a6cefef253ebddc25b483f83",
+          "type_string": "%struct.X86Features*"
+        }
+      ],
+      "is_array": false,
+      "is_file_path": false,
+      "is_malloc_size": false,
+      "len_depends_on": "",
+      "set_by": []
+    },
+    "param_1": {
+      "access_type_set": [
+        {
+          "access": "read",
+          "fields": [],
+          "parent": 0,
+          "type": "c86ee0d9d7ed3e7b4fdbf486fa6c0ebb",
+          "type_string": "i32"
+        }
+      ],
+      "is_array": false,
+      "is_file_path": false,
+      "is_malloc_size": false,
+      "len_depends_on": "",
+      "set_by": []
+    },
+    "return": {
+      "access_type_set": [],
+      "is_array": false,
+      "is_file_path": false,
+      "is_malloc_size": false,
+      "len_depends_on": "",
+      "set_by": []
+    }
+  },
+  {
+    "function_name": "GetX86Info",
+    "return": {
+      "access_type_set": [],
+      "is_array": false,
+      "is_file_path": false,
+      "is_malloc_size": false,
+      "len_depends_on": "",
+      "set_by": []
+    }
+  },
+  {
+    "function_name": "GetX86Microarchitecture",
+    "param_0": {
+      "access_type_set": [
+        {
+          "access": "read",
+          "fields": [],
+          "parent": 0,
+          "type": "3803c476707b8fa26c2dde17a34d1b95",
+          "type_string": "%struct.X86Info*"
+        },
+        {
+          "access": "read",
+          "fields": [
+            -1
+          ],
+          "parent": {
+            "access": "read",
+            "fields": [],
+            "type": "3803c476707b8fa26c2dde17a34d1b95",
+            "type_string": "%struct.X86Info*"
+          },
+          "type": "3803c476707b8fa26c2dde17a34d1b95",
+          "type_string": "%struct.X86Info*"
+        },
+        {
+          "access": "read",
+          "fields": [
+            1
+          ],
+          "parent": {
+            "access": "read",
+            "fields": [],
+            "type": "3803c476707b8fa26c2dde17a34d1b95",
+            "type_string": "%struct.X86Info*"
+          },
+          "type": "c86ee0d9d7ed3e7b4fdbf486fa6c0ebb",
+          "type_string": "i32"
+        },
+        {
+          "access": "read",
+          "fields": [
+            2
+          ],
+          "parent": {
+            "access": "read",
+            "fields": [],
+            "type": "3803c476707b8fa26c2dde17a34d1b95",
+            "type_string": "%struct.X86Info*"
+          },
+          "type": "c86ee0d9d7ed3e7b4fdbf486fa6c0ebb",
+          "type_string": "i32"
+        },
+        {
+          "access": "read",
+          "fields": [
+            3
+          ],
+          "parent": {
+            "access": "read",
+            "fields": [],
+            "type": "3803c476707b8fa26c2dde17a34d1b95",
+            "type_string": "%struct.X86Info*"
+          },
+          "type": "c86ee0d9d7ed3e7b4fdbf486fa6c0ebb",
+          "type_string": "i32"
+        },
+        {
+          "access": "read",
+          "fields": [
+            4
+          ],
+          "parent": {
+            "access": "read",
+            "fields": [],
+            "type": "3803c476707b8fa26c2dde17a34d1b95",
+            "type_string": "%struct.X86Info*"
+          },
+          "type": "313f3bc370102db44d2db0f1fb16e99b",
+          "type_string": "[13 x i8]"
+        }
+      ],
+      "is_array": false,
+      "is_file_path": false,
+      "is_malloc_size": false,
+      "len_depends_on": "",
+      "set_by": []
+    },
+    "return": {
+      "access_type_set": [],
+      "is_array": false,
+      "is_file_path": false,
+      "is_malloc_size": false,
+      "len_depends_on": "",
+      "set_by": []
+    }
+  },
+  {
+    "function_name": "GetX86MicroarchitectureName",
+    "param_0": {
+      "access_type_set": [
+        {
+          "access": "read",
+          "fields": [],
+          "parent": 0,
+          "type": "c86ee0d9d7ed3e7b4fdbf486fa6c0ebb",
+          "type_string": "i32"
+        }
+      ],
+      "is_array": false,
+      "is_file_path": false,
+      "is_malloc_size": false,
+      "len_depends_on": "",
+      "set_by": []
+    },
+    "return": {
+      "access_type_set": [
+        {
+          "access": "read",
+          "fields": [],
+          "parent": 0,
+          "type": "8b336322cb5b10c8b7dac308c85cff15",
+          "type_string": "i8*"
+        },
+        {
+          "access": "write",
+          "fields": [],
+          "parent": 0,
+          "type": "8b336322cb5b10c8b7dac308c85cff15",
+          "type_string": "i8*"
+        }
+      ],
+      "is_array": false,
+      "is_file_path": false,
+      "is_malloc_size": false,
+      "len_depends_on": "",
+      "set_by": []
+    }
+  }
+]

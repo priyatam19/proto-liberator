@@ -1,0 +1,10 @@
+pcap_option_name
+__itimer_which
+(unnamed enum at /usr/include/netinet/in.h:122:1)
+(unnamed enum at /usr/include/x86_64-linux-gnu/bits/socket.h:200:1)
+(unnamed enum at /usr/include/x86_64-linux-gnu/sys/socket.h:41:1)
+__socket_type
+(unnamed enum at /usr/include/netinet/in.h:40:1)
+(unnamed enum at /usr/include/netinet/in.h:99:1)
+(unnamed enum at /usr/include/x86_64-linux-gnu/bits/socket.h:332:1)
+pcap_direction_t

@@ -1,0 +1,4 @@
+plist_write_options_t
+plist_format_t
+plist_err_t
+plist_type

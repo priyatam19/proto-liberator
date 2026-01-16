@@ -1,0 +1,635 @@
+aom_uleb_size_in_bytes(uint64_t)
+aom_uleb_decode(const uint8_t *, size_t, uint64_t *, size_t *)
+aom_uleb_encode(uint64_t, size_t, uint8_t *, size_t *)
+aom_uleb_encode_fixed_size(uint64_t, size_t, size_t, uint8_t *, size_t *)
+aom_img_alloc(aom_image_t *, aom_img_fmt_t, unsigned int, unsigned int, unsigned int)
+aom_img_wrap(aom_image_t *, aom_img_fmt_t, unsigned int, unsigned int, unsigned int, unsigned char *)
+aom_img_alloc_with_border(aom_image_t *, aom_img_fmt_t, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int)
+aom_img_set_rect(aom_image_t *, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int)
+aom_img_flip(aom_image_t *)
+aom_img_free(aom_image_t *)
+aom_img_plane_width(const aom_image_t *, int)
+aom_img_plane_height(const aom_image_t *, int)
+aom_img_add_metadata(aom_image_t *, uint32_t, const uint8_t *, size_t, aom_metadata_insert_flags_t)
+aom_img_get_metadata(const aom_image_t *, size_t)
+aom_img_num_metadata(const aom_image_t *)
+aom_img_remove_metadata(aom_image_t *)
+aom_img_metadata_alloc(uint32_t, const uint8_t *, size_t, aom_metadata_insert_flags_t)
+aom_img_metadata_free(aom_metadata_t *)
+aom_codec_version()
+aom_codec_version_str()
+aom_codec_version_extra_str()
+aom_codec_build_config()
+aom_codec_iface_name(aom_codec_iface_t *)
+aom_codec_err_to_string(aom_codec_err_t)
+aom_codec_error(const aom_codec_ctx_t *)
+aom_codec_error_detail(const aom_codec_ctx_t *)
+aom_codec_destroy(aom_codec_ctx_t *)
+aom_codec_get_caps(aom_codec_iface_t *)
+aom_codec_control(aom_codec_ctx_t *, int, ...)
+aom_codec_set_option(aom_codec_ctx_t *, const char *, const char *)
+aom_obu_type_to_string(OBU_TYPE)
+aom_codec_control_typechecked_AV1_GET_REFERENCE(aom_codec_ctx_t *, int, av1_ref_frame_t *)
+aom_codec_control
+aom_codec_control_typechecked_AV1_GET_REFERENCE(aom_codec_ctx_t *, int, av1_ref_frame_t *)
+aom_codec_control_typechecked_AV1_SET_REFERENCE(aom_codec_ctx_t *, int, av1_ref_frame_t *)
+aom_codec_control
+aom_codec_control_typechecked_AV1_SET_REFERENCE(aom_codec_ctx_t *, int, av1_ref_frame_t *)
+aom_codec_control_typechecked_AV1_COPY_REFERENCE(aom_codec_ctx_t *, int, av1_ref_frame_t *)
+aom_codec_control
+aom_codec_control_typechecked_AV1_COPY_REFERENCE(aom_codec_ctx_t *, int, av1_ref_frame_t *)
+aom_codec_control_typechecked_AV1_GET_NEW_FRAME_IMAGE(aom_codec_ctx_t *, int, aom_image_t *)
+aom_codec_control
+aom_codec_control_typechecked_AV1_GET_NEW_FRAME_IMAGE(aom_codec_ctx_t *, int, aom_image_t *)
+aom_codec_control_typechecked_AV1_COPY_NEW_FRAME_IMAGE(aom_codec_ctx_t *, int, aom_image_t *)
+aom_codec_control
+aom_codec_control_typechecked_AV1_COPY_NEW_FRAME_IMAGE(aom_codec_ctx_t *, int, aom_image_t *)
+aom_codec_av1_dx()
+aom_codec_control_typechecked_AOMD_GET_LAST_REF_UPDATES(aom_codec_ctx_t *, int, int *)
+aom_codec_control
+aom_codec_control_typechecked_AOMD_GET_LAST_REF_UPDATES(aom_codec_ctx_t *, int, int *)
+aom_codec_control_typechecked_AOMD_GET_FRAME_CORRUPTED(aom_codec_ctx_t *, int, int *)
+aom_codec_control
+aom_codec_control_typechecked_AOMD_GET_FRAME_CORRUPTED(aom_codec_ctx_t *, int, int *)
+aom_codec_control_typechecked_AOMD_GET_LAST_REF_USED(aom_codec_ctx_t *, int, int *)
+aom_codec_control
+aom_codec_control_typechecked_AOMD_GET_LAST_REF_USED(aom_codec_ctx_t *, int, int *)
+aom_codec_control_typechecked_AV1D_GET_FRAME_SIZE(aom_codec_ctx_t *, int, int *)
+aom_codec_control
+aom_codec_control_typechecked_AV1D_GET_FRAME_SIZE(aom_codec_ctx_t *, int, int *)
+aom_codec_control_typechecked_AV1D_GET_DISPLAY_SIZE(aom_codec_ctx_t *, int, int *)
+aom_codec_control
+aom_codec_control_typechecked_AV1D_GET_DISPLAY_SIZE(aom_codec_ctx_t *, int, int *)
+aom_codec_control_typechecked_AV1D_GET_BIT_DEPTH(aom_codec_ctx_t *, int, unsigned int *)
+aom_codec_control
+aom_codec_control_typechecked_AV1D_GET_BIT_DEPTH(aom_codec_ctx_t *, int, unsigned int *)
+aom_codec_control_typechecked_AV1D_GET_IMG_FORMAT(aom_codec_ctx_t *, int, aom_img_fmt_t *)
+aom_codec_control
+aom_codec_control_typechecked_AV1D_GET_IMG_FORMAT(aom_codec_ctx_t *, int, aom_img_fmt_t *)
+aom_codec_control_typechecked_AV1D_GET_TILE_SIZE(aom_codec_ctx_t *, int, unsigned int *)
+aom_codec_control
+aom_codec_control_typechecked_AV1D_GET_TILE_SIZE(aom_codec_ctx_t *, int, unsigned int *)
+aom_codec_control_typechecked_AV1D_GET_TILE_COUNT(aom_codec_ctx_t *, int, unsigned int *)
+aom_codec_control
+aom_codec_control_typechecked_AV1D_GET_TILE_COUNT(aom_codec_ctx_t *, int, unsigned int *)
+aom_codec_control_typechecked_AV1_INVERT_TILE_DECODE_ORDER(aom_codec_ctx_t *, int, int)
+aom_codec_control
+aom_codec_control_typechecked_AV1_INVERT_TILE_DECODE_ORDER(aom_codec_ctx_t *, int, int)
+aom_codec_control_typechecked_AV1_SET_SKIP_LOOP_FILTER(aom_codec_ctx_t *, int, int)
+aom_codec_control
+aom_codec_control_typechecked_AV1_SET_SKIP_LOOP_FILTER(aom_codec_ctx_t *, int, int)
+aom_codec_control_typechecked_AV1_GET_ACCOUNTING(aom_codec_ctx_t *, int, Accounting **)
+aom_codec_control
+aom_codec_control_typechecked_AV1_GET_ACCOUNTING(aom_codec_ctx_t *, int, Accounting **)
+aom_codec_control_typechecked_AOMD_GET_LAST_QUANTIZER(aom_codec_ctx_t *, int, int *)
+aom_codec_control
+aom_codec_control_typechecked_AOMD_GET_LAST_QUANTIZER(aom_codec_ctx_t *, int, int *)
+aom_codec_control_typechecked_AV1_SET_DECODE_TILE_ROW(aom_codec_ctx_t *, int, int)
+aom_codec_control
+aom_codec_control_typechecked_AV1_SET_DECODE_TILE_ROW(aom_codec_ctx_t *, int, int)
+aom_codec_control_typechecked_AV1_SET_DECODE_TILE_COL(aom_codec_ctx_t *, int, int)
+aom_codec_control
+aom_codec_control_typechecked_AV1_SET_DECODE_TILE_COL(aom_codec_ctx_t *, int, int)
+aom_codec_control_typechecked_AV1_SET_TILE_MODE(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control
+aom_codec_control_typechecked_AV1_SET_TILE_MODE(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control_typechecked_AV1D_GET_FRAME_HEADER_INFO(aom_codec_ctx_t *, int, aom_tile_data *)
+aom_codec_control
+aom_codec_control_typechecked_AV1D_GET_FRAME_HEADER_INFO(aom_codec_ctx_t *, int, aom_tile_data *)
+aom_codec_control_typechecked_AV1D_GET_TILE_DATA(aom_codec_ctx_t *, int, aom_tile_data *)
+aom_codec_control
+aom_codec_control_typechecked_AV1D_GET_TILE_DATA(aom_codec_ctx_t *, int, aom_tile_data *)
+aom_codec_control_typechecked_AV1D_SET_EXT_REF_PTR(aom_codec_ctx_t *, int, av1_ext_ref_frame_t *)
+aom_codec_control
+aom_codec_control_typechecked_AV1D_SET_EXT_REF_PTR(aom_codec_ctx_t *, int, av1_ext_ref_frame_t *)
+aom_codec_control_typechecked_AV1D_EXT_TILE_DEBUG(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control
+aom_codec_control_typechecked_AV1D_EXT_TILE_DEBUG(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control_typechecked_AV1D_SET_ROW_MT(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control
+aom_codec_control_typechecked_AV1D_SET_ROW_MT(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control_typechecked_AV1D_SET_IS_ANNEXB(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control
+aom_codec_control_typechecked_AV1D_SET_IS_ANNEXB(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control_typechecked_AV1D_SET_OPERATING_POINT(aom_codec_ctx_t *, int, int)
+aom_codec_control
+aom_codec_control_typechecked_AV1D_SET_OPERATING_POINT(aom_codec_ctx_t *, int, int)
+aom_codec_control_typechecked_AV1D_SET_OUTPUT_ALL_LAYERS(aom_codec_ctx_t *, int, int)
+aom_codec_control
+aom_codec_control_typechecked_AV1D_SET_OUTPUT_ALL_LAYERS(aom_codec_ctx_t *, int, int)
+aom_codec_control_typechecked_AV1_SET_INSPECTION_CALLBACK(aom_codec_ctx_t *, int, aom_inspect_init *)
+aom_codec_control
+aom_codec_control_typechecked_AV1_SET_INSPECTION_CALLBACK(aom_codec_ctx_t *, int, aom_inspect_init *)
+aom_codec_control_typechecked_AV1D_SET_SKIP_FILM_GRAIN(aom_codec_ctx_t *, int, int)
+aom_codec_control
+aom_codec_control_typechecked_AV1D_SET_SKIP_FILM_GRAIN(aom_codec_ctx_t *, int, int)
+aom_codec_control_typechecked_AOMD_GET_FWD_KF_PRESENT(aom_codec_ctx_t *, int, int *)
+aom_codec_control
+aom_codec_control_typechecked_AOMD_GET_FWD_KF_PRESENT(aom_codec_ctx_t *, int, int *)
+aom_codec_control_typechecked_AOMD_GET_FRAME_FLAGS(aom_codec_ctx_t *, int, int *)
+aom_codec_control
+aom_codec_control_typechecked_AOMD_GET_FRAME_FLAGS(aom_codec_ctx_t *, int, int *)
+aom_codec_control_typechecked_AOMD_GET_ALTREF_PRESENT(aom_codec_ctx_t *, int, int *)
+aom_codec_control
+aom_codec_control_typechecked_AOMD_GET_ALTREF_PRESENT(aom_codec_ctx_t *, int, int *)
+aom_codec_control_typechecked_AOMD_GET_TILE_INFO(aom_codec_ctx_t *, int, aom_tile_info *)
+aom_codec_control
+aom_codec_control_typechecked_AOMD_GET_TILE_INFO(aom_codec_ctx_t *, int, aom_tile_info *)
+aom_codec_control_typechecked_AOMD_GET_SCREEN_CONTENT_TOOLS_INFO(aom_codec_ctx_t *, int, aom_screen_content_tools_info *)
+aom_codec_control
+aom_codec_control_typechecked_AOMD_GET_SCREEN_CONTENT_TOOLS_INFO(aom_codec_ctx_t *, int, aom_screen_content_tools_info *)
+aom_codec_control_typechecked_AOMD_GET_STILL_PICTURE(aom_codec_ctx_t *, int, aom_still_picture_info *)
+aom_codec_control
+aom_codec_control_typechecked_AOMD_GET_STILL_PICTURE(aom_codec_ctx_t *, int, aom_still_picture_info *)
+aom_codec_control_typechecked_AOMD_GET_SB_SIZE(aom_codec_ctx_t *, int, aom_superblock_size_t *)
+aom_codec_control
+aom_codec_control_typechecked_AOMD_GET_SB_SIZE(aom_codec_ctx_t *, int, aom_superblock_size_t *)
+aom_codec_control_typechecked_AOMD_GET_SHOW_EXISTING_FRAME_FLAG(aom_codec_ctx_t *, int, int *)
+aom_codec_control
+aom_codec_control_typechecked_AOMD_GET_SHOW_EXISTING_FRAME_FLAG(aom_codec_ctx_t *, int, int *)
+aom_codec_control_typechecked_AOMD_GET_S_FRAME_INFO(aom_codec_ctx_t *, int, aom_s_frame_info *)
+aom_codec_control
+aom_codec_control_typechecked_AOMD_GET_S_FRAME_INFO(aom_codec_ctx_t *, int, aom_s_frame_info *)
+aom_codec_control_typechecked_AOMD_GET_SHOW_FRAME_FLAG(aom_codec_ctx_t *, int, int *)
+aom_codec_control
+aom_codec_control_typechecked_AOMD_GET_SHOW_FRAME_FLAG(aom_codec_ctx_t *, int, int *)
+aom_codec_control_typechecked_AOMD_GET_BASE_Q_IDX(aom_codec_ctx_t *, int, int *)
+aom_codec_control
+aom_codec_control_typechecked_AOMD_GET_BASE_Q_IDX(aom_codec_ctx_t *, int, int *)
+aom_codec_control_typechecked_AOMD_GET_ORDER_HINT(aom_codec_ctx_t *, int, unsigned int *)
+aom_codec_control
+aom_codec_control_typechecked_AOMD_GET_ORDER_HINT(aom_codec_ctx_t *, int, unsigned int *)
+aom_codec_dec_init_ver(aom_codec_ctx_t *, aom_codec_iface_t *, const aom_codec_dec_cfg_t *, aom_codec_flags_t, int)
+aom_codec_peek_stream_info(aom_codec_iface_t *, const uint8_t *, size_t, aom_codec_stream_info_t *)
+aom_codec_get_stream_info(aom_codec_ctx_t *, aom_codec_stream_info_t *)
+aom_codec_decode(aom_codec_ctx_t *, const uint8_t *, size_t, void *)
+aom_codec_get_frame(aom_codec_ctx_t *, aom_codec_iter_t *)
+aom_codec_set_frame_buffer_functions(aom_codec_ctx_t *, aom_get_frame_buffer_cb_fn_t, aom_release_frame_buffer_cb_fn_t, void *)
+aom_codec_enc_init_ver(aom_codec_ctx_t *, aom_codec_iface_t *, const aom_codec_enc_cfg_t *, aom_codec_flags_t, int)
+aom_codec_enc_config_default(aom_codec_iface_t *, aom_codec_enc_cfg_t *, unsigned int)
+aom_codec_enc_config_set(aom_codec_ctx_t *, const aom_codec_enc_cfg_t *)
+aom_codec_get_global_headers(aom_codec_ctx_t *)
+aom_codec_encode(aom_codec_ctx_t *, const aom_image_t *, aom_codec_pts_t, unsigned long, aom_enc_frame_flags_t)
+aom_codec_set_cx_data_buf(aom_codec_ctx_t *, const aom_fixed_buf_t *, unsigned int, unsigned int)
+aom_codec_get_cx_data(aom_codec_ctx_t *, aom_codec_iter_t *)
+aom_codec_get_preview_frame(aom_codec_ctx_t *)
+aom_codec_av1_cx()
+aom_codec_control_typechecked_AOME_USE_REFERENCE(aom_codec_ctx_t *, int, int)
+aom_codec_control
+aom_codec_control_typechecked_AOME_USE_REFERENCE(aom_codec_ctx_t *, int, int)
+aom_codec_control_typechecked_AOME_SET_ROI_MAP(aom_codec_ctx_t *, int, aom_roi_map_t *)
+aom_codec_control
+aom_codec_control_typechecked_AOME_SET_ROI_MAP(aom_codec_ctx_t *, int, aom_roi_map_t *)
+aom_codec_control_typechecked_AOME_SET_ACTIVEMAP(aom_codec_ctx_t *, int, aom_active_map_t *)
+aom_codec_control
+aom_codec_control_typechecked_AOME_SET_ACTIVEMAP(aom_codec_ctx_t *, int, aom_active_map_t *)
+aom_codec_control_typechecked_AOME_SET_SCALEMODE(aom_codec_ctx_t *, int, aom_scaling_mode_t *)
+aom_codec_control
+aom_codec_control_typechecked_AOME_SET_SCALEMODE(aom_codec_ctx_t *, int, aom_scaling_mode_t *)
+aom_codec_control_typechecked_AOME_SET_SPATIAL_LAYER_ID(aom_codec_ctx_t *, int, int)
+aom_codec_control
+aom_codec_control_typechecked_AOME_SET_SPATIAL_LAYER_ID(aom_codec_ctx_t *, int, int)
+aom_codec_control_typechecked_AOME_SET_CPUUSED(aom_codec_ctx_t *, int, int)
+aom_codec_control
+aom_codec_control_typechecked_AOME_SET_CPUUSED(aom_codec_ctx_t *, int, int)
+aom_codec_control_typechecked_AOME_SET_ENABLEAUTOALTREF(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control
+aom_codec_control_typechecked_AOME_SET_ENABLEAUTOALTREF(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control_typechecked_AOME_SET_SHARPNESS(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control
+aom_codec_control_typechecked_AOME_SET_SHARPNESS(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control_typechecked_AOME_SET_STATIC_THRESHOLD(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control
+aom_codec_control_typechecked_AOME_SET_STATIC_THRESHOLD(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control_typechecked_AOME_GET_LAST_QUANTIZER(aom_codec_ctx_t *, int, int *)
+aom_codec_control
+aom_codec_control_typechecked_AOME_GET_LAST_QUANTIZER(aom_codec_ctx_t *, int, int *)
+aom_codec_control_typechecked_AOME_GET_LAST_QUANTIZER_64(aom_codec_ctx_t *, int, int *)
+aom_codec_control
+aom_codec_control_typechecked_AOME_GET_LAST_QUANTIZER_64(aom_codec_ctx_t *, int, int *)
+aom_codec_control_typechecked_AOME_SET_ARNR_MAXFRAMES(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control
+aom_codec_control_typechecked_AOME_SET_ARNR_MAXFRAMES(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control_typechecked_AOME_SET_ARNR_STRENGTH(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control
+aom_codec_control_typechecked_AOME_SET_ARNR_STRENGTH(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control_typechecked_AOME_SET_TUNING(aom_codec_ctx_t *, int, int)
+aom_codec_control
+aom_codec_control_typechecked_AOME_SET_TUNING(aom_codec_ctx_t *, int, int)
+aom_codec_control_typechecked_AOME_SET_CQ_LEVEL(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control
+aom_codec_control_typechecked_AOME_SET_CQ_LEVEL(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control_typechecked_AOME_SET_MAX_INTRA_BITRATE_PCT(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control
+aom_codec_control_typechecked_AOME_SET_MAX_INTRA_BITRATE_PCT(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control_typechecked_AOME_SET_NUMBER_SPATIAL_LAYERS(aom_codec_ctx_t *, int, int)
+aom_codec_control
+aom_codec_control_typechecked_AOME_SET_NUMBER_SPATIAL_LAYERS(aom_codec_ctx_t *, int, int)
+aom_codec_control_typechecked_AOME_SET_MAX_INTER_BITRATE_PCT(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control
+aom_codec_control_typechecked_AOME_SET_MAX_INTER_BITRATE_PCT(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control_typechecked_AV1E_SET_GF_CBR_BOOST_PCT(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_GF_CBR_BOOST_PCT(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control_typechecked_AV1E_SET_LOSSLESS(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_LOSSLESS(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control_typechecked_AV1E_SET_ROW_MT(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_ROW_MT(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control_typechecked_AV1E_SET_TILE_COLUMNS(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_TILE_COLUMNS(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control_typechecked_AV1E_SET_TILE_ROWS(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_TILE_ROWS(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control_typechecked_AV1E_SET_ENABLE_TPL_MODEL(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_ENABLE_TPL_MODEL(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control_typechecked_AV1E_SET_ENABLE_KEYFRAME_FILTERING(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_ENABLE_KEYFRAME_FILTERING(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control_typechecked_AV1E_SET_FRAME_PARALLEL_DECODING(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_FRAME_PARALLEL_DECODING(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control_typechecked_AV1E_SET_ERROR_RESILIENT_MODE(aom_codec_ctx_t *, int, int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_ERROR_RESILIENT_MODE(aom_codec_ctx_t *, int, int)
+aom_codec_control_typechecked_AV1E_SET_S_FRAME_MODE(aom_codec_ctx_t *, int, int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_S_FRAME_MODE(aom_codec_ctx_t *, int, int)
+aom_codec_control_typechecked_AV1E_SET_AQ_MODE(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_AQ_MODE(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control_typechecked_AV1E_SET_FRAME_PERIODIC_BOOST(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_FRAME_PERIODIC_BOOST(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control_typechecked_AV1E_SET_NOISE_SENSITIVITY(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_NOISE_SENSITIVITY(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control_typechecked_AV1E_SET_TUNE_CONTENT(aom_codec_ctx_t *, int, int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_TUNE_CONTENT(aom_codec_ctx_t *, int, int)
+aom_codec_control_typechecked_AV1E_SET_CDF_UPDATE_MODE(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_CDF_UPDATE_MODE(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control_typechecked_AV1E_SET_COLOR_PRIMARIES(aom_codec_ctx_t *, int, int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_COLOR_PRIMARIES(aom_codec_ctx_t *, int, int)
+aom_codec_control_typechecked_AV1E_SET_TRANSFER_CHARACTERISTICS(aom_codec_ctx_t *, int, int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_TRANSFER_CHARACTERISTICS(aom_codec_ctx_t *, int, int)
+aom_codec_control_typechecked_AV1E_SET_MATRIX_COEFFICIENTS(aom_codec_ctx_t *, int, int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_MATRIX_COEFFICIENTS(aom_codec_ctx_t *, int, int)
+aom_codec_control_typechecked_AV1E_SET_CHROMA_SAMPLE_POSITION(aom_codec_ctx_t *, int, int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_CHROMA_SAMPLE_POSITION(aom_codec_ctx_t *, int, int)
+aom_codec_control_typechecked_AV1E_SET_MIN_GF_INTERVAL(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_MIN_GF_INTERVAL(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control_typechecked_AV1E_SET_MAX_GF_INTERVAL(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_MAX_GF_INTERVAL(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control_typechecked_AV1E_GET_ACTIVEMAP(aom_codec_ctx_t *, int, aom_active_map_t *)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_GET_ACTIVEMAP(aom_codec_ctx_t *, int, aom_active_map_t *)
+aom_codec_control_typechecked_AV1E_SET_COLOR_RANGE(aom_codec_ctx_t *, int, int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_COLOR_RANGE(aom_codec_ctx_t *, int, int)
+aom_codec_control_typechecked_AV1E_SET_RENDER_SIZE(aom_codec_ctx_t *, int, int *)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_RENDER_SIZE(aom_codec_ctx_t *, int, int *)
+aom_codec_control_typechecked_AV1E_SET_TARGET_SEQ_LEVEL_IDX(aom_codec_ctx_t *, int, int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_TARGET_SEQ_LEVEL_IDX(aom_codec_ctx_t *, int, int)
+aom_codec_control_typechecked_AV1E_GET_SEQ_LEVEL_IDX(aom_codec_ctx_t *, int, int *)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_GET_SEQ_LEVEL_IDX(aom_codec_ctx_t *, int, int *)
+aom_codec_control_typechecked_AV1E_SET_SUPERBLOCK_SIZE(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_SUPERBLOCK_SIZE(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control_typechecked_AOME_SET_ENABLEAUTOBWDREF(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control
+aom_codec_control_typechecked_AOME_SET_ENABLEAUTOBWDREF(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control_typechecked_AV1E_SET_ENABLE_CDEF(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_ENABLE_CDEF(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control_typechecked_AV1E_SET_ENABLE_RESTORATION(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_ENABLE_RESTORATION(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control_typechecked_AV1E_SET_FORCE_VIDEO_MODE(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_FORCE_VIDEO_MODE(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control_typechecked_AV1E_SET_ENABLE_OBMC(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_ENABLE_OBMC(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control_typechecked_AV1E_SET_DISABLE_TRELLIS_QUANT(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_DISABLE_TRELLIS_QUANT(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control_typechecked_AV1E_SET_ENABLE_QM(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_ENABLE_QM(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control_typechecked_AV1E_SET_ENABLE_DIST_8X8(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_ENABLE_DIST_8X8(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control_typechecked_AV1E_SET_QM_MIN(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_QM_MIN(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control_typechecked_AV1E_SET_QM_MAX(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_QM_MAX(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control_typechecked_AV1E_SET_QM_Y(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_QM_Y(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control_typechecked_AV1E_SET_QM_U(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_QM_U(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control_typechecked_AV1E_SET_QM_V(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_QM_V(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control_typechecked_AV1E_SET_NUM_TG(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_NUM_TG(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control_typechecked_AV1E_SET_MTU(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_MTU(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control_typechecked_AV1E_SET_ENABLE_RECT_PARTITIONS(aom_codec_ctx_t *, int, int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_ENABLE_RECT_PARTITIONS(aom_codec_ctx_t *, int, int)
+aom_codec_control_typechecked_AV1E_SET_ENABLE_AB_PARTITIONS(aom_codec_ctx_t *, int, int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_ENABLE_AB_PARTITIONS(aom_codec_ctx_t *, int, int)
+aom_codec_control_typechecked_AV1E_SET_ENABLE_1TO4_PARTITIONS(aom_codec_ctx_t *, int, int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_ENABLE_1TO4_PARTITIONS(aom_codec_ctx_t *, int, int)
+aom_codec_control_typechecked_AV1E_SET_MIN_PARTITION_SIZE(aom_codec_ctx_t *, int, int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_MIN_PARTITION_SIZE(aom_codec_ctx_t *, int, int)
+aom_codec_control_typechecked_AV1E_SET_MAX_PARTITION_SIZE(aom_codec_ctx_t *, int, int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_MAX_PARTITION_SIZE(aom_codec_ctx_t *, int, int)
+aom_codec_control_typechecked_AV1E_SET_ENABLE_INTRA_EDGE_FILTER(aom_codec_ctx_t *, int, int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_ENABLE_INTRA_EDGE_FILTER(aom_codec_ctx_t *, int, int)
+aom_codec_control_typechecked_AV1E_SET_ENABLE_ORDER_HINT(aom_codec_ctx_t *, int, int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_ENABLE_ORDER_HINT(aom_codec_ctx_t *, int, int)
+aom_codec_control_typechecked_AV1E_SET_ENABLE_TX64(aom_codec_ctx_t *, int, int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_ENABLE_TX64(aom_codec_ctx_t *, int, int)
+aom_codec_control_typechecked_AV1E_SET_ENABLE_FLIP_IDTX(aom_codec_ctx_t *, int, int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_ENABLE_FLIP_IDTX(aom_codec_ctx_t *, int, int)
+aom_codec_control_typechecked_AV1E_SET_ENABLE_RECT_TX(aom_codec_ctx_t *, int, int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_ENABLE_RECT_TX(aom_codec_ctx_t *, int, int)
+aom_codec_control_typechecked_AV1E_SET_ENABLE_DIST_WTD_COMP(aom_codec_ctx_t *, int, int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_ENABLE_DIST_WTD_COMP(aom_codec_ctx_t *, int, int)
+aom_codec_control_typechecked_AV1E_SET_ENABLE_REF_FRAME_MVS(aom_codec_ctx_t *, int, int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_ENABLE_REF_FRAME_MVS(aom_codec_ctx_t *, int, int)
+aom_codec_control_typechecked_AV1E_SET_ALLOW_REF_FRAME_MVS(aom_codec_ctx_t *, int, int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_ALLOW_REF_FRAME_MVS(aom_codec_ctx_t *, int, int)
+aom_codec_control_typechecked_AV1E_SET_ENABLE_DUAL_FILTER(aom_codec_ctx_t *, int, int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_ENABLE_DUAL_FILTER(aom_codec_ctx_t *, int, int)
+aom_codec_control_typechecked_AV1E_SET_ENABLE_CHROMA_DELTAQ(aom_codec_ctx_t *, int, int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_ENABLE_CHROMA_DELTAQ(aom_codec_ctx_t *, int, int)
+aom_codec_control_typechecked_AV1E_SET_ENABLE_MASKED_COMP(aom_codec_ctx_t *, int, int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_ENABLE_MASKED_COMP(aom_codec_ctx_t *, int, int)
+aom_codec_control_typechecked_AV1E_SET_ENABLE_ONESIDED_COMP(aom_codec_ctx_t *, int, int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_ENABLE_ONESIDED_COMP(aom_codec_ctx_t *, int, int)
+aom_codec_control_typechecked_AV1E_SET_ENABLE_INTERINTRA_COMP(aom_codec_ctx_t *, int, int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_ENABLE_INTERINTRA_COMP(aom_codec_ctx_t *, int, int)
+aom_codec_control_typechecked_AV1E_SET_ENABLE_SMOOTH_INTERINTRA(aom_codec_ctx_t *, int, int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_ENABLE_SMOOTH_INTERINTRA(aom_codec_ctx_t *, int, int)
+aom_codec_control_typechecked_AV1E_SET_ENABLE_DIFF_WTD_COMP(aom_codec_ctx_t *, int, int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_ENABLE_DIFF_WTD_COMP(aom_codec_ctx_t *, int, int)
+aom_codec_control_typechecked_AV1E_SET_ENABLE_INTERINTER_WEDGE(aom_codec_ctx_t *, int, int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_ENABLE_INTERINTER_WEDGE(aom_codec_ctx_t *, int, int)
+aom_codec_control_typechecked_AV1E_SET_ENABLE_INTERINTRA_WEDGE(aom_codec_ctx_t *, int, int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_ENABLE_INTERINTRA_WEDGE(aom_codec_ctx_t *, int, int)
+aom_codec_control_typechecked_AV1E_SET_ENABLE_GLOBAL_MOTION(aom_codec_ctx_t *, int, int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_ENABLE_GLOBAL_MOTION(aom_codec_ctx_t *, int, int)
+aom_codec_control_typechecked_AV1E_SET_ENABLE_WARPED_MOTION(aom_codec_ctx_t *, int, int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_ENABLE_WARPED_MOTION(aom_codec_ctx_t *, int, int)
+aom_codec_control_typechecked_AV1E_SET_ALLOW_WARPED_MOTION(aom_codec_ctx_t *, int, int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_ALLOW_WARPED_MOTION(aom_codec_ctx_t *, int, int)
+aom_codec_control_typechecked_AV1E_SET_ENABLE_FILTER_INTRA(aom_codec_ctx_t *, int, int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_ENABLE_FILTER_INTRA(aom_codec_ctx_t *, int, int)
+aom_codec_control_typechecked_AV1E_SET_ENABLE_SMOOTH_INTRA(aom_codec_ctx_t *, int, int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_ENABLE_SMOOTH_INTRA(aom_codec_ctx_t *, int, int)
+aom_codec_control_typechecked_AV1E_SET_ENABLE_PAETH_INTRA(aom_codec_ctx_t *, int, int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_ENABLE_PAETH_INTRA(aom_codec_ctx_t *, int, int)
+aom_codec_control_typechecked_AV1E_SET_ENABLE_CFL_INTRA(aom_codec_ctx_t *, int, int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_ENABLE_CFL_INTRA(aom_codec_ctx_t *, int, int)
+aom_codec_control_typechecked_AV1E_SET_ENABLE_SUPERRES(aom_codec_ctx_t *, int, int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_ENABLE_SUPERRES(aom_codec_ctx_t *, int, int)
+aom_codec_control_typechecked_AV1E_SET_ENABLE_OVERLAY(aom_codec_ctx_t *, int, int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_ENABLE_OVERLAY(aom_codec_ctx_t *, int, int)
+aom_codec_control_typechecked_AV1E_SET_ENABLE_PALETTE(aom_codec_ctx_t *, int, int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_ENABLE_PALETTE(aom_codec_ctx_t *, int, int)
+aom_codec_control_typechecked_AV1E_SET_ENABLE_INTRABC(aom_codec_ctx_t *, int, int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_ENABLE_INTRABC(aom_codec_ctx_t *, int, int)
+aom_codec_control_typechecked_AV1E_SET_ENABLE_ANGLE_DELTA(aom_codec_ctx_t *, int, int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_ENABLE_ANGLE_DELTA(aom_codec_ctx_t *, int, int)
+aom_codec_control_typechecked_AV1E_SET_DELTAQ_MODE(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_DELTAQ_MODE(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control_typechecked_AV1E_SET_DELTALF_MODE(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_DELTALF_MODE(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control_typechecked_AV1E_SET_SINGLE_TILE_DECODING(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_SINGLE_TILE_DECODING(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control_typechecked_AV1E_ENABLE_MOTION_VECTOR_UNIT_TEST(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_ENABLE_MOTION_VECTOR_UNIT_TEST(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control_typechecked_AV1E_SET_TIMING_INFO_TYPE(aom_codec_ctx_t *, int, int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_TIMING_INFO_TYPE(aom_codec_ctx_t *, int, int)
+aom_codec_control_typechecked_AV1E_SET_FILM_GRAIN_TEST_VECTOR(aom_codec_ctx_t *, int, int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_FILM_GRAIN_TEST_VECTOR(aom_codec_ctx_t *, int, int)
+aom_codec_control_typechecked_AV1E_SET_FILM_GRAIN_TABLE(aom_codec_ctx_t *, int, const char *)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_FILM_GRAIN_TABLE(aom_codec_ctx_t *, int, const char *)
+aom_codec_control_typechecked_AV1E_SET_DENOISE_NOISE_LEVEL(aom_codec_ctx_t *, int, int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_DENOISE_NOISE_LEVEL(aom_codec_ctx_t *, int, int)
+aom_codec_control_typechecked_AV1E_SET_DENOISE_BLOCK_SIZE(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_DENOISE_BLOCK_SIZE(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control_typechecked_AV1E_SET_CHROMA_SUBSAMPLING_X(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_CHROMA_SUBSAMPLING_X(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control_typechecked_AV1E_SET_CHROMA_SUBSAMPLING_Y(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_CHROMA_SUBSAMPLING_Y(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control_typechecked_AV1E_SET_REDUCED_TX_TYPE_SET(aom_codec_ctx_t *, int, int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_REDUCED_TX_TYPE_SET(aom_codec_ctx_t *, int, int)
+aom_codec_control_typechecked_AV1E_SET_INTRA_DCT_ONLY(aom_codec_ctx_t *, int, int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_INTRA_DCT_ONLY(aom_codec_ctx_t *, int, int)
+aom_codec_control_typechecked_AV1E_SET_INTER_DCT_ONLY(aom_codec_ctx_t *, int, int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_INTER_DCT_ONLY(aom_codec_ctx_t *, int, int)
+aom_codec_control_typechecked_AV1E_SET_INTRA_DEFAULT_TX_ONLY(aom_codec_ctx_t *, int, int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_INTRA_DEFAULT_TX_ONLY(aom_codec_ctx_t *, int, int)
+aom_codec_control_typechecked_AV1E_SET_QUANT_B_ADAPT(aom_codec_ctx_t *, int, int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_QUANT_B_ADAPT(aom_codec_ctx_t *, int, int)
+aom_codec_control_typechecked_AV1E_SET_GF_MAX_PYRAMID_HEIGHT(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_GF_MAX_PYRAMID_HEIGHT(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control_typechecked_AV1E_SET_MAX_REFERENCE_FRAMES(aom_codec_ctx_t *, int, int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_MAX_REFERENCE_FRAMES(aom_codec_ctx_t *, int, int)
+aom_codec_control_typechecked_AV1E_SET_REDUCED_REFERENCE_SET(aom_codec_ctx_t *, int, int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_REDUCED_REFERENCE_SET(aom_codec_ctx_t *, int, int)
+aom_codec_control_typechecked_AV1E_SET_COEFF_COST_UPD_FREQ(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_COEFF_COST_UPD_FREQ(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control_typechecked_AV1E_SET_MODE_COST_UPD_FREQ(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_MODE_COST_UPD_FREQ(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control_typechecked_AV1E_SET_MV_COST_UPD_FREQ(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_MV_COST_UPD_FREQ(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control_typechecked_AV1E_SET_TIER_MASK(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_TIER_MASK(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control_typechecked_AV1E_SET_MIN_CR(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_MIN_CR(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control_typechecked_AV1E_SET_SVC_LAYER_ID(aom_codec_ctx_t *, int, aom_svc_layer_id_t *)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_SVC_LAYER_ID(aom_codec_ctx_t *, int, aom_svc_layer_id_t *)
+aom_codec_control_typechecked_AV1E_SET_SVC_PARAMS(aom_codec_ctx_t *, int, aom_svc_params_t *)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_SVC_PARAMS(aom_codec_ctx_t *, int, aom_svc_params_t *)
+aom_codec_control_typechecked_AV1E_SET_SVC_REF_FRAME_CONFIG(aom_codec_ctx_t *, int, aom_svc_ref_frame_config_t *)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_SVC_REF_FRAME_CONFIG(aom_codec_ctx_t *, int, aom_svc_ref_frame_config_t *)
+aom_codec_control_typechecked_AV1E_SET_VMAF_MODEL_PATH(aom_codec_ctx_t *, int, const char *)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_VMAF_MODEL_PATH(aom_codec_ctx_t *, int, const char *)
+aom_codec_control_typechecked_AV1E_ENABLE_EXT_TILE_DEBUG(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_ENABLE_EXT_TILE_DEBUG(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control_typechecked_AV1E_ENABLE_SB_MULTIPASS_UNIT_TEST(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_ENABLE_SB_MULTIPASS_UNIT_TEST(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control_typechecked_AV1E_SET_GF_MIN_PYRAMID_HEIGHT(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_GF_MIN_PYRAMID_HEIGHT(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control_typechecked_AV1E_SET_VBR_CORPUS_COMPLEXITY_LAP(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_VBR_CORPUS_COMPLEXITY_LAP(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control_typechecked_AV1E_GET_BASELINE_GF_INTERVAL(aom_codec_ctx_t *, int, int *)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_GET_BASELINE_GF_INTERVAL(aom_codec_ctx_t *, int, int *)
+aom_codec_control_typechecked_AV1E_SET_ENABLE_DNL_DENOISING(aom_codec_ctx_t *, int, int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_ENABLE_DNL_DENOISING(aom_codec_ctx_t *, int, int)
+aom_codec_control_typechecked_AV1E_SET_ENABLE_DIAGONAL_INTRA(aom_codec_ctx_t *, int, int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_ENABLE_DIAGONAL_INTRA(aom_codec_ctx_t *, int, int)
+aom_codec_control_typechecked_AV1E_SET_DV_COST_UPD_FREQ(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_DV_COST_UPD_FREQ(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control_typechecked_AV1E_SET_PARTITION_INFO_PATH(aom_codec_ctx_t *, int, const char *)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_PARTITION_INFO_PATH(aom_codec_ctx_t *, int, const char *)
+aom_codec_control_typechecked_AV1E_SET_EXTERNAL_PARTITION(aom_codec_ctx_t *, int, aom_ext_part_funcs_t *)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_EXTERNAL_PARTITION(aom_codec_ctx_t *, int, aom_ext_part_funcs_t *)
+aom_codec_control_typechecked_AV1E_SET_ENABLE_DIRECTIONAL_INTRA(aom_codec_ctx_t *, int, int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_ENABLE_DIRECTIONAL_INTRA(aom_codec_ctx_t *, int, int)
+aom_codec_control_typechecked_AV1E_SET_ENABLE_TX_SIZE_SEARCH(aom_codec_ctx_t *, int, int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_ENABLE_TX_SIZE_SEARCH(aom_codec_ctx_t *, int, int)
+aom_codec_control_typechecked_AV1E_SET_SVC_REF_FRAME_COMP_PRED(aom_codec_ctx_t *, int, aom_svc_ref_frame_comp_pred_t *)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_SVC_REF_FRAME_COMP_PRED(aom_codec_ctx_t *, int, aom_svc_ref_frame_comp_pred_t *)
+aom_codec_control_typechecked_AV1E_SET_DELTAQ_STRENGTH(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_DELTAQ_STRENGTH(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control_typechecked_AV1E_SET_LOOPFILTER_CONTROL(aom_codec_ctx_t *, int, int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_LOOPFILTER_CONTROL(aom_codec_ctx_t *, int, int)
+aom_codec_control_typechecked_AOME_GET_LOOPFILTER_LEVEL(aom_codec_ctx_t *, int, int *)
+aom_codec_control
+aom_codec_control_typechecked_AOME_GET_LOOPFILTER_LEVEL(aom_codec_ctx_t *, int, int *)
+aom_codec_control_typechecked_AV1E_SET_AUTO_INTRA_TOOLS_OFF(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_AUTO_INTRA_TOOLS_OFF(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control_typechecked_AV1E_SET_RTC_EXTERNAL_RC(aom_codec_ctx_t *, int, int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_RTC_EXTERNAL_RC(aom_codec_ctx_t *, int, int)
+aom_codec_control_typechecked_AV1E_SET_FP_MT(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_FP_MT(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control_typechecked_AV1E_SET_FP_MT_UNIT_TEST(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_FP_MT_UNIT_TEST(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control_typechecked_AV1E_GET_TARGET_SEQ_LEVEL_IDX(aom_codec_ctx_t *, int, int *)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_GET_TARGET_SEQ_LEVEL_IDX(aom_codec_ctx_t *, int, int *)
+aom_codec_control_typechecked_AV1E_GET_NUM_OPERATING_POINTS(aom_codec_ctx_t *, int, int *)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_GET_NUM_OPERATING_POINTS(aom_codec_ctx_t *, int, int *)
+aom_codec_control_typechecked_AV1E_SET_SKIP_POSTPROC_FILTERING(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_SKIP_POSTPROC_FILTERING(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control_typechecked_AV1E_ENABLE_SB_QP_SWEEP(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_ENABLE_SB_QP_SWEEP(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control_typechecked_AV1E_SET_QUANTIZER_ONE_PASS(aom_codec_ctx_t *, int, int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_QUANTIZER_ONE_PASS(aom_codec_ctx_t *, int, int)
+aom_codec_control_typechecked_AV1E_ENABLE_RATE_GUIDE_DELTAQ(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_ENABLE_RATE_GUIDE_DELTAQ(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control_typechecked_AV1E_SET_RATE_DISTRIBUTION_INFO(aom_codec_ctx_t *, int, const char *)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_RATE_DISTRIBUTION_INFO(aom_codec_ctx_t *, int, const char *)
+aom_codec_control_typechecked_AV1E_GET_LUMA_CDEF_STRENGTH(aom_codec_ctx_t *, int, int *)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_GET_LUMA_CDEF_STRENGTH(aom_codec_ctx_t *, int, int *)
+aom_codec_control_typechecked_AV1E_SET_BITRATE_ONE_PASS_CBR(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_BITRATE_ONE_PASS_CBR(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control_typechecked_AV1E_SET_SVC_FRAME_DROP_MODE(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_SVC_FRAME_DROP_MODE(aom_codec_ctx_t *, int, unsigned int)
+aom_codec_control_typechecked_AV1E_SET_MAX_CONSEC_FRAME_DROP_CBR(aom_codec_ctx_t *, int, int)
+aom_codec_control
+aom_codec_control_typechecked_AV1E_SET_MAX_CONSEC_FRAME_DROP_CBR(aom_codec_ctx_t *, int, int)

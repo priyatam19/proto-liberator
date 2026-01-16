@@ -1,0 +1,10 @@
+%obstack
+%pcap_t
+%_IO_codecvt
+%_IO_marker
+%_IO_wide_data
+%pcap_dumper
+%pcap
+%pcap_options
+%_IO_lock_t
+%pcap_dumper_t

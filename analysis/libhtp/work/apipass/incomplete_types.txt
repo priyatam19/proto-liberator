@@ -1,0 +1,14 @@
+%htp_header_line_t
+%htp_cfg_t
+%htp_mpartp_t
+%__locale_data
+%htp_table_t
+%_IO_marker
+%htp_connp_t
+%_IO_wide_data
+%_IO_lock_t
+%htp_list_array_t
+%obstack
+%internal_state
+%htp_list_linked_t
+%_IO_codecvt

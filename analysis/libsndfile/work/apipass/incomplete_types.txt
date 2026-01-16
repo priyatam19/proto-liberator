@@ -1,0 +1,8 @@
+%obstack
+%_IO_lock_t
+%SNDFILE
+%_IO_wide_data
+%_IO_codecvt
+%sf_private_tag
+%_IO_marker
+%SF_CHUNK_ITERATOR

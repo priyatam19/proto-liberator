@@ -1,0 +1,5 @@
+__rlimit_resource
+minijail_hook_event_t
+__priority_which
+(unnamed enum at /workspaces/libfuzz/analysis/minijail/work/include/libminijail.h:44:1)
+__rusage_who

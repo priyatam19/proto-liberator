@@ -1,0 +1,5 @@
+%_IO_marker
+%_IO_wide_data
+%_IO_lock_t
+%obstack
+%_IO_codecvt

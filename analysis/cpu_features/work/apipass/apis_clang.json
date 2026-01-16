@@ -1,0 +1,7 @@
+{"function_name": "GetX86Info", "namespace": ["cpu_features"], "return_info": {"type_clang": "cpu_features::X86Info", "const": [false]}, "arguments_info": []}
+{"function_name": "GetX86CacheInfo", "namespace": ["cpu_features"], "return_info": {"type_clang": "cpu_features::CacheInfo", "const": [false]}, "arguments_info": []}
+{"function_name": "GetX86Microarchitecture", "namespace": ["cpu_features"], "return_info": {"type_clang": "cpu_features::X86Microarchitecture", "const": [false]}, "arguments_info": [{"type_clang": "cpu_features::X86Info *", "const": [true, false]}]}
+{"function_name": "FillX86BrandString", "namespace": ["cpu_features"], "return_info": {"type_clang": "void", "const": [false]}, "arguments_info": [{"type_clang": "char *", "const": [false, false]}]}
+{"function_name": "GetX86FeaturesEnumValue", "namespace": ["cpu_features"], "return_info": {"type_clang": "int", "const": [false]}, "arguments_info": [{"type_clang": "cpu_features::X86Features *", "const": [true, false]}, {"type_clang": "cpu_features::X86FeaturesEnum", "const": [false]}]}
+{"function_name": "GetX86FeaturesEnumName", "namespace": ["cpu_features"], "return_info": {"type_clang": "char *", "const": [true, false]}, "arguments_info": [{"type_clang": "cpu_features::X86FeaturesEnum", "const": [false]}]}
+{"function_name": "GetX86MicroarchitectureName", "namespace": ["cpu_features"], "return_info": {"type_clang": "char *", "const": [true, false]}, "arguments_info": [{"type_clang": "cpu_features::X86Microarchitecture", "const": [false]}]}

@@ -1,0 +1,7 @@
+GetX86Info()
+GetX86CacheInfo()
+GetX86Microarchitecture(const cpu_features::X86Info *)
+FillX86BrandString(char *)
+GetX86FeaturesEnumValue(const cpu_features::X86Features *, cpu_features::X86FeaturesEnum)
+GetX86FeaturesEnumName(cpu_features::X86FeaturesEnum)
+GetX86MicroarchitectureName(cpu_features::X86Microarchitecture)

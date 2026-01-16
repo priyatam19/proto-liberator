@@ -1,0 +1,12 @@
+%tiff
+%_IO_wide_data
+%_TIFFFieldArray
+%_IO_codecvt
+%TIFFField
+%TIFFOpenOptions
+%TIFFFieldArray
+%obstack
+%TIFF
+%_TIFFField
+%_IO_marker
+%_IO_lock_t
