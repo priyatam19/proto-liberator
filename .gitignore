@@ -26,6 +26,13 @@ crashes/
 workdir/
 crash-*
 
+# One-off fuzz artifacts dumped with garbage names in repo root
+/[^ -~]*
+/\#*
+/=
+/A
+/-*
+
 # Test outputs (generated)
 tests/output/
 tests/output_v2/
