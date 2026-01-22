@@ -201,6 +201,115 @@ def extract_schema_functions(proto_path: Path, verbose: bool = False) -> Set[str
         return set()
 
 
+def categorize_function_gap(
+    func_name: str,
+    api_info: Optional[Dict[str, Any]],
+    condition_info: Optional[Dict[str, Any]]
+) -> List[str]:
+    """
+    Categorize why a function might be missing at a particular tier.
+
+    Categories detected:
+    - "varargs" - function has variable arguments (...)
+    - "function_pointer_param" - parameter type contains function pointer "(*)("
+    - "no_constraints" - function in apis but not in conditions
+    - "complex_type" - parameter has union type or multi-dimensional array
+    - "unknown" - no obvious pattern detected
+
+    Args:
+        func_name: Name of the function
+        api_info: Entry from apis_clang.json (or None)
+        condition_info: Entry from conditions.json (or None)
+
+    Returns:
+        List of category strings explaining why function may be missing
+    """
+    categories = []
+
+    if api_info is None:
+        # Not in API list at all - can't categorize further
+        return ['not_in_apis']
+
+    # Check for varargs in arguments
+    args_info = api_info.get('arguments_info', [])
+
+    # Varargs check - look for "..." in type or empty last arg indicating varargs
+    # Note: libErator may not explicitly record "..." but we check type patterns
+    for arg in args_info:
+        type_clang = arg.get('type_clang', '')
+        if '...' in type_clang or type_clang == 'va_list':
+            categories.append('varargs')
+            break
+
+    # Function pointer parameter check
+    for arg in args_info:
+        type_clang = arg.get('type_clang', '')
+        # Match patterns like "void (*)(u_char *, ...)" or "int (*callback)(void*)"
+        if '(*)' in type_clang or '(*' in type_clang:
+            categories.append('function_pointer_param')
+            break
+
+    # Complex type check - unions or multi-dimensional arrays
+    for arg in args_info:
+        type_clang = arg.get('type_clang', '')
+        # Union types
+        if 'union ' in type_clang.lower():
+            categories.append('complex_type')
+            break
+        # Multi-dimensional arrays like "int[3][3]" or "char **"
+        if type_clang.count('*') > 2 or type_clang.count('[') > 1:
+            categories.append('complex_type')
+            break
+
+    # No constraints check
+    if condition_info is None and api_info is not None:
+        categories.append('no_constraints')
+
+    # If no categories found, mark as unknown
+    if not categories:
+        categories.append('unknown')
+
+    return categories
+
+
+def categorize_gaps(
+    gap_functions: List[str],
+    api_functions: Dict[str, Dict[str, Any]],
+    condition_functions: Dict[str, Dict[str, Any]],
+    verbose: bool = False
+) -> Dict[str, List[str]]:
+    """
+    Categorize all functions in a gap list.
+
+    Args:
+        gap_functions: List of function names in the gap
+        api_functions: Dict of all API info
+        condition_functions: Dict of all condition info
+        verbose: Print progress messages
+
+    Returns:
+        Dict mapping category name to list of functions
+    """
+    categories: Dict[str, List[str]] = {}
+
+    for func_name in gap_functions:
+        api_info = api_functions.get(func_name)
+        condition_info = condition_functions.get(func_name)
+
+        func_categories = categorize_function_gap(func_name, api_info, condition_info)
+
+        for cat in func_categories:
+            if cat not in categories:
+                categories[cat] = []
+            categories[cat].append(func_name)
+
+    # Sort function lists within each category
+    for cat in categories:
+        categories[cat] = sorted(categories[cat])
+
+    return categories
+
+
 def analyze_gaps(
     library_symbols: Optional[Set[str]],
     api_functions: Set[str],
@@ -284,6 +393,7 @@ def generate_report(
     condition_functions: Dict[str, Dict[str, Any]],
     schema_functions: Optional[Set[str]],
     gaps: Dict[str, List[str]],
+    categorized_gaps: Dict[str, Dict[str, List[str]]],
     verbose: bool = False
 ) -> Dict[str, Any]:
     """
@@ -316,7 +426,8 @@ def generate_report(
         'generated_at': datetime.now(timezone.utc).isoformat(),
         'counts': counts,
         'gaps': gaps,
-        'coverage_pct': coverage
+        'coverage_pct': coverage,
+        'categorized_gaps': categorized_gaps
     }
 
     return report
@@ -376,6 +487,29 @@ def main():
         args.verbose
     )
 
+    # Categorize gaps to explain WHY functions are missing
+    categorized_gaps = {}
+
+    # Categorize tier 2 gaps (APIs without constraints)
+    if gaps['tier2_no_constraints']:
+        categorized_gaps['tier2_by_category'] = categorize_gaps(
+            gaps['tier2_no_constraints'],
+            api_functions,
+            condition_functions,
+            args.verbose
+        )
+        log(f"Tier 2 categories: {list(categorized_gaps['tier2_by_category'].keys())}", args.verbose)
+
+    # Categorize tier 3 gaps (constraints not in schema) - if we have schema
+    if gaps['tier3_excluded_schema']:
+        categorized_gaps['tier3_by_category'] = categorize_gaps(
+            gaps['tier3_excluded_schema'],
+            api_functions,
+            condition_functions,
+            args.verbose
+        )
+        log(f"Tier 3 categories: {list(categorized_gaps['tier3_by_category'].keys())}", args.verbose)
+
     # Generate report
     report = generate_report(
         args.library,
@@ -384,6 +518,7 @@ def main():
         condition_functions,
         schema_functions,
         gaps,
+        categorized_gaps,
         args.verbose
     )
 
