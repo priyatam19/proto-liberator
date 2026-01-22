@@ -1,0 +1,164 @@
+{
+  "phase": "01-baseline-gap-analysis",
+  "generated_at": "2026-01-22T18:06:57Z",
+  "description": "Consolidated baseline metrics from Phase 1 gap analysis across three target libraries",
+
+  "targets": {
+    "cjson": {
+      "library_name": "cJSON",
+      "library_type": "JSON parser",
+      "complexity": "low",
+      "counts": {
+        "library_exports": 78,
+        "liberator_apis": 78,
+        "with_constraints": 78,
+        "missing_constraints": 0
+      },
+      "coverage_pct": {
+        "api_coverage": 100.0,
+        "constraint_coverage": 100.0
+      },
+      "baseline_fuzzing": {
+        "function_coverage_pct": 76.99,
+        "branch_coverage_pct": 22.19,
+        "mode": "CMP tracing",
+        "date": "2026-01-19",
+        "duration_hours": 24
+      },
+      "gaps": {
+        "tier1_not_analyzed": 0,
+        "tier2_no_constraints": 0
+      },
+      "gap_categories": {},
+      "priority": "HIGH",
+      "notes": "Ideal reference target with perfect constraint coverage"
+    },
+
+    "libpcap": {
+      "library_name": "libpcap",
+      "library_type": "packet capture",
+      "complexity": "medium",
+      "counts": {
+        "library_exports": null,
+        "liberator_apis": 99,
+        "with_constraints": 88,
+        "missing_constraints": 11
+      },
+      "coverage_pct": {
+        "api_coverage": null,
+        "constraint_coverage": 88.89
+      },
+      "baseline_fuzzing": {
+        "function_coverage_pct": 13.12,
+        "branch_coverage_pct": 3.27,
+        "mode": "CMP tracing",
+        "date": "2026-01-19",
+        "duration_hours": 24
+      },
+      "gaps": {
+        "tier1_not_analyzed": 0,
+        "tier2_no_constraints": 11
+      },
+      "gap_categories": {
+        "option_api": ["pcap_alloc_option", "pcap_free_option", "pcap_get_option_int", "pcap_get_option_string", "pcap_set_option_int", "pcap_set_option_string"],
+        "remote_api": ["pcap_remoteact_accept", "pcap_remoteact_accept_ex", "pcap_remoteact_cleanup", "pcap_remoteact_close", "pcap_remoteact_list"]
+      },
+      "blocking_factors": ["callback_functions", "resource_dependencies", "platform_specific"],
+      "priority": "MEDIUM",
+      "notes": "Good constraint coverage, blocked by callback-heavy APIs and resource dependencies"
+    },
+
+    "libaom": {
+      "library_name": "libaom",
+      "library_type": "AV1 codec",
+      "complexity": "high",
+      "counts": {
+        "library_exports": null,
+        "liberator_apis": 243,
+        "with_constraints": 47,
+        "missing_constraints": 196
+      },
+      "coverage_pct": {
+        "api_coverage": null,
+        "constraint_coverage": 19.34
+      },
+      "baseline_fuzzing": {
+        "function_coverage_pct": 0.69,
+        "branch_coverage_pct": 0.35,
+        "mode": "CMP tracing",
+        "date": "2026-01-19",
+        "duration_hours": 24
+      },
+      "gaps": {
+        "tier1_not_analyzed": 0,
+        "tier2_no_constraints": 196
+      },
+      "gap_categories": {
+        "macro_generated_control": 196
+      },
+      "blocking_factors": ["macro_generated_functions", "codec_init_complexity", "state_machine_dependencies"],
+      "priority": "LOW",
+      "notes": "Massive constraint gap (80.7%) from aom_codec_control_typechecked_* macro functions"
+    }
+  },
+
+  "summary": {
+    "total_apis_analyzed": 420,
+    "total_with_constraints": 213,
+    "total_without_constraints": 207,
+    "overall_constraint_coverage_pct": 50.71,
+
+    "aggregated_gaps": {
+      "tier1_not_analyzed": 0,
+      "tier2_no_constraints": 207
+    },
+
+    "gap_categories_summary": {
+      "macro_generated": {
+        "count": 196,
+        "targets": ["libaom"],
+        "fixable": "manual_constraints_required"
+      },
+      "option_api": {
+        "count": 6,
+        "targets": ["libpcap"],
+        "fixable": "updated_liberator_analysis"
+      },
+      "remote_api": {
+        "count": 5,
+        "targets": ["libpcap"],
+        "fixable": "platform_specific_exclusion"
+      }
+    },
+
+    "baseline_coverage": {
+      "best": {
+        "target": "cjson",
+        "function_coverage_pct": 76.99
+      },
+      "worst": {
+        "target": "libaom",
+        "function_coverage_pct": 0.69
+      },
+      "average_function_coverage_pct": 30.27
+    }
+  },
+
+  "success_criteria_verification": {
+    "function_gap_reports_created": true,
+    "reports": ["cjson_gap_report.md", "libpcap_gap_report.md", "libaom_gap_report.md"],
+    "baseline_numbers_documented": true,
+    "categorized_unreachable_functions": true,
+    "phase_1_complete": true
+  },
+
+  "phase_2_recommendations": {
+    "priority_order": ["cjson", "libpcap", "libaom"],
+    "rationale": "cJSON has 100% constraints and highest baseline - optimize first. libpcap has 89% constraints but low coverage due to resource dependencies. libaom has fundamental constraint gap requiring manual work.",
+    "estimated_improvement": {
+      "cjson": "76.99% -> 90%+ with v2 super-harness optimization",
+      "libpcap": "13.12% -> 40-60% with pcap_open_dead path and file corpus",
+      "libaom": "0.69% -> 5-10% with stateless function focus"
+    }
+  }
+}
