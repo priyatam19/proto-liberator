@@ -1,0 +1,21 @@
+{
+  "library": "cjson",
+  "generated_at": "2026-01-22T18:03:21.970056+00:00",
+  "counts": {
+    "library_exports": 78,
+    "liberator_apis": 78,
+    "with_constraints": 78,
+    "in_schema": null
+  },
+  "gaps": {
+    "tier1_not_analyzed": [],
+    "tier2_no_constraints": [],
+    "tier3_excluded_schema": []
+  },
+  "coverage_pct": {
+    "api_coverage": 100.0,
+    "constraint_coverage": 100.0,
+    "schema_coverage": null
+  },
+  "categorized_gaps": {}
+}
