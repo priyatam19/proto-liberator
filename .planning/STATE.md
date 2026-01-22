@@ -10,20 +10,20 @@
 
 **Milestone**: 1 - Achieve 100% Function Coverage with Crash Traceability
 **Phase**: 1 of 5 - Baseline & Function Coverage Gap Analysis
-**Plan**: 01-01 complete, ready for 01-02
+**Plan**: 01-02 complete, ready for 01-03
 **Status**: In progress
-**Last activity**: 2026-01-22 - Completed 01-01-PLAN.md (Gap Analysis Tooling)
+**Last activity**: 2026-01-22 - Completed 01-02-PLAN.md (cJSON Gap Analysis)
 
 ## Progress
 
 ```
-Phase 1: Gap Analysis      [██░░░░░░░░] 20%  ← Current (1/5 plans done)
+Phase 1: Gap Analysis      [████░░░░░░] 40%  <- Current (2/5 plans done)
 Phase 2: Complete Schema   [░░░░░░░░░░] 0%
 Phase 3: Sequence Gen      [░░░░░░░░░░] 0%
 Phase 4: Crash Trace       [░░░░░░░░░░] 0%
 Phase 5: Coverage Push     [░░░░░░░░░░] 0%
 ─────────────────────────────────────────
-Overall                    [░░░░░░░░░░] 4%
+Overall                    [█░░░░░░░░░] 8%
 ```
 
 ## Context From Previous Work
@@ -39,20 +39,25 @@ Overall                    [░░░░░░░░░░] 4%
   - `scripts/extract_symbols.sh` - Library symbol extraction
   - `scripts/gap_analyzer.py` - Three-tier gap analysis with categorization
 
+- cJSON gap analysis (01-02)
+  - `.planning/phases/01-baseline-gap-analysis/reports/cjson_gap_report.json`
+  - `.planning/phases/01-baseline-gap-analysis/reports/cjson_gap_report.md`
+  - Result: 100% constraint coverage (78/78 APIs)
+
 ### Known Baseline (Jan 19, 2026)
 
-| Target | Function Coverage | Notes |
-|--------|-------------------|-------|
-| cJSON | 76.99% (CMP) | Best performer |
-| libpcap | 13.12% (CMP) | Stuck, needs sequencing |
-| libaom | 0.69% (CMP) | Blocked, needs deep work |
+| Target | Function Coverage | Constraint Coverage | Notes |
+|--------|-------------------|---------------------|-------|
+| cJSON | 76.99% (CMP) | 100% (78/78) | Best performer, ideal reference |
+| libpcap | 13.12% (CMP) | 88.9% (88/99) | Stuck, needs sequencing |
+| libaom | 0.69% (CMP) | 19.3% (47/243) | Blocked, needs deep work |
 
 ### Key Insights
 - CMP tracing helps when baseline reaches comparison logic (cJSON)
 - Larger targets blocked by state/structure prerequisites
-- libaom has major constraint gap: only 47/243 APIs have constraints (19.3%)
-- libpcap has small constraint gap: 88/99 APIs (88.9%)
-- cjson has no constraint gap: 78/78 APIs (100%)
+- cJSON has perfect constraint coverage (100%) - ideal reference target
+- libpcap has small constraint gap: 11 APIs missing constraints
+- libaom has major constraint gap: 196 APIs missing constraints
 
 ## Recent Decisions
 
@@ -62,10 +67,13 @@ Overall                    [░░░░░░░░░░] 4%
 | Target strategy | All 3 targets in parallel | 2026-01-21 |
 | Crash format | Protobuf + C reproducer | 2026-01-21 |
 | Gap output format | JSON with counts, gaps, coverage, categorization | 2026-01-22 |
+| cJSON as reference | 100% constraint coverage makes it ideal for tooling validation | 2026-01-22 |
 
 ## Pending Todos
 
-- [ ] Run gap analysis on all targets (01-02)
+- [x] Run gap analysis on cJSON (01-02)
+- [ ] Run gap analysis on libpcap (01-02 continuation or 01-02b)
+- [ ] Run gap analysis on libaom (01-02 continuation or 01-02c)
 - [ ] Run baseline coverage campaigns (01-03)
 - [ ] Consolidate baseline report (01-04)
 - [ ] Prioritize targets for Phase 2 (01-05)
@@ -73,17 +81,18 @@ Overall                    [░░░░░░░░░░] 4%
 ## Blockers/Concerns
 
 - [x] ~~Don't know exact function coverage gap for any target~~ (tooling built)
+- [x] ~~cJSON gap analysis~~ (complete: 100% constraint coverage confirmed)
 - [ ] libErator baseline numbers need verification (01-03)
 - [ ] libaom complexity may require special handling (196 APIs missing constraints)
 
 ## Session Continuity
 
 **Last session**: 2026-01-22
-**Stopped at**: Completed 01-01-PLAN.md (Gap Analysis Tooling)
-**Resume file**: .planning/phases/01-baseline-gap-analysis/01-02-PLAN.md
+**Stopped at**: Completed 01-02-PLAN.md (cJSON Gap Analysis)
+**Resume file**: .planning/phases/01-baseline-gap-analysis/01-03-PLAN.md
 
 ## Next Action
 
-Execute Plan 01-02: Run Gap Analysis on All Targets
+Execute Plan 01-03: Run Gap Analysis on libpcap and libaom, or proceed to baseline coverage campaigns
 
-Command: `/gsd:execute-phase 01-02`
+Command: `/gsd:execute-phase 01-03`
