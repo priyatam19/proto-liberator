@@ -1,0 +1,49 @@
+{
+  "library": "libpcap",
+  "generated_at": "2026-01-22T18:03:16.926743+00:00",
+  "counts": {
+    "library_exports": null,
+    "liberator_apis": 99,
+    "with_constraints": 88,
+    "in_schema": null
+  },
+  "gaps": {
+    "tier1_not_analyzed": [],
+    "tier2_no_constraints": [
+      "pcap_alloc_option",
+      "pcap_free_option",
+      "pcap_get_option_int",
+      "pcap_get_option_string",
+      "pcap_remoteact_accept",
+      "pcap_remoteact_accept_ex",
+      "pcap_remoteact_cleanup",
+      "pcap_remoteact_close",
+      "pcap_remoteact_list",
+      "pcap_set_option_int",
+      "pcap_set_option_string"
+    ],
+    "tier3_excluded_schema": []
+  },
+  "coverage_pct": {
+    "api_coverage": null,
+    "constraint_coverage": 88.89,
+    "schema_coverage": null
+  },
+  "categorized_gaps": {
+    "tier2_by_category": {
+      "no_constraints": [
+        "pcap_alloc_option",
+        "pcap_free_option",
+        "pcap_get_option_int",
+        "pcap_get_option_string",
+        "pcap_remoteact_accept",
+        "pcap_remoteact_accept_ex",
+        "pcap_remoteact_cleanup",
+        "pcap_remoteact_close",
+        "pcap_remoteact_list",
+        "pcap_set_option_int",
+        "pcap_set_option_string"
+      ]
+    }
+  }
+}
