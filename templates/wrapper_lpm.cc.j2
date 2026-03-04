@@ -15,6 +15,8 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <vector>
+#include <set>
+#include <string>
 #include <climits>
 #include <type_traits>
 
@@ -53,6 +55,7 @@ struct HandleTable {
 };
 
 static HandleTable g_tables[HT__COUNT];
+static bool g_hard_constraint_redirected = false;
 
 static void handles_reset() {
     for (size_t t = 0; t < (size_t)HT__COUNT; t++) {
@@ -62,7 +65,7 @@ static void handles_reset() {
     }
 }
 
-static uint32_t handle_register(uint32_t type_id, void *ptr) {
+static uint32_t handle_register_typed(uint32_t type_id, void *ptr) {
     if (!ptr) return 0;
     if (type_id >= (uint32_t)HT__COUNT) return 0;
     HandleTable& tab = g_tables[type_id];
@@ -73,7 +76,7 @@ static uint32_t handle_register(uint32_t type_id, void *ptr) {
     return id;
 }
 
-static uint32_t handle_select(uint32_t type_id, uint32_t requested) {
+static uint32_t handle_select_typed(uint32_t type_id, uint32_t requested) {
     if (type_id >= (uint32_t)HT__COUNT) return 0;
     HandleTable& tab = g_tables[type_id];
     if (tab.count == 0) return 0;
@@ -83,8 +86,8 @@ static uint32_t handle_select(uint32_t type_id, uint32_t requested) {
     return idx;
 }
 
-static void *handle_get(uint32_t type_id, uint32_t requested, bool allow_stale, uint32_t *out_selected) {
-    uint32_t idx = handle_select(type_id, requested);
+static void *handle_get_typed(uint32_t type_id, uint32_t requested, bool allow_stale, uint32_t *out_selected) {
+    uint32_t idx = handle_select_typed(type_id, requested);
     if (out_selected) *out_selected = idx;
     if (idx == 0) return NULL;
     if (type_id >= (uint32_t)HT__COUNT) return NULL;
@@ -93,11 +96,485 @@ static void *handle_get(uint32_t type_id, uint32_t requested, bool allow_stale, 
     return NULL;
 }
 
-static void handle_invalidate(uint32_t type_id, uint32_t selected) {
+static void handle_invalidate_typed(uint32_t type_id, uint32_t selected) {
     if (type_id >= (uint32_t)HT__COUNT) return;
     HandleTable& tab = g_tables[type_id];
     if (selected == 0 || selected > tab.count) return;
     tab.valid[selected] = false;
+}
+
+// =============================================================================
+// Sequence repair helpers (generated from constraint graph)
+// =============================================================================
+
+static uint64_t g_seq_repair_attempted = 0;
+static uint64_t g_seq_repair_changed = 0;
+static uint64_t g_seq_repair_insertions = 0;
+static uint64_t g_seq_repair_serialize_failures = 0;
+
+static int plb_env_int(const char* name, int def_val) {
+    const char* val = std::getenv(name);
+    if (!val || !val[0]) return def_val;
+    char* end = nullptr;
+    long parsed = std::strtol(val, &end, 10);
+    if (end == val) return def_val;
+    if (parsed < 0) return 0;
+    if (parsed > INT_MAX) return INT_MAX;
+    return static_cast<int>(parsed);
+}
+
+static uint32_t plb_mix(uint32_t x) {
+    x ^= x >> 16; x *= 0x7feb352dU;
+    x ^= x >> 15; x *= 0x846ca68bU;
+    x ^= x >> 16;
+    return x;
+}
+
+// Returns the handle type_id produced by an action variant (-1 = produces none).
+static int plb_produced_type(int case_id) {
+    switch (case_id) {
+{% for api in apis if api.returns_handle %}
+        case static_cast<int>({{ package_name }}::{{ action_type }}::k{{ api.field_name.replace('_', ' ').title().replace(' ', '') }}):
+            return {{ api.return_type_id }};
+{% endfor %}
+        default: return -1;
+    }
+}
+
+// Returns the handle type_ids required by an action variant (empty = no handle deps).
+static std::vector<int> plb_required_types(int case_id) {
+    switch (case_id) {
+{% for api in apis %}
+{% set ns = namespace(has_handle=false) %}
+{% for arg in api.args %}
+{% if arg.param.kind == "handle" %}
+{% set ns.has_handle = true %}
+{% endif %}
+{% endfor %}
+{% if ns.has_handle %}
+        case static_cast<int>({{ package_name }}::{{ action_type }}::k{{ api.field_name.replace('_', ' ').title().replace(' ', '') }}):
+            return { {% for arg in api.args if arg.param.kind == "handle" %}{{ arg.param.type_id }}{% if not loop.last %}, {% endif %}{% endfor %} };
+{% endif %}
+{% endfor %}
+        default: return {};
+    }
+}
+
+// Returns deleted handle type for a destructor action variant (-1 = none).
+// We mirror harness invalidation semantics: first handle parameter is invalidated.
+static int plb_deleted_type(int case_id) {
+    switch (case_id) {
+{% for api in apis if api.is_destructor %}
+{% set ns = namespace(first_handle=none) %}
+{% for arg in api.args %}
+{% if ns.first_handle is none and arg.param.kind == "handle" %}
+{% set ns.first_handle = arg %}
+{% endif %}
+{% endfor %}
+{% if ns.first_handle is not none %}
+        case static_cast<int>({{ package_name }}::{{ action_type }}::k{{ api.field_name.replace('_', ' ').title().replace(' ', '') }}):
+            return {{ ns.first_handle.param.type_id }};
+{% endif %}
+{% endfor %}
+        default: return -1;
+    }
+}
+
+// Creates a minimal producer action for the given type_id.
+// Empty params are intentional: mutator evolution will fill semantic content.
+static bool plb_make_producer(int type_id, {{ package_name }}::{{ action_type }}* out) {
+    switch (type_id) {
+{% for ht in handle_types %}
+{% set ns = namespace(producer=none) %}
+{% for api in apis %}
+{% if api.returns_handle and api.return_type_id == ht.id and ns.producer is none %}
+{% set ns.producer = api %}
+{% endif %}
+{% endfor %}
+{% if ns.producer is not none %}
+        case {{ ht.id }}: /* {{ ht.key }} */
+            out->mutable_{{ ns.producer.field_name }}();
+            return true;
+{% endif %}
+{% endfor %}
+        default: return false;
+    }
+}
+
+// Scans the action list and inserts missing producers before consumers.
+// Returns number of inserted actions.
+static int plb_repair_sequence({{ package_name }}::{{ fuzz_input_type }}* msg, int max_inserts) {
+    if (!msg || max_inserts <= 0) return 0;
+    int inserts = 0;
+    std::set<int> produced;
+
+    const int n = msg->{{ actions_field }}_size();
+    std::vector<{{ package_name }}::{{ action_type }}> out;
+    out.reserve(n + max_inserts);
+
+    for (int i = 0; i < n; i++) {
+        const auto& action = msg->{{ actions_field }}(i);
+        int case_id = static_cast<int>(action.{{ action_oneof_field }}_case());
+
+        if (inserts < max_inserts) {
+            for (int req : plb_required_types(case_id)) {
+                if (!produced.count(req) && inserts < max_inserts) {
+                    {{ package_name }}::{{ action_type }} producer;
+                    if (plb_make_producer(req, &producer)) {
+                        out.push_back(std::move(producer));
+                        produced.insert(req);
+                        ++inserts;
+                    }
+                }
+            }
+        }
+
+        out.push_back(action);
+
+        int prod = plb_produced_type(case_id);
+        if (prod >= 0) produced.insert(prod);
+    }
+
+    if (inserts <= 0) return 0;
+
+    msg->mutable_{{ actions_field }}()->Clear();
+    for (auto& a : out) {
+        if (msg->{{ actions_field }}_size() >= (int){{ max_actions }}) break;
+        *msg->add_{{ actions_field }}() = std::move(a);
+    }
+    return inserts;
+}
+
+// Enforce hard validity at sequence level:
+// - insert missing producers for required handle types
+// - drop actions that still violate hard requirements (strict mode)
+static bool plb_enforce_hard_validity(
+    {{ package_name }}::{{ fuzz_input_type }}* msg,
+    int max_inserts,
+    bool misuse_mode
+) {
+    if (!msg || misuse_mode) return false;
+    if (max_inserts < 0) max_inserts = 0;
+
+    const int n = msg->{{ actions_field }}_size();
+    int live[static_cast<int>(HT__COUNT)] = {};
+    int inserted = 0;
+    bool changed = false;
+
+    std::vector<{{ package_name }}::{{ action_type }}> out;
+    out.reserve(n + max_inserts);
+
+    for (int i = 0; i < n; i++) {
+        const auto& action = msg->{{ actions_field }}(i);
+        int case_id = static_cast<int>(action.{{ action_oneof_field }}_case());
+        std::vector<int> req = plb_required_types(case_id);
+
+        // Repair missing prerequisites by inserting producers first.
+        for (int t : req) {
+            if (t < 0 || t >= static_cast<int>(HT__COUNT)) continue;
+            while (live[t] <= 0 && inserted < max_inserts) {
+                {{ package_name }}::{{ action_type }} producer;
+                if (!plb_make_producer(t, &producer)) break;
+                out.push_back(std::move(producer));
+                live[t] += 1;
+                inserted += 1;
+                changed = true;
+            }
+        }
+
+        // Strict mode: never emit hard-invalid action when deps are still missing.
+        bool missing = false;
+        for (int t : req) {
+            if (t < 0 || t >= static_cast<int>(HT__COUNT)) continue;
+            if (live[t] <= 0) {
+                missing = true;
+                break;
+            }
+        }
+        if (missing) {
+            changed = true;
+            continue;
+        }
+
+        out.push_back(action);
+
+        int prod = plb_produced_type(case_id);
+        if (prod >= 0 && prod < static_cast<int>(HT__COUNT)) {
+            live[prod] += 1;
+        }
+
+        int del = plb_deleted_type(case_id);
+        if (del >= 0 && del < static_cast<int>(HT__COUNT) && live[del] > 0) {
+            live[del] -= 1;
+        }
+    }
+
+    if (!changed && out.size() == static_cast<size_t>(n)) return false;
+
+    msg->mutable_{{ actions_field }}()->Clear();
+    for (auto& a : out) {
+        if (msg->{{ actions_field }}_size() >= static_cast<int>({{ max_actions }})) break;
+        *msg->add_{{ actions_field }}() = std::move(a);
+    }
+    return true;
+}
+
+// =============================================================================
+// Handle ID normalization (Gap 1: random uint32 handle IDs have no gradient)
+// Remaps each handle param to [1, producer_count_seen_so_far] so the fuzzer
+// can learn meaningful distinctions between live handle slots.
+// =============================================================================
+{% if handle_types %}
+static bool plb_normalize_handles({{ package_name }}::{{ fuzz_input_type }}* msg) {
+    if (!msg) return false;
+    bool changed = false;
+    int produced_count[static_cast<int>(HT__COUNT)] = {};
+    const int n = msg->{{ actions_field }}_size();
+    for (int i = 0; i < n; i++) {
+        auto* action = msg->mutable_{{ actions_field }}(i);
+        int case_id = static_cast<int>(action->{{ action_oneof_field }}_case());
+        switch (case_id) {
+{% for api in apis %}
+{% set ns = namespace(has_handle_arg=false) %}
+{% for arg in api.args %}
+{% if arg.param.kind == "handle" %}{% set ns.has_handle_arg = true %}{% endif %}
+{% endfor %}
+{% if ns.has_handle_arg %}
+            case static_cast<int>({{ package_name }}::{{ action_type }}::k{{ api.field_name.replace('_', ' ').title().replace(' ', '') }}): {
+                auto* params = action->mutable_{{ api.field_name }}();
+{% for arg in api.args if arg.param.kind == "handle" %}
+                {
+                    int pool = produced_count[{{ arg.param.type_id }}];
+                    if (pool > 0 && params->has_param_{{ arg.i }}_handle()) {
+                        uint32_t raw = params->param_{{ arg.i }}_handle();
+                        uint32_t norm = (raw % static_cast<uint32_t>(pool)) + 1;
+                        if (norm != raw) { params->set_param_{{ arg.i }}_handle(norm); changed = true; }
+                    }
+                }
+{% endfor %}
+                break;
+            }
+{% endif %}
+{% endfor %}
+            default: break;
+        }
+        int prod = plb_produced_type(case_id);
+        if (prod >= 0 && prod < static_cast<int>(HT__COUNT)) produced_count[prod]++;
+    }
+    return changed;
+}
+{% else %}
+static bool plb_normalize_handles({{ package_name }}::{{ fuzz_input_type }}*) { return false; }
+{% endif %}
+
+// =============================================================================
+// Length coupling repair (Gap 4: bytes + length_override mutated independently)
+// Re-syncs length_override to match bytes.size() so the harness sees a coherent
+// length after LPM's independent field mutations drift the two apart.
+// =============================================================================
+static bool plb_sync_lengths({{ package_name }}::{{ fuzz_input_type }}* msg) {
+    if (!msg) return false;
+    bool changed = false;
+    for (int i = 0; i < msg->{{ actions_field }}_size(); i++) {
+        auto* action = msg->mutable_{{ actions_field }}(i);
+        switch (action->{{ action_oneof_field }}_case()) {
+{% for api in apis %}
+{% set ns = namespace(has_len_pair=false) %}
+{% for arg in api.args %}
+{% if arg.param.kind == "bytes_array" and arg.param.has_length %}{% set ns.has_len_pair = true %}{% endif %}
+{% endfor %}
+{% if ns.has_len_pair %}
+            case static_cast<int>({{ package_name }}::{{ action_type }}::k{{ api.field_name.replace('_', ' ').title().replace(' ', '') }}): {
+                auto* params = action->mutable_{{ api.field_name }}();
+{% for arg in api.args if arg.param.kind == "bytes_array" and arg.param.has_length %}
+                if (params->has_param_{{ arg.i }}() && params->has_param_{{ arg.i }}_length_override()) {
+                    uint32_t actual = static_cast<uint32_t>(params->param_{{ arg.i }}().size());
+                    if (params->param_{{ arg.i }}_length_override() != actual) {
+                        params->set_param_{{ arg.i }}_length_override(actual);
+                        changed = true;
+                    }
+                }
+{% endfor %}
+                break;
+            }
+{% endif %}
+{% endfor %}
+            default: break;
+        }
+    }
+    return changed;
+}
+
+// =============================================================================
+// Constraint-graph guided sequence extension
+// Baked-in inter_edges from constraint_graph.json. When a producer action is
+// present in the sequence and the confidence roll passes, appends a minimal
+// consumer action so the fuzzer explores cross-API paths.
+// =============================================================================
+struct PlbEdge { int src_case; int dst_case; uint8_t confidence_pct; };
+static const PlbEdge kGraphEdges[] = {
+{% for edge in graph_edges %}
+    { static_cast<int>({{ package_name }}::{{ action_type }}::k{{ edge.src_field.replace('_', ' ').title().replace(' ', '') }}),
+      static_cast<int>({{ package_name }}::{{ action_type }}::k{{ edge.dst_field.replace('_', ' ').title().replace(' ', '') }}),
+      static_cast<uint8_t>({{ edge.confidence_pct }}) },
+{% endfor %}
+    { -1, -1, 0 }
+};
+static const int kGraphEdgesCount = {{ graph_edges|length }};
+
+static bool plb_graph_extend({{ package_name }}::{{ fuzz_input_type }}* msg, int max_appends, unsigned int seed) {
+    if (!msg || max_appends <= 0 || kGraphEdgesCount == 0) return false;
+    if (msg->{{ actions_field }}_size() >= static_cast<int>({{ max_actions }})) return false;
+
+    std::set<int> present;
+    const int n = msg->{{ actions_field }}_size();
+    for (int i = 0; i < n; i++) {
+        present.insert(static_cast<int>(msg->{{ actions_field }}(i).{{ action_oneof_field }}_case()));
+    }
+
+    bool changed = false;
+    int appended = 0;
+    uint32_t rng = plb_mix(static_cast<uint32_t>(seed) ^ static_cast<uint32_t>(n) ^ 0x1234abcdU);
+
+    for (int e = 0; kGraphEdges[e].src_case >= 0 && appended < max_appends; e++) {
+        const PlbEdge& edge = kGraphEdges[e];
+        if (!present.count(edge.src_case)) continue;  // producer not present
+        if (present.count(edge.dst_case)) continue;   // consumer already present
+        rng = plb_mix(rng);
+        if (static_cast<int>(rng % 100) >= edge.confidence_pct) continue;
+
+        {{ package_name }}::{{ action_type }} new_action;
+        bool created = false;
+        switch (edge.dst_case) {
+{% for api in apis %}
+            case static_cast<int>({{ package_name }}::{{ action_type }}::k{{ api.field_name.replace('_', ' ').title().replace(' ', '') }}):
+                new_action.mutable_{{ api.field_name }}();
+                created = true;
+                break;
+{% endfor %}
+            default: break;
+        }
+        if (created && msg->{{ actions_field }}_size() < static_cast<int>({{ max_actions }})) {
+            *msg->add_{{ actions_field }}() = std::move(new_action);
+            present.insert(edge.dst_case);
+            appended++;
+            changed = true;
+        }
+    }
+    return changed;
+}
+
+// =============================================================================
+// UAF / double-free probe
+// With low probability (~5%), appends a duplicate destructor call after each
+// destructor found in the sequence to probe use-after-free and double-free paths.
+// Opt-in: PROTO_LIBERATOR_UAF_PROBE=1
+// =============================================================================
+static bool plb_uaf_probe({{ package_name }}::{{ fuzz_input_type }}* msg, unsigned int seed) {
+    if (!msg) return false;
+    bool changed = false;
+    uint32_t rng = plb_mix(static_cast<uint32_t>(seed) ^ 0xdeadbeefU);
+    const int n = msg->{{ actions_field }}_size();
+    for (int i = 0; i < n; i++) {
+        const auto& action = msg->{{ actions_field }}(i);
+        int case_id = static_cast<int>(action.{{ action_oneof_field }}_case());
+        bool is_dtor = false;
+        switch (case_id) {
+{% for api in apis if api.is_destructor %}
+            case static_cast<int>({{ package_name }}::{{ action_type }}::k{{ api.field_name.replace('_', ' ').title().replace(' ', '') }}):
+                is_dtor = true; break;
+{% endfor %}
+            default: break;
+        }
+        if (!is_dtor) continue;
+        rng = plb_mix(rng ^ static_cast<uint32_t>(i));
+        if (static_cast<int>(rng % 100) >= 5) continue;  // 5% chance
+        if (msg->{{ actions_field }}_size() >= static_cast<int>({{ max_actions }})) break;
+
+        {{ package_name }}::{{ action_type }} dtor_copy = action;
+        switch (case_id) {
+{% for api in apis if api.is_destructor and api.has_allow_double_delete %}
+            case static_cast<int>({{ package_name }}::{{ action_type }}::k{{ api.field_name.replace('_', ' ').title().replace(' ', '') }}):
+                dtor_copy.mutable_{{ api.field_name }}()->set_allow_double_delete(true);
+                break;
+{% endfor %}
+            default: break;
+        }
+        *msg->add_{{ actions_field }}() = std::move(dtor_copy);
+        changed = true;
+    }
+    return changed;
+}
+
+// =============================================================================
+// Custom mutator: protobuf-aware mutation + multi-pass semantic repair.
+//
+// Passes (each controlled by PROTO_LIBERATOR_* env vars, default in parens):
+//   SEQ_REPAIR=1     Insert missing producer actions before consumers (Gap 3)
+//   ENFORCE_HARD=1   Drop/repair hard-invalid actions so output sequence is valid
+//   NORM_HANDLES=1   Normalize handle IDs to [1, pool_size] range (Gap 1)
+//   SYNC_LENGTHS=1   Resync length_override to match bytes.size() (Gap 4)
+//   GRAPH_EXTEND=0   Append consumers guided by constraint graph edges (opt-in)
+//   UAF_PROBE=0      Duplicate destructor calls to probe UAF paths (opt-in)
+// =============================================================================
+extern "C" size_t LLVMFuzzerCustomMutator(
+    uint8_t* data, size_t size, size_t max_size, unsigned int seed) {
+    {{ package_name }}::{{ fuzz_input_type }} msg;
+    g_seq_repair_attempted++;
+
+    size_t new_size = protobuf_mutator::libfuzzer::CustomProtoMutator(
+        /*binary=*/true, data, size, max_size, seed, &msg);
+
+    bool changed = false;
+
+    // Pass 1: Sequence repair — insert missing producers before consumers (Gap 3).
+    if (plb_env_int("PROTO_LIBERATOR_SEQ_REPAIR", 1) != 0) {
+        int max_inserts = plb_env_int("PROTO_LIBERATOR_SEQ_REPAIR_MAX_INSERTS", 8);
+        int inserted = plb_repair_sequence(&msg, max_inserts);
+        if (inserted > 0) {
+            g_seq_repair_changed++;
+            g_seq_repair_insertions += static_cast<uint64_t>(inserted);
+            changed = true;
+        }
+    }
+
+    // Pass 2: Hard validity enforcement (strict by default).
+    if (plb_env_int("PROTO_LIBERATOR_ENFORCE_HARD_VALIDITY", 1) != 0) {
+        int max_inserts = plb_env_int("PROTO_LIBERATOR_ENFORCE_HARD_MAX_INSERTS", 8);
+        bool misuse_mode = plb_env_int("PROTO_LIBERATOR_MUTATOR_MISUSE_MODE", 0) != 0;
+        if (plb_enforce_hard_validity(&msg, max_inserts, misuse_mode)) changed = true;
+    }
+
+    // Pass 3: Handle ID normalization — remap to [1, pool_size] (Gap 1).
+    if (plb_env_int("PROTO_LIBERATOR_NORM_HANDLES", 1) != 0) {
+        if (plb_normalize_handles(&msg)) changed = true;
+    }
+
+    // Pass 4: Length sync — resync length_override to bytes.size() (Gap 4).
+    if (plb_env_int("PROTO_LIBERATOR_SYNC_LENGTHS", 1) != 0) {
+        if (plb_sync_lengths(&msg)) changed = true;
+    }
+
+    // Pass 5: Graph-guided extension — append consumers from producer_consumer edges (opt-in).
+    if (plb_env_int("PROTO_LIBERATOR_GRAPH_EXTEND", 0) != 0) {
+        int max_appends = plb_env_int("PROTO_LIBERATOR_GRAPH_EXTEND_MAX", 4);
+        if (plb_graph_extend(&msg, max_appends, seed)) changed = true;
+    }
+
+    // Pass 6: UAF probe — duplicate destructor to probe double-free paths (opt-in).
+    if (plb_env_int("PROTO_LIBERATOR_UAF_PROBE", 0) != 0) {
+        if (plb_uaf_probe(&msg, seed)) changed = true;
+    }
+
+    if (!changed) return new_size;
+
+    std::string buf;
+    if (!msg.SerializeToString(&buf) || buf.size() > max_size) {
+        g_seq_repair_serialize_failures++;
+        return new_size;
+    }
+    std::memcpy(data, buf.data(), buf.size());
+    return buf.size();
 }
 
 // -----------------------------------------------------------------------------
@@ -266,6 +743,7 @@ static const bool kSimpleHarness = {{ "true" if harness_style == "simple" else "
 DEFINE_BINARY_PROTO_FUZZER(const {{ package_name }}::{{ fuzz_input_type }}& input) {
     // Reset handles
     handles_reset();
+    g_hard_constraint_redirected = false;
     int null_budget_default = env_int("PROTO_LIBERATOR_NULL_BUDGET", kSimpleHarness ? INT_MAX : 1);
     int stale_budget_default = env_int("PROTO_LIBERATOR_STALE_BUDGET", kSimpleHarness ? INT_MAX : 0);
     int null_prob_num_default = env_int("PROTO_LIBERATOR_NULL_PROB_NUM", 1);
@@ -406,7 +884,7 @@ DEFINE_BINARY_PROTO_FUZZER(const {{ package_name }}::{{ fuzz_input_type }}& inpu
                             }
                         }
                     } else {
-                        ptr = handle_get({{ arg.param.type_id }}, hid, allow_stale, &sel_{{ arg.i }});
+                        ptr = handle_get_typed({{ arg.param.type_id }}, hid, allow_stale, &sel_{{ arg.i }});
                         if (ptr == nullptr) {
                             {% if arg.is_char_ptr_ptr %}
                             if (charpp_fallback) {
@@ -467,6 +945,12 @@ DEFINE_BINARY_PROTO_FUZZER(const {{ package_name }}::{{ fuzz_input_type }}& inpu
                 }
                 {% endif %}
                 {% endfor %}
+                {% if api.pre_call_guards %}
+                // Constraint-graph pre-call guards
+                {% for guard in api.pre_call_guards %}
+                {{ guard | replace('\n', '\n                ') }}
+                {% endfor %}
+                {% endif %}
                 {% if harness_style != "simple" %}
                 // Enforce len_depends_on: clamp buffers to dependent length, and infer missing lengths.
                 {% for arg in api.args %}
@@ -596,7 +1080,7 @@ DEFINE_BINARY_PROTO_FUZZER(const {{ package_name }}::{{ fuzz_input_type }}& inpu
 
                 // Handle return
                 {% if api.returns_handle %}
-                handle_register({{ api.return_type_id }}, (void*)ret);
+                handle_register_typed({{ api.return_type_id }}, (void*)ret);
                 {% endif %}
                 g_api_executed[api_idx]++;
 
@@ -611,7 +1095,7 @@ DEFINE_BINARY_PROTO_FUZZER(const {{ package_name }}::{{ fuzz_input_type }}& inpu
                 {% endfor %}
                 {% if ns.first_handle is not none %}
                 if (!allow_double_delete) {
-                    handle_invalidate({{ api.args[ns.first_handle].param.type_id }}, sel_{{ ns.first_handle }});
+                    handle_invalidate_typed({{ api.args[ns.first_handle].param.type_id }}, sel_{{ ns.first_handle }});
                 }
                 {% endif %}
                 {% endif %}
@@ -622,5 +1106,8 @@ DEFINE_BINARY_PROTO_FUZZER(const {{ package_name }}::{{ fuzz_input_type }}& inpu
             default:
                 break;
         }
+    }
+    if (g_hard_constraint_redirected) {
+        std::fprintf(stderr, "PLB_CONSTRAINT_REDIRECTED=1\n");
     }
 }

@@ -30,11 +30,13 @@ from jinja2 import Environment, FileSystemLoader
 
 try:
     from contracts import MSG_FUZZ_INPUT, MSG_ACTION, FIELD_ACTIONS, FIELD_ACTION_ONEOF, DEFAULT_MAX_ACTIONS
+    from emi_guard_rules import EmiGuardRules
     from utils import load_json, load_text_lines, to_proto_field_name
     from type_mapper import TypeMapper, TypeContext
 except ImportError:
     sys.path.append(os.path.dirname(__file__))
     from contracts import MSG_FUZZ_INPUT, MSG_ACTION, FIELD_ACTIONS, FIELD_ACTION_ONEOF, DEFAULT_MAX_ACTIONS
+    from emi_guard_rules import EmiGuardRules
     from utils import load_json, load_text_lines, to_proto_field_name
     from type_mapper import TypeMapper, TypeContext
 
@@ -482,6 +484,7 @@ class WrapperGenerator:
         emi_config: Optional[Dict] = None,
         extra_headers: Optional[List[str]] = None,
         apipass_dir: Optional[Path] = None,
+        constraint_graph_path: Optional[Path] = None,
         harness_style: str = "strict",
     ):
         self.proto_path = proto_path
@@ -499,7 +502,9 @@ class WrapperGenerator:
         self.max_actions = int(max_actions)
         self.emi_config = emi_config or {}
         self.extra_headers = extra_headers or []
+        self.constraint_graph_path = constraint_graph_path
         self.harness_style = harness_style
+        self.emi_rules = EmiGuardRules(constraint_graph_path=constraint_graph_path)
 
         if self.mutation_mode == "lpm" and self.schema_mode != "v2":
             raise ValueError("mutation_mode=lpm currently requires schema_mode=v2")
@@ -773,6 +778,7 @@ class WrapperGenerator:
                     "has_allow_double_delete": "return" in entry,
                     "is_destructor": is_destructor_name(func_name),
                     "unsupported_vararg": unsupported_vararg,
+                    "pre_call_guards": self.emi_rules.get_guard_for_api(func_name, args),
                 }
             )
 
@@ -804,6 +810,28 @@ class WrapperGenerator:
             if api.get("returns_handle"):
                 api["return_type_id"] = key_to_id.get(api.get("return_type_key", ""), 0)
 
+        # Build graph_edges from inter_edges for constraint-graph-guided mutator.
+        graph_edges = []
+        if self.emi_rules and self.emi_rules.inter_edges:
+            fn_to_field = {api["name"]: api["field_name"] for api in apis}
+            for edge in self.emi_rules.inter_edges:
+                relation = str(edge.get("relation") or "")
+                if relation != "producer_consumer":
+                    continue
+                src_name = str(edge.get("src") or "")
+                dst_name = str(edge.get("dst") or "")
+                if src_name not in fn_to_field or dst_name not in fn_to_field:
+                    continue
+                confidence = float(edge.get("confidence") or 0)
+                if confidence < 0.5:
+                    continue
+                graph_edges.append({
+                    "src_field": fn_to_field[src_name],
+                    "dst_field": fn_to_field[dst_name],
+                    "confidence_pct": max(1, min(100, int(confidence * 100))),
+                    "relation": relation,
+                })
+
         return {
             "headers": headers,
             "proto_header": self.proto_path.stem + ".pb.h",
@@ -816,6 +844,7 @@ class WrapperGenerator:
             "apis": apis,
             "handle_types": handle_types,
             "harness_style": self.harness_style,
+            "graph_edges": graph_edges,
         }
 
 
@@ -848,6 +877,11 @@ def main():
         default="strict",
         help="Validation strictness for generated harness",
     )
+    parser.add_argument(
+        "--constraint-graph",
+        default=None,
+        help="Optional constraint_graph.json for generating pre-call guard rules",
+    )
 
     args = parser.parse_args()
 
@@ -863,6 +897,7 @@ def main():
         max_actions=args.max_actions,
         extra_headers=args.header,
         apipass_dir=Path(args.apipass_dir) if args.apipass_dir else None,
+        constraint_graph_path=Path(args.constraint_graph) if args.constraint_graph else None,
         harness_style=args.harness_style,
     )
 

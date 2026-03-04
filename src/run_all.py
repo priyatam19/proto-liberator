@@ -159,9 +159,30 @@ def main() -> int:
     parser.add_argument("--seed-max-len", type=int, default=16, help="(v2) max actions per seed")
     parser.add_argument("--seed-rng", type=int, default=0, help="(v2) deterministic RNG seed")
     parser.add_argument(
+        "--constraint-graph",
+        default=None,
+        help="Optional constraint_graph.json to drive stateful sequence planning in seed generation",
+    )
+    parser.add_argument(
+        "--schedule-mode",
+        choices=["strict", "balanced", "explore"],
+        default="strict",
+        help="Planner mode for --constraint-graph",
+    )
+    parser.add_argument(
+        "--misuse-mode",
+        action="store_true",
+        help="Allow explicit misuse-oriented planning when using --constraint-graph",
+    )
+    parser.add_argument(
         "--seed-constants-json",
         default=None,
         help="Optional JSON mapping function -> {field_name: value} for seed generation",
+    )
+    parser.add_argument(
+        "--novelty-signal-json",
+        default=None,
+        help="Optional JSON signal (api_stats/coverage) used for planner novelty scoring",
     )
 
     parser.add_argument("--build", action="store_true", help="Compile a libFuzzer binary")
@@ -217,6 +238,9 @@ def main() -> int:
     conditions = Path(args.conditions).resolve()
     apis = Path(args.apis).resolve()
     driver = Path(args.driver).resolve() if args.driver else None
+    effective_apipass_dir = Path(args.apipass_dir).resolve() if args.apipass_dir else conditions.parent
+    auto_constraint_graph: Optional[Path] = None
+    auto_constraint_graph_attempted = False
 
     if args.mutation_mode == "lpm" and args.schema_mode != "v2":
         raise SystemExit("--mutation-mode lpm currently requires --schema-mode v2")
@@ -305,6 +329,29 @@ def main() -> int:
         )
     _run(bindings_cmd, dry_run=args.dry_run)
 
+    # 2.5) Constraint graph (for wrapper guards and optional sequence planning)
+    if args.schema_mode == "v2" and not args.constraint_graph:
+        auto_constraint_graph_attempted = True
+        graph_out = effective_apipass_dir / "constraint_graph.json"
+        if graph_out.exists():
+            auto_constraint_graph = graph_out
+        elif (effective_apipass_dir / "conditions.json").exists():
+            cg_argv: List[str] = [
+                python,
+                str(src_dir / "constraint_graph_builder.py"),
+                "--apipass-dir",
+                str(effective_apipass_dir),
+                "--library",
+                args.library,
+            ]
+            _run(Cmd(cg_argv), dry_run=args.dry_run)
+            auto_constraint_graph = graph_out
+        else:
+            print(
+                f"[Orch] Skipping auto constraint-graph build: "
+                f"{effective_apipass_dir / 'conditions.json'} not found"
+            )
+
     # 3) Harness
     wrapper_argv: List[str] = [
         python,
@@ -335,7 +382,36 @@ def main() -> int:
         wrapper_argv += ["--minimum-apis", str(Path(args.minimum_apis).resolve())]
     if args.apipass_dir:
         wrapper_argv += ["--apipass-dir", str(Path(args.apipass_dir).resolve())]
+    selected_graph = Path(args.constraint_graph).resolve() if args.constraint_graph else auto_constraint_graph
+    if selected_graph:
+        wrapper_argv += ["--constraint-graph", str(selected_graph)]
     _run(Cmd(wrapper_argv), dry_run=args.dry_run)
+
+    # 3.5) Constraint graph (safety fallback before seed generation)
+    if (
+        args.generate_seeds
+        and args.schema_mode == "v2"
+        and not args.constraint_graph
+        and not auto_constraint_graph
+        and not auto_constraint_graph_attempted
+    ):
+        if (effective_apipass_dir / "conditions.json").exists():
+            graph_out = effective_apipass_dir / "constraint_graph.json"
+            cg_argv: List[str] = [
+                python,
+                str(src_dir / "constraint_graph_builder.py"),
+                "--apipass-dir",
+                str(effective_apipass_dir),
+                "--library",
+                args.library,
+            ]
+            _run(Cmd(cg_argv), dry_run=args.dry_run)
+            auto_constraint_graph = graph_out
+        else:
+            print(
+                f"[Orch] Skipping auto constraint-graph build: "
+                f"{effective_apipass_dir / 'conditions.json'} not found"
+            )
 
     # 4) Seeds (v2)
     seeds_dir = Path(args.seeds_dir).resolve() if args.seeds_dir else (out_dir / "corpus")
@@ -366,6 +442,14 @@ def main() -> int:
             seed_argv += ["--apipass-dir", str(Path(args.apipass_dir).resolve())]
         if args.seed_constants_json:
             seed_argv += ["--constants-json", str(Path(args.seed_constants_json).resolve())]
+        if args.novelty_signal_json:
+            seed_argv += ["--novelty-signal-json", str(Path(args.novelty_signal_json).resolve())]
+        selected_graph = Path(args.constraint_graph).resolve() if args.constraint_graph else auto_constraint_graph
+        if selected_graph:
+            seed_argv += ["--constraint-graph", str(selected_graph)]
+            seed_argv += ["--schedule-mode", args.schedule_mode]
+            if args.misuse_mode:
+                seed_argv += ["--misuse-mode"]
         _run(Cmd(seed_argv), dry_run=args.dry_run)
 
     # 5) Build

@@ -14,15 +14,17 @@ import random
 import sys
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Tuple
+from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple
 
 try:
     from contracts import FIELD_ACTIONS, FIELD_ACTION_ONEOF, FIELD_GLOBAL_SEED
+    from sequence_planner import PlannerConfig, SequencePlanner
     from type_mapper import TypeMapper, TypeContext
     from utils import load_json, to_proto_field_name
 except ImportError:
     sys.path.append(str(Path(__file__).parent))
     from contracts import FIELD_ACTIONS, FIELD_ACTION_ONEOF, FIELD_GLOBAL_SEED
+    from sequence_planner import PlannerConfig, SequencePlanner
     from type_mapper import TypeMapper, TypeContext
     from utils import load_json, to_proto_field_name
 
@@ -92,6 +94,62 @@ def _is_creator(entry: Dict[str, Any]) -> bool:
             if isinstance(a, dict) and a.get("access") == "create":
                 return True
     return False
+
+
+def build_novelty_scores(signal: Any) -> Dict[str, float]:
+    """
+    Build per-API novelty scores from one of several JSON formats:
+    1) API stats: {"apis": [{"name","seen","executed","skipped",...}, ...]}
+    2) Direct map: {"api_novelty": {"Foo": 0.9, ...}}
+    3) Coverage map: {"Foo": {"uncovered_edges": N}, ...}
+    """
+    scores: Dict[str, float] = {}
+    if not isinstance(signal, dict):
+        return scores
+
+    api_novelty = signal.get("api_novelty")
+    if isinstance(api_novelty, dict):
+        for k, v in api_novelty.items():
+            try:
+                scores[str(k)] = max(0.0, float(v))
+            except Exception:
+                continue
+        return scores
+
+    apis = signal.get("apis")
+    if isinstance(apis, list):
+        for row in apis:
+            if not isinstance(row, dict):
+                continue
+            name = str(row.get("name") or "")
+            if not name:
+                continue
+            seen = float(row.get("seen", 0) or 0)
+            executed = float(row.get("executed", 0) or 0)
+            skipped = float(row.get("skipped", 0) or 0)
+            # Prioritize never/rarely-executed APIs and mildly penalize chronic skips.
+            base = 1.0 / (1.0 + executed)
+            skip_penalty = min(0.5, skipped / (seen + 1.0)) if seen >= 0 else 0.0
+            scores[name] = max(0.0, base - (0.3 * skip_penalty))
+        return scores
+
+    # Coverage-style map keyed by API names.
+    for k, v in signal.items():
+        name = str(k)
+        if not name:
+            continue
+        if isinstance(v, dict):
+            if "uncovered_edges" in v:
+                try:
+                    scores[name] = max(0.0, float(v.get("uncovered_edges", 0))) * 0.1
+                except Exception:
+                    continue
+            elif "novelty" in v:
+                try:
+                    scores[name] = max(0.0, float(v.get("novelty", 0)))
+                except Exception:
+                    continue
+    return scores
 
 
 @dataclass(frozen=True)
@@ -518,6 +576,44 @@ class SeedGenerator:
             sequences.append(seq)
         return sequences
 
+    def seed_sequences_with_planner(
+        self,
+        *,
+        num_seeds: int,
+        max_len: int,
+        constraint_graph: Path,
+        mode: str,
+        misuse_mode: bool,
+        novelty_provider: Optional[Callable[[str], float]] = None,
+        prefixes: Optional[List[List[str]]] = None,
+    ) -> List[List[str]]:
+        planner = SequencePlanner(
+            graph_path=constraint_graph,
+            rng_seed=self.rng.randint(0, 2**31 - 1),
+            config=PlannerConfig(mode=mode, misuse_mode=misuse_mode),
+            novelty_provider=novelty_provider,
+        )
+        sequences: List[List[str]] = []
+
+        prefix_list = prefixes or []
+        for prefix in prefix_list:
+            if len(sequences) >= num_seeds:
+                break
+            target_len = self.rng.randint(max(1, len(prefix)), max_len) if max_len > 1 else 1
+            seq = planner.plan_sequence(max_len=target_len, prefix=prefix)
+            if seq:
+                sequences.append(seq)
+
+        while len(sequences) < num_seeds:
+            target_len = self.rng.randint(1, max_len) if max_len > 1 else 1
+            seq = planner.plan_sequence(max_len=target_len)
+            if not seq:
+                # Fallback safety: retain existing behavior if planner is too restrictive.
+                seq = self.seed_sequences_default(1, max_len)[0]
+            sequences.append(seq)
+
+        return sequences
+
 
 def _load_proto_module(path: Path):
     # Optional mode: python-protobuf serialization using generated *_pb2.py.
@@ -541,6 +637,22 @@ def main() -> int:
     parser.add_argument("--minimum-apis", help="Optional apis_minimized.txt to filter functions")
     parser.add_argument("--apipass-dir", help="Optional apipass dir (defaults to parent of conditions.json)")
     parser.add_argument("--constants-json", help="Optional JSON mapping function -> {field_name: value}")
+    parser.add_argument(
+        "--novelty-signal-json",
+        help="Optional JSON signal (api_stats/coverage) used to bias sequence planning novelty",
+    )
+    parser.add_argument("--constraint-graph", help="Optional constraint_graph.json for stateful planning")
+    parser.add_argument(
+        "--schedule-mode",
+        choices=["strict", "balanced", "explore"],
+        default="strict",
+        help="Sequence planner mode when --constraint-graph is provided",
+    )
+    parser.add_argument(
+        "--misuse-mode",
+        action="store_true",
+        help="Allow explicit misuse-oriented planning (disables some hard lifecycle checks)",
+    )
     parser.add_argument(
         "--mode",
         choices=["wire", "protobuf"],
@@ -583,7 +695,23 @@ def main() -> int:
         meta = load_json(Path(d))
         sequences.extend(gen.seed_sequences_from_driver(meta))
 
-    if not sequences:
+    novelty_provider: Optional[Callable[[str], float]] = None
+    if args.novelty_signal_json:
+        signal = load_json(Path(args.novelty_signal_json))
+        novelty_scores = build_novelty_scores(signal)
+        novelty_provider = lambda api: float(novelty_scores.get(api, 0.0))
+
+    if args.constraint_graph:
+        sequences = gen.seed_sequences_with_planner(
+            num_seeds=args.num_seeds,
+            max_len=args.max_len,
+            constraint_graph=Path(args.constraint_graph),
+            mode=args.schedule_mode,
+            misuse_mode=bool(args.misuse_mode),
+            novelty_provider=novelty_provider,
+            prefixes=sequences if sequences else None,
+        )
+    elif not sequences:
         sequences = gen.seed_sequences_default(args.num_seeds, args.max_len)
 
     for i, seq in enumerate(sequences[: args.num_seeds]):
