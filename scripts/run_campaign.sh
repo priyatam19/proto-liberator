@@ -584,8 +584,9 @@ postprocess_variant() {
   local coverage_dir="${out_dir}/coverage"
   local api_stats_dir="${out_dir}/api_stats"
   local casr_dir="${out_dir}/casr"
+  local crashes_dir="${out_dir}/crashes"
 
-  mkdir -p "${profraw_dir}" "${coverage_dir}" "${casr_dir}" "${api_stats_dir}"
+  mkdir -p "${profraw_dir}" "${coverage_dir}" "${casr_dir}" "${api_stats_dir}" "${crashes_dir}"
 
   local -a env_kv=()
   while IFS= read -r kv; do
@@ -627,11 +628,22 @@ postprocess_variant() {
     > "${coverage_dir}/coverage_summary.txt" 2>&1 || true
 
   if [ -d "${api_stats_dir}" ]; then
-    echo "[Campaign] Merging API stats for '${variant}'..."
-    "${ROOT_DIR}/scripts/merge_api_stats.py" \
+    echo "[Campaign] Aggregating API feedback for '${variant}'..."
+    python3 "${ROOT_DIR}/src/feedback_aggregator.py" \
       --input-dir "${api_stats_dir}" \
-      --output "${api_stats_dir}/merged_api_stats.json" \
-      > "${api_stats_dir}/merge_api_stats.log" 2>&1 || true
+      --output "${api_stats_dir}/api_stats.json" \
+      > "${api_stats_dir}/feedback_aggregator.log" 2>&1 || true
+  fi
+
+  if [ -f "${fuzzer_bin}" ]; then
+    echo "[Campaign] Crash classification for '${variant}'..."
+    python3 "${ROOT_DIR}/src/crash_classifier.py" \
+      --workdir "${out_dir}" \
+      --fuzzer-bin "${fuzzer_bin}" \
+      --crash-dir "${out_dir}/artifacts" \
+      --out-dir "${crashes_dir}" \
+      --timeout-sec "${TIMEOUT_SEC}" \
+      > "${crashes_dir}/summary.txt" 2>&1 || true
   fi
 
   echo "[Campaign] Crash clustering for '${variant}'..."

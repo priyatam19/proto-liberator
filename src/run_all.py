@@ -23,7 +23,7 @@ import subprocess
 import sys
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable, List, Optional
+from typing import Dict, Iterable, List, Optional
 
 
 @dataclass(frozen=True)
@@ -114,6 +114,189 @@ def _target_libs_for_profile(target_libs: List[str]) -> List[str]:
     return out
 
 
+def _aggregate_feedback_signal_from_stats(
+    *,
+    out_dir: Path,
+    src_dir: Path,
+    python: str,
+    dry_run: bool,
+) -> Optional[Path]:
+    """
+    Aggregate per-process API stats into a novelty signal JSON.
+    """
+    stats_dir = out_dir / "api_stats"
+    if not stats_dir.exists():
+        return None
+
+    if not any(stats_dir.glob("api_stats.*.json")):
+        return None
+
+    output = (stats_dir / "api_stats.json").resolve()
+    agg_argv: List[str] = [
+        python,
+        str(src_dir / "feedback_aggregator.py"),
+        "--input-dir",
+        str(stats_dir),
+        "--output",
+        str(output),
+    ]
+    _run(Cmd(agg_argv), dry_run=dry_run)
+    return output
+
+
+def _safe_int(value: object) -> int:
+    try:
+        return int(value)  # type: ignore[arg-type]
+    except Exception:
+        return 0
+
+
+def _feedback_refresh_metrics(
+    *,
+    stats_dir: Path,
+    novelty_signal_path: Path,
+) -> Dict[str, int]:
+    """
+    Read refresh metrics from aggregated files, with a dry-run fallback that
+    computes the merged signal in-memory from api_stats.*.json inputs.
+    """
+    metrics: Dict[str, int] = {
+        "api_count": 0,
+        "pair_count": 0,
+        "prefix_count": 0,
+        "learned_edges": 0,
+        "prefix_weights": 0,
+    }
+
+    loaded_any = False
+    if novelty_signal_path.exists():
+        try:
+            novelty = json.loads(novelty_signal_path.read_text())
+        except Exception:
+            novelty = {}
+        if isinstance(novelty, dict):
+            meta = novelty.get("meta", {})
+            if isinstance(meta, dict):
+                metrics["api_count"] = _safe_int(meta.get("api_count"))
+                metrics["pair_count"] = _safe_int(meta.get("pair_count"))
+                metrics["prefix_count"] = _safe_int(meta.get("prefix_count"))
+            edges = novelty.get("learned_edges")
+            if isinstance(edges, list):
+                metrics["learned_edges"] = len(edges)
+            weights = novelty.get("prefix_weights")
+            if isinstance(weights, dict):
+                metrics["prefix_weights"] = len(weights)
+            loaded_any = True
+
+    learned_edges_path = stats_dir / "learned_edges.json"
+    if learned_edges_path.exists():
+        try:
+            learned = json.loads(learned_edges_path.read_text())
+        except Exception:
+            learned = {}
+        if isinstance(learned, dict):
+            edges = learned.get("edges")
+            if isinstance(edges, list):
+                metrics["learned_edges"] = len(edges)
+                loaded_any = True
+
+    prefix_weights_path = stats_dir / "prefix_weights.json"
+    if prefix_weights_path.exists():
+        try:
+            weights_json = json.loads(prefix_weights_path.read_text())
+        except Exception:
+            weights_json = {}
+        if isinstance(weights_json, dict):
+            weights = weights_json.get("weights")
+            if isinstance(weights, dict):
+                metrics["prefix_weights"] = len(weights)
+                loaded_any = True
+
+    if loaded_any:
+        return metrics
+
+    # Dry-run fallback: compute merged signal from existing per-process files.
+    try:
+        from feedback_aggregator import build_feedback_signal  # local import to avoid hard dependency at startup
+    except Exception:
+        return metrics
+
+    inputs = sorted(stats_dir.glob("api_stats.*.json"))
+    if not inputs:
+        return metrics
+    try:
+        merged = build_feedback_signal(inputs)
+    except Exception:
+        return metrics
+    if not isinstance(merged, dict):
+        return metrics
+
+    meta = merged.get("meta", {})
+    if isinstance(meta, dict):
+        metrics["api_count"] = _safe_int(meta.get("api_count"))
+        metrics["pair_count"] = _safe_int(meta.get("pair_count"))
+        metrics["prefix_count"] = _safe_int(meta.get("prefix_count"))
+    edges = merged.get("learned_edges")
+    if isinstance(edges, list):
+        metrics["learned_edges"] = len(edges)
+    weights = merged.get("prefix_weights")
+    if isinstance(weights, dict):
+        metrics["prefix_weights"] = len(weights)
+    return metrics
+
+
+def _crash_classification_metrics(
+    *,
+    summary_path: Path,
+) -> Dict[str, int]:
+    metrics: Dict[str, int] = {
+        "total": 0,
+        "genuine": 0,
+        "constraint_misuse": 0,
+    }
+    if not summary_path.exists():
+        return metrics
+    try:
+        summary = json.loads(summary_path.read_text())
+    except Exception:
+        return metrics
+    if not isinstance(summary, dict):
+        return metrics
+    metrics["total"] = _safe_int(summary.get("total"))
+    genuine = _safe_int(summary.get("genuine"))
+    if genuine <= 0:
+        genuine = _safe_int(summary.get("genuine_bug"))
+    metrics["genuine"] = genuine
+    metrics["constraint_misuse"] = _safe_int(summary.get("constraint_misuse"))
+    return metrics
+
+
+def _auto_feedback_signal(
+    *,
+    novelty_signal_json: Optional[str],
+    out_dir: Path,
+    src_dir: Path,
+    python: str,
+    dry_run: bool,
+) -> Optional[Path]:
+    """
+    Resolve novelty signal path for seed generation.
+
+    Priority:
+      1) explicit --novelty-signal-json
+      2) auto-aggregate prior per-process api_stats.*.json in <out-dir>/api_stats
+    """
+    if novelty_signal_json:
+        return Path(novelty_signal_json).resolve()
+
+    return _aggregate_feedback_signal_from_stats(
+        out_dir=out_dir,
+        src_dir=src_dir,
+        python=python,
+        dry_run=dry_run,
+    )
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Proto-libErator Orchestrator")
 
@@ -198,6 +381,24 @@ def main() -> int:
     )
     parser.add_argument("--fuzz", action="store_true", help="Run the fuzzer after build")
     parser.add_argument(
+        "--classify-crashes",
+        dest="classify_crashes",
+        action="store_true",
+        help="Classify crash artifacts into genuine vs constraint-misuse after fuzzing (default: enabled)",
+    )
+    parser.add_argument(
+        "--no-classify-crashes",
+        dest="classify_crashes",
+        action="store_false",
+        help="Disable post-fuzz crash classification",
+    )
+    parser.add_argument(
+        "--crash-timeout-sec",
+        type=int,
+        default=20,
+        help="Per-input replay timeout for crash classification (default: 20)",
+    )
+    parser.add_argument(
         "--detect-leaks",
         action="store_true",
         help="Enable LeakSanitizer detection (default: disabled via -detect_leaks=0)",
@@ -221,6 +422,7 @@ def main() -> int:
 
     argv = sys.argv[1:]
     argv = _rewrite_flag_values_starting_with_dash(argv, flag="--cc-arg")
+    parser.set_defaults(classify_crashes=True)
     args = parser.parse_args(argv)
 
     root = _repo_root()
@@ -418,6 +620,13 @@ def main() -> int:
     if args.generate_seeds:
         if args.schema_mode != "v2":
             raise SystemExit("--generate-seeds is only supported for --schema-mode v2")
+        novelty_signal_path = _auto_feedback_signal(
+            novelty_signal_json=args.novelty_signal_json,
+            out_dir=out_dir,
+            src_dir=src_dir,
+            python=python,
+            dry_run=args.dry_run,
+        )
         seed_argv: List[str] = [
             python,
             str(src_dir / "seed_generator.py"),
@@ -442,8 +651,8 @@ def main() -> int:
             seed_argv += ["--apipass-dir", str(Path(args.apipass_dir).resolve())]
         if args.seed_constants_json:
             seed_argv += ["--constants-json", str(Path(args.seed_constants_json).resolve())]
-        if args.novelty_signal_json:
-            seed_argv += ["--novelty-signal-json", str(Path(args.novelty_signal_json).resolve())]
+        if novelty_signal_path:
+            seed_argv += ["--novelty-signal-json", str(novelty_signal_path)]
         selected_graph = Path(args.constraint_graph).resolve() if args.constraint_graph else auto_constraint_graph
         if selected_graph:
             seed_argv += ["--constraint-graph", str(selected_graph)]
@@ -688,6 +897,61 @@ def main() -> int:
             if "detect_leaks=" not in opts:
                 env["ASAN_OPTIONS"] = (opts + ":" if opts else "") + "detect_leaks=0"
         _run(Cmd(fuzz_argv, cwd=out_dir, env=env), dry_run=args.dry_run)
+        if args.schema_mode == "v2":
+            refreshed_signal = _aggregate_feedback_signal_from_stats(
+                out_dir=out_dir,
+                src_dir=src_dir,
+                python=python,
+                dry_run=args.dry_run,
+            )
+            if refreshed_signal:
+                stats_dir = out_dir / "api_stats"
+                learned_edges_path = stats_dir / "learned_edges.json"
+                prefix_weights_path = stats_dir / "prefix_weights.json"
+                metrics = _feedback_refresh_metrics(
+                    stats_dir=stats_dir,
+                    novelty_signal_path=refreshed_signal,
+                )
+                print(f"[Orch] feedback signal refreshed: {refreshed_signal}")
+                print(
+                    "[Orch] feedback refresh metrics: "
+                    f"apis={metrics['api_count']} "
+                    f"pairs={metrics['pair_count']} "
+                    f"prefixes={metrics['prefix_count']} "
+                    f"learned_edges={metrics['learned_edges']} "
+                    f"prefix_weights={metrics['prefix_weights']}"
+                )
+                print(
+                    "[Orch] feedback refresh outputs: "
+                    f"learned_edges={learned_edges_path} "
+                    f"prefix_weights={prefix_weights_path}"
+                )
+        if args.classify_crashes:
+            crashes_dir = out_dir / "crashes"
+            classify_argv: List[str] = [
+                python,
+                str(src_dir / "crash_classifier.py"),
+                "--workdir",
+                str(out_dir),
+                "--fuzzer-bin",
+                str(fuzzer_bin),
+                "--crash-dir",
+                str(artifacts_dir),
+                "--out-dir",
+                str(crashes_dir),
+                "--timeout-sec",
+                str(max(1, int(args.crash_timeout_sec))),
+            ]
+            _run(Cmd(classify_argv), dry_run=args.dry_run)
+            summary_path = crashes_dir / "summary.json"
+            crash_metrics = _crash_classification_metrics(summary_path=summary_path)
+            print(
+                "[Orch] crash classification summary: "
+                f"total={crash_metrics['total']} "
+                f"genuine={crash_metrics['genuine']} "
+                f"constraint_misuse={crash_metrics['constraint_misuse']}"
+            )
+            print(f"[Orch] crash classification output: {summary_path}")
 
     return 0
 
