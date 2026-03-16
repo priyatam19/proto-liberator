@@ -17,6 +17,7 @@
 #include <vector>
 #include <set>
 #include <string>
+#include <map>
 #include <climits>
 #include <type_traits>
 
@@ -40,6 +41,7 @@ extern "C" {
 
 // Typed handle tables (prevent cross-type mixing).
 static const size_t MAX_HANDLES = 1024;
+static const size_t MAX_SCALAR_SLOTS = 1024;
 
 enum HandleTypeId {
 {% for ht in handle_types %}
@@ -55,6 +57,20 @@ struct HandleTable {
 };
 
 static HandleTable g_tables[HT__COUNT];
+
+enum ScalarTypeId {
+{% for st in scalar_types %}
+    ST_{{ st.ident }} = {{ st.id }},
+{% endfor %}
+    ST__COUNT = {{ scalar_types|length }}
+};
+
+struct ScalarTable {
+    int64_t values[MAX_SCALAR_SLOTS];
+    uint32_t count;
+};
+
+static ScalarTable g_scalar_tables[ST__COUNT];
 static bool g_hard_constraint_redirected = false;
 
 static void handles_reset() {
@@ -62,6 +78,13 @@ static void handles_reset() {
         g_tables[t].count = 0;
         std::memset(g_tables[t].handles, 0, sizeof(g_tables[t].handles));
         std::memset(g_tables[t].valid, 0, sizeof(g_tables[t].valid));
+    }
+}
+
+static void scalars_reset() {
+    for (size_t t = 0; t < (size_t)ST__COUNT; t++) {
+        g_scalar_tables[t].count = 0;
+        std::memset(g_scalar_tables[t].values, 0, sizeof(g_scalar_tables[t].values));
     }
 }
 
@@ -103,6 +126,31 @@ static void handle_invalidate_typed(uint32_t type_id, uint32_t selected) {
     tab.valid[selected] = false;
 }
 
+static uint32_t scalar_register_typed(uint32_t type_id, int64_t value) {
+    if (type_id >= (uint32_t)ST__COUNT) return 0;
+    ScalarTable& tab = g_scalar_tables[type_id];
+    if (tab.count + 1 >= MAX_SCALAR_SLOTS) return 0;
+    uint32_t id = ++tab.count;
+    tab.values[id] = value;
+    return id;
+}
+
+static bool scalar_get_typed(uint32_t type_id, uint32_t requested, int64_t* out_value) {
+    if (type_id >= (uint32_t)ST__COUNT) return false;
+    ScalarTable& tab = g_scalar_tables[type_id];
+    if (tab.count == 0) return false;
+    uint32_t idx = requested;
+    if (idx == 0) {
+        idx = tab.count; /* latest */
+    } else {
+        idx = idx % tab.count;
+        if (idx == 0) idx = tab.count;
+    }
+    if (idx == 0 || idx > tab.count) return false;
+    if (out_value) *out_value = tab.values[idx];
+    return true;
+}
+
 // =============================================================================
 // Sequence repair helpers (generated from constraint graph)
 // =============================================================================
@@ -128,6 +176,136 @@ static uint32_t plb_mix(uint32_t x) {
     x ^= x >> 15; x *= 0x846ca68bU;
     x ^= x >> 16;
     return x;
+}
+
+static int plb_produced_type(int case_id);
+
+// -----------------------------------------------------------------------------
+// Effective producer-argument cache (Hopper-style reuse).
+// We cache successful producer params and reuse them in mutator passes.
+// -----------------------------------------------------------------------------
+static const int kPlbActionCaseSlots = {{ apis|length + 1 }};
+static std::vector<std::string> g_effective_args[kPlbActionCaseSlots];
+static uint32_t g_effective_args_next[kPlbActionCaseSlots];
+static uint64_t g_effective_arg_recorded = 0;
+static uint64_t g_effective_arg_reuse_attempts = 0;
+static uint64_t g_effective_arg_reused = 0;
+static uint64_t g_effective_arg_cache_miss = 0;
+
+static bool plb_valid_case_slot(int case_id) {
+    return case_id > 0 && case_id < kPlbActionCaseSlots;
+}
+
+static void plb_cache_record_payload(int case_id, const std::string& payload) {
+    if (!plb_valid_case_slot(case_id) || payload.empty()) return;
+    g_effective_arg_recorded++;
+
+    int max_entries = plb_env_int("PROTO_LIBERATOR_EFFECTIVE_ARG_CACHE_SIZE", 64);
+    if (max_entries <= 0) return;
+
+    std::vector<std::string>& bucket = g_effective_args[case_id];
+    for (const auto& cur : bucket) {
+        if (cur == payload) return;
+    }
+    if ((int)bucket.size() < max_entries) {
+        bucket.push_back(payload);
+        return;
+    }
+    uint32_t& next = g_effective_args_next[case_id];
+    if (bucket.empty()) return;
+    if (next >= bucket.size()) next = 0;
+    bucket[next] = payload;
+    next = (next + 1U) % static_cast<uint32_t>(bucket.size());
+}
+
+template <typename ParamsT>
+static void plb_cache_record_params(int case_id, const ParamsT& params) {
+    std::string payload;
+    if (!params.SerializeToString(&payload)) return;
+    plb_cache_record_payload(case_id, payload);
+}
+
+static bool plb_pick_cached_payload(int case_id, uint32_t* rng, std::string* payload) {
+    if (!rng || !payload) return false;
+    if (!plb_valid_case_slot(case_id)) return false;
+
+    g_effective_arg_reuse_attempts++;
+    const std::vector<std::string>& bucket = g_effective_args[case_id];
+    if (bucket.empty()) {
+        g_effective_arg_cache_miss++;
+        return false;
+    }
+
+    int reuse_pct = plb_env_int("PROTO_LIBERATOR_EFFECTIVE_ARG_REUSE_PCT", 70);
+    if (reuse_pct <= 0) return false;
+    if (reuse_pct < 100) {
+        *rng = plb_mix(*rng ^ 0x93f4a4dfU);
+        if (static_cast<int>(*rng % 100U) >= reuse_pct) return false;
+    }
+
+    *rng = plb_mix(*rng ^ 0x4a6f7c19U);
+    size_t idx = static_cast<size_t>(*rng % static_cast<uint32_t>(bucket.size()));
+    *payload = bucket[idx];
+    g_effective_arg_reused++;
+    return true;
+}
+
+static bool plb_try_apply_cached_params({{ package_name }}::{{ action_type }}* action, uint32_t* rng) {
+    if (!action || !rng) return false;
+    int case_id = static_cast<int>(action->{{ action_oneof_field }}_case());
+    if (plb_produced_type(case_id) < 0) return false;
+
+    std::string payload;
+    if (!plb_pick_cached_payload(case_id, rng, &payload)) return false;
+
+    switch (case_id) {
+{% for api in apis if api.returns_handle %}
+        case static_cast<int>({{ package_name }}::{{ action_type }}::k{{ api.field_name.replace('_', ' ').title().replace(' ', '') }}): {
+            {{ package_name }}::{{ api.name }}_Params parsed;
+            if (!parsed.ParseFromString(payload)) return false;
+            *action->mutable_{{ api.field_name }}() = parsed;
+            return true;
+        }
+{% endfor %}
+        default:
+            return false;
+    }
+}
+
+static bool plb_reuse_cached_producer_args({{ package_name }}::{{ fuzz_input_type }}* msg, unsigned int seed) {
+    if (!msg) return false;
+    if (plb_env_int("PROTO_LIBERATOR_EFFECTIVE_ARG_REUSE", 1) == 0) return false;
+
+    int max_rewrites = plb_env_int("PROTO_LIBERATOR_EFFECTIVE_ARG_MAX_REWRITES", 4);
+    if (max_rewrites <= 0) return false;
+
+    bool changed = false;
+    int rewrites = 0;
+    uint32_t rng = plb_mix(static_cast<uint32_t>(seed) ^ 0x7ca31e5bU);
+    const int n = msg->{{ actions_field }}_size();
+    for (int i = 0; i < n; i++) {
+        if (rewrites >= max_rewrites) break;
+        auto* action = msg->mutable_{{ actions_field }}(i);
+        int case_id = static_cast<int>(action->{{ action_oneof_field }}_case());
+        if (plb_produced_type(case_id) < 0) continue;
+        if (plb_try_apply_cached_params(action, &rng)) {
+            changed = true;
+            rewrites++;
+        }
+    }
+    return changed;
+}
+
+template <typename T>
+static typename std::enable_if<std::is_pointer<T>::value, bool>::type
+plb_handle_is_valid(T value) {
+    return value != nullptr;
+}
+
+template <typename T>
+static typename std::enable_if<!std::is_pointer<T>::value, bool>::type
+plb_handle_is_valid(T value) {
+    return value != 0;
 }
 
 // Returns the handle type_id produced by an action variant (-1 = produces none).
@@ -203,10 +381,11 @@ static bool plb_make_producer(int type_id, {{ package_name }}::{{ action_type }}
 
 // Scans the action list and inserts missing producers before consumers.
 // Returns number of inserted actions.
-static int plb_repair_sequence({{ package_name }}::{{ fuzz_input_type }}* msg, int max_inserts) {
+static int plb_repair_sequence({{ package_name }}::{{ fuzz_input_type }}* msg, int max_inserts, unsigned int seed) {
     if (!msg || max_inserts <= 0) return 0;
     int inserts = 0;
     std::set<int> produced;
+    uint32_t rng = plb_mix(static_cast<uint32_t>(seed) ^ 0x418f02deU);
 
     const int n = msg->{{ actions_field }}_size();
     std::vector<{{ package_name }}::{{ action_type }}> out;
@@ -221,6 +400,9 @@ static int plb_repair_sequence({{ package_name }}::{{ fuzz_input_type }}* msg, i
                 if (!produced.count(req) && inserts < max_inserts) {
                     {{ package_name }}::{{ action_type }} producer;
                     if (plb_make_producer(req, &producer)) {
+                        if (plb_env_int("PROTO_LIBERATOR_EFFECTIVE_ARG_REUSE", 1) != 0) {
+                            (void)plb_try_apply_cached_params(&producer, &rng);
+                        }
                         out.push_back(std::move(producer));
                         produced.insert(req);
                         ++inserts;
@@ -251,7 +433,8 @@ static int plb_repair_sequence({{ package_name }}::{{ fuzz_input_type }}* msg, i
 static bool plb_enforce_hard_validity(
     {{ package_name }}::{{ fuzz_input_type }}* msg,
     int max_inserts,
-    bool misuse_mode
+    bool misuse_mode,
+    unsigned int seed
 ) {
     if (!msg || misuse_mode) return false;
     if (max_inserts < 0) max_inserts = 0;
@@ -260,6 +443,7 @@ static bool plb_enforce_hard_validity(
     int live[static_cast<int>(HT__COUNT)] = {};
     int inserted = 0;
     bool changed = false;
+    uint32_t rng = plb_mix(static_cast<uint32_t>(seed) ^ 0x5db49cc3U);
 
     std::vector<{{ package_name }}::{{ action_type }}> out;
     out.reserve(n + max_inserts);
@@ -275,6 +459,9 @@ static bool plb_enforce_hard_validity(
             while (live[t] <= 0 && inserted < max_inserts) {
                 {{ package_name }}::{{ action_type }} producer;
                 if (!plb_make_producer(t, &producer)) break;
+                if (plb_env_int("PROTO_LIBERATOR_EFFECTIVE_ARG_REUSE", 1) != 0) {
+                    (void)plb_try_apply_cached_params(&producer, &rng);
+                }
                 out.push_back(std::move(producer));
                 live[t] += 1;
                 inserted += 1;
@@ -512,6 +699,7 @@ static bool plb_uaf_probe({{ package_name }}::{{ fuzz_input_type }}* msg, unsign
 // Passes (each controlled by PROTO_LIBERATOR_* env vars, default in parens):
 //   SEQ_REPAIR=1     Insert missing producer actions before consumers (Gap 3)
 //   ENFORCE_HARD=1   Drop/repair hard-invalid actions so output sequence is valid
+//   EFFECTIVE_ARG_REUSE=1  Reuse cached producer args from successful calls
 //   NORM_HANDLES=1   Normalize handle IDs to [1, pool_size] range (Gap 1)
 //   SYNC_LENGTHS=1   Resync length_override to match bytes.size() (Gap 4)
 //   GRAPH_EXTEND=0   Append consumers guided by constraint graph edges (opt-in)
@@ -530,7 +718,7 @@ extern "C" size_t LLVMFuzzerCustomMutator(
     // Pass 1: Sequence repair — insert missing producers before consumers (Gap 3).
     if (plb_env_int("PROTO_LIBERATOR_SEQ_REPAIR", 1) != 0) {
         int max_inserts = plb_env_int("PROTO_LIBERATOR_SEQ_REPAIR_MAX_INSERTS", 8);
-        int inserted = plb_repair_sequence(&msg, max_inserts);
+        int inserted = plb_repair_sequence(&msg, max_inserts, seed);
         if (inserted > 0) {
             g_seq_repair_changed++;
             g_seq_repair_insertions += static_cast<uint64_t>(inserted);
@@ -542,26 +730,31 @@ extern "C" size_t LLVMFuzzerCustomMutator(
     if (plb_env_int("PROTO_LIBERATOR_ENFORCE_HARD_VALIDITY", 1) != 0) {
         int max_inserts = plb_env_int("PROTO_LIBERATOR_ENFORCE_HARD_MAX_INSERTS", 8);
         bool misuse_mode = plb_env_int("PROTO_LIBERATOR_MUTATOR_MISUSE_MODE", 0) != 0;
-        if (plb_enforce_hard_validity(&msg, max_inserts, misuse_mode)) changed = true;
+        if (plb_enforce_hard_validity(&msg, max_inserts, misuse_mode, seed)) changed = true;
     }
 
-    // Pass 3: Handle ID normalization — remap to [1, pool_size] (Gap 1).
+    // Pass 3: Effective-arg reuse for producers (Hopper-style).
+    if (plb_env_int("PROTO_LIBERATOR_EFFECTIVE_ARG_REUSE", 1) != 0) {
+        if (plb_reuse_cached_producer_args(&msg, seed)) changed = true;
+    }
+
+    // Pass 4: Handle ID normalization — remap to [1, pool_size] (Gap 1).
     if (plb_env_int("PROTO_LIBERATOR_NORM_HANDLES", 1) != 0) {
         if (plb_normalize_handles(&msg)) changed = true;
     }
 
-    // Pass 4: Length sync — resync length_override to bytes.size() (Gap 4).
+    // Pass 5: Length sync — resync length_override to bytes.size() (Gap 4).
     if (plb_env_int("PROTO_LIBERATOR_SYNC_LENGTHS", 1) != 0) {
         if (plb_sync_lengths(&msg)) changed = true;
     }
 
-    // Pass 5: Graph-guided extension — append consumers from producer_consumer edges (opt-in).
+    // Pass 6: Graph-guided extension — append consumers from producer_consumer edges (opt-in).
     if (plb_env_int("PROTO_LIBERATOR_GRAPH_EXTEND", 0) != 0) {
         int max_appends = plb_env_int("PROTO_LIBERATOR_GRAPH_EXTEND_MAX", 4);
         if (plb_graph_extend(&msg, max_appends, seed)) changed = true;
     }
 
-    // Pass 6: UAF probe — duplicate destructor to probe double-free paths (opt-in).
+    // Pass 7: UAF probe — duplicate destructor to probe double-free paths (opt-in).
     if (plb_env_int("PROTO_LIBERATOR_UAF_PROBE", 0) != 0) {
         if (plb_uaf_probe(&msg, seed)) changed = true;
     }
@@ -581,10 +774,112 @@ extern "C" size_t LLVMFuzzerCustomMutator(
 // API stats (per-process; orchestrator merges api_stats.*.json)
 // -----------------------------------------------------------------------------
 
+extern "C" {
+extern uint8_t __start___sancov_cntrs[] __attribute__((weak));
+extern uint8_t __stop___sancov_cntrs[] __attribute__((weak));
+}
+
 static const size_t API_COUNT = {{ apis|length }};
 static uint64_t g_api_seen[{{ apis|length }}];
 static uint64_t g_api_executed[{{ apis|length }}];
 static uint64_t g_api_skipped[{{ apis|length }}];
+static uint64_t g_api_pair_counts[{{ apis|length }}][{{ apis|length }}];
+static uint64_t g_api_coverage_pair_counts[{{ apis|length }}][{{ apis|length }}];
+static std::map<std::string, uint64_t> g_prefix_counts;
+static std::map<std::string, uint64_t> g_coverage_prefix_counts;
+static const char* kApiNames[{{ apis|length }}] = {
+{% for api in apis %}
+    "{{ api.name }}"{% if not loop.last %},{% endif %}
+{% endfor %}
+};
+
+static bool g_cov_tracker_init = false;
+static bool g_cov_tracker_ready = false;
+static const uint8_t* g_cov_counters = nullptr;
+static size_t g_cov_counter_count = 0;
+static std::vector<uint8_t> g_cov_seen;
+static uint64_t g_cov_inputs = 0;
+static uint64_t g_cov_inputs_with_new = 0;
+static uint64_t g_cov_new_counter_hits = 0;
+
+static bool cov_signal_enabled() {
+    const char* raw = std::getenv("PROTO_LIBERATOR_COV_SIGNAL");
+    if (!raw || !raw[0]) return true;
+    char* end = nullptr;
+    long v = std::strtol(raw, &end, 10);
+    if (end == raw) return true;
+    return v != 0;
+}
+
+static void cov_tracker_init_once() {
+    if (g_cov_tracker_init) return;
+    g_cov_tracker_init = true;
+    if (!cov_signal_enabled()) return;
+    if (!__start___sancov_cntrs || !__stop___sancov_cntrs) return;
+    if (__stop___sancov_cntrs <= __start___sancov_cntrs) return;
+    size_t n = (size_t)(__stop___sancov_cntrs - __start___sancov_cntrs);
+    if (n == 0 || n > (size_t)(1u << 30)) return;
+    g_cov_counters = __start___sancov_cntrs;
+    g_cov_counter_count = n;
+    g_cov_seen.assign(n, 0);
+    g_cov_tracker_ready = true;
+}
+
+static uint64_t collect_new_coverage_hits() {
+    g_cov_inputs++;
+    cov_tracker_init_once();
+    if (!g_cov_tracker_ready || !g_cov_counters || g_cov_counter_count == 0 || g_cov_seen.empty()) {
+        return 0;
+    }
+    uint64_t new_hits = 0;
+    for (size_t i = 0; i < g_cov_counter_count; i++) {
+        if (g_cov_counters[i] == 0) continue;
+        if (g_cov_seen[i]) continue;
+        g_cov_seen[i] = 1;
+        new_hits++;
+    }
+    if (new_hits > 0) {
+        g_cov_inputs_with_new++;
+        g_cov_new_counter_hits += new_hits;
+    }
+    return new_hits;
+}
+
+static void record_api_pair(uint32_t src_idx, uint32_t dst_idx, uint64_t coverage_weight) {
+    if (src_idx >= API_COUNT || dst_idx >= API_COUNT) return;
+    g_api_pair_counts[src_idx][dst_idx]++;
+    if (coverage_weight > 0) {
+        g_api_coverage_pair_counts[src_idx][dst_idx] += coverage_weight;
+    }
+}
+
+static void record_api_prefix(const uint32_t* seq, size_t n, size_t prefix_len, uint64_t coverage_weight) {
+    if (!seq || prefix_len < 2 || prefix_len > n) return;
+    std::string key;
+    for (size_t i = 0; i < prefix_len; i++) {
+        uint32_t idx = seq[i];
+        if (idx >= API_COUNT) return;
+        if (!key.empty()) key.push_back(',');
+        key += kApiNames[idx];
+    }
+    if (!key.empty()) {
+        g_prefix_counts[key]++;
+        if (coverage_weight > 0) {
+            g_coverage_prefix_counts[key] += coverage_weight;
+        }
+    }
+}
+
+static void record_sequence_stats(const uint32_t* seq, size_t n, uint64_t coverage_weight) {
+    if (!seq || n == 0) return;
+    for (size_t i = 1; i < n; i++) {
+        record_api_pair(seq[i - 1], seq[i], coverage_weight);
+    }
+    const size_t max_prefix = std::min<size_t>(4, n);
+    for (size_t plen = 2; plen <= max_prefix; plen++) {
+        record_api_prefix(seq, n, plen, coverage_weight);
+    }
+}
 
 static void ensure_dir_recursive(const char* dir) {
     if (!dir || !dir[0]) return;
@@ -652,7 +947,105 @@ static void write_api_stats() {
         );
     }
     {% endfor %}
-    std::fprintf(f, "  ]\n}\n");
+    std::fprintf(f, "  ],\n");
+
+    std::fprintf(f, "  \"pairs\": [\n");
+    bool first_pair = true;
+    for (size_t src = 0; src < API_COUNT; src++) {
+        for (size_t dst = 0; dst < API_COUNT; dst++) {
+            uint64_t count = g_api_pair_counts[src][dst];
+            if (count == 0) continue;
+            if (!first_pair) {
+                std::fprintf(f, ",\n");
+            }
+            std::fprintf(
+                f,
+                "    {\"src\":\"%s\",\"dst\":\"%s\",\"count\":%llu}",
+                kApiNames[src],
+                kApiNames[dst],
+                (unsigned long long)count
+            );
+            first_pair = false;
+        }
+    }
+    if (!first_pair) std::fprintf(f, "\n");
+    std::fprintf(f, "  ],\n");
+
+    std::fprintf(f, "  \"coverage_pairs\": [\n");
+    bool first_cov_pair = true;
+    for (size_t src = 0; src < API_COUNT; src++) {
+        for (size_t dst = 0; dst < API_COUNT; dst++) {
+            uint64_t count = g_api_coverage_pair_counts[src][dst];
+            if (count == 0) continue;
+            if (!first_cov_pair) {
+                std::fprintf(f, ",\n");
+            }
+            std::fprintf(
+                f,
+                "    {\"src\":\"%s\",\"dst\":\"%s\",\"count\":%llu}",
+                kApiNames[src],
+                kApiNames[dst],
+                (unsigned long long)count
+            );
+            first_cov_pair = false;
+        }
+    }
+    if (!first_cov_pair) std::fprintf(f, "\n");
+    std::fprintf(f, "  ],\n");
+
+    std::fprintf(f, "  \"prefixes\": [\n");
+    bool first_prefix = true;
+    for (const auto& kv : g_prefix_counts) {
+        if (kv.second == 0) continue;
+        if (!first_prefix) {
+            std::fprintf(f, ",\n");
+        }
+        std::fprintf(
+            f,
+            "    {\"seq\":\"%s\",\"count\":%llu}",
+            kv.first.c_str(),
+            (unsigned long long)kv.second
+        );
+        first_prefix = false;
+    }
+    if (!first_prefix) std::fprintf(f, "\n");
+    std::fprintf(f, "  ],\n");
+
+    std::fprintf(f, "  \"coverage_prefixes\": [\n");
+    bool first_cov_prefix = true;
+    for (const auto& kv : g_coverage_prefix_counts) {
+        if (kv.second == 0) continue;
+        if (!first_cov_prefix) {
+            std::fprintf(f, ",\n");
+        }
+        std::fprintf(
+            f,
+            "    {\"seq\":\"%s\",\"count\":%llu}",
+            kv.first.c_str(),
+            (unsigned long long)kv.second
+        );
+        first_cov_prefix = false;
+    }
+    if (!first_cov_prefix) std::fprintf(f, "\n");
+    std::fprintf(f, "  ],\n");
+
+    std::fprintf(
+        f,
+        "  \"coverage\": {\"inputs\":%llu,\"inputs_with_new\":%llu,\"new_counter_hits\":%llu,\"counter_slots\":%llu},\n",
+        (unsigned long long)g_cov_inputs,
+        (unsigned long long)g_cov_inputs_with_new,
+        (unsigned long long)g_cov_new_counter_hits,
+        (unsigned long long)g_cov_counter_count
+    );
+
+    std::fprintf(
+        f,
+        "  \"effective_arg_cache\": {\"recorded\":%llu,\"reuse_attempts\":%llu,\"reused\":%llu,\"cache_miss\":%llu}\n}\n",
+        (unsigned long long)g_effective_arg_recorded,
+        (unsigned long long)g_effective_arg_reuse_attempts,
+        (unsigned long long)g_effective_arg_reused,
+        (unsigned long long)g_effective_arg_cache_miss
+    );
     std::fclose(f);
 }
 
@@ -743,6 +1136,7 @@ static const bool kSimpleHarness = {{ "true" if harness_style == "simple" else "
 DEFINE_BINARY_PROTO_FUZZER(const {{ package_name }}::{{ fuzz_input_type }}& input) {
     // Reset handles
     handles_reset();
+    scalars_reset();
     g_hard_constraint_redirected = false;
     int null_budget_default = env_int("PROTO_LIBERATOR_NULL_BUDGET", kSimpleHarness ? INT_MAX : 1);
     int stale_budget_default = env_int("PROTO_LIBERATOR_STALE_BUDGET", kSimpleHarness ? INT_MAX : 0);
@@ -782,6 +1176,8 @@ DEFINE_BINARY_PROTO_FUZZER(const {{ package_name }}::{{ fuzz_input_type }}& inpu
     {% endfor %}
 
     const int actions_n = std::min<int>(input.{{ actions_field }}_size(), (int){{ max_actions }});
+    std::vector<uint32_t> executed_api_seq;
+    if (actions_n > 0) executed_api_seq.reserve((size_t)actions_n);
     for (int action_idx = 0; action_idx < actions_n; action_idx++) {
         const auto& action = input.{{ actions_field }}(action_idx);
         switch (action.{{ action_oneof_field }}_case()) {
@@ -861,9 +1257,21 @@ DEFINE_BINARY_PROTO_FUZZER(const {{ package_name }}::{{ fuzz_input_type }}& inpu
                 // Decode/scalar-first: parse scalar and handle selectors without allocating pointer buffers.
                 {% for arg in api.args %}
                 {% if arg.param.kind == "scalar" %}
+                {% if arg.scalar_slot_enabled %}
+                {
+                    uint32_t requested_slot = params.has_{{ arg.param.slot_field }}() ? params.{{ arg.param.slot_field }}() : 0;
+                    int64_t slot_value = 0;
+                    if (scalar_get_typed({{ arg.scalar_type_id }}, requested_slot, &slot_value)) {
+                        arg_{{ arg.i }} = ({{ arg.c_type }})slot_value;
+                    } else if (params.has_param_{{ arg.i }}()) {
+                        arg_{{ arg.i }} = ({{ arg.c_type }})params.param_{{ arg.i }}();
+                    }
+                }
+                {% else %}
                 if (params.has_param_{{ arg.i }}()) {
                     arg_{{ arg.i }} = ({{ arg.c_type }})params.param_{{ arg.i }}();
                 }
+                {% endif %}
                 {% elif arg.param.kind == "va_list" %}
                 memset(&arg_{{ arg.i }}, 0, sizeof(arg_{{ arg.i }}));
                 {% elif arg.param.kind == "handle" %}
@@ -1078,11 +1486,26 @@ DEFINE_BINARY_PROTO_FUZZER(const {{ package_name }}::{{ fuzz_input_type }}& inpu
                     {% endfor %}
                 );
 
+                {% if api.post_call_check %}
+                // Constraint-graph post-call guards
+                {{ api.post_call_check | replace('\n', '\n                ') }}
+                {% endif %}
+
                 // Handle return
                 {% if api.returns_handle %}
                 handle_register_typed({{ api.return_type_id }}, (void*)ret);
+                if (plb_handle_is_valid(ret)) {
+                    plb_cache_record_params(
+                        static_cast<int>({{ package_name }}::{{ action_type }}::k{{ api.field_name.replace('_', ' ').title().replace(' ', '') }}),
+                        params
+                    );
+                }
+                {% endif %}
+                {% if api.returns_scalar %}
+                scalar_register_typed({{ api.return_scalar_type_id }}, (int64_t)ret);
                 {% endif %}
                 g_api_executed[api_idx]++;
+                executed_api_seq.push_back((uint32_t)api_idx);
 
                 // Handle destruction
                 {% if api.is_destructor %}
@@ -1106,6 +1529,12 @@ DEFINE_BINARY_PROTO_FUZZER(const {{ package_name }}::{{ fuzz_input_type }}& inpu
             default:
                 break;
         }
+    }
+    if (!executed_api_seq.empty()) {
+        uint64_t cov_weight = collect_new_coverage_hits();
+        record_sequence_stats(executed_api_seq.data(), executed_api_seq.size(), cov_weight);
+    } else {
+        (void)collect_new_coverage_hits();
     }
     if (g_hard_constraint_redirected) {
         std::fprintf(stderr, "PLB_CONSTRAINT_REDIRECTED=1\n");
