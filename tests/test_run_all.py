@@ -139,6 +139,51 @@ class TestRunAll(unittest.TestCase):
             self.assertIn("constraints=0", proc.stdout)
             self.assertIn(str(out_dir / "crashes" / "crash_learned_constraints.json"), proc.stdout)
 
+    def test_dry_run_timed_fuzz_runs_feedback_watchdog_and_reseeds(self):
+        conditions = FIXTURES / "minimal_conditions.json"
+        apis = FIXTURES / "minimal_apis_clang.jsonl"
+
+        with tempfile.TemporaryDirectory() as td:
+            out_dir = Path(td) / "output_orch"
+            api_stats_dir = out_dir / "api_stats"
+            api_stats_dir.mkdir(parents=True, exist_ok=True)
+            (api_stats_dir / "api_stats.2222.json").write_text(
+                json.dumps({"apis": [{"name": "Foo", "seen": 3, "executed": 0, "skipped": 0}]})
+            )
+
+            proc = subprocess.run(
+                [
+                    sys.executable,
+                    str(SRC_DIR / "run_all.py"),
+                    "--library",
+                    "demo",
+                    "--conditions",
+                    str(conditions),
+                    "--apis",
+                    str(apis),
+                    "--out-dir",
+                    str(out_dir),
+                    "--schema-mode",
+                    "v2",
+                    "--dry-run",
+                    "--fuzz",
+                    "--fuzz-duration",
+                    "601",
+                    "--feedback-refresh-sec",
+                    "300",
+                ],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+                check=True,
+            )
+
+            self.assertIn("-max_total_time=300", proc.stdout)
+            self.assertIn("-max_total_time=1", proc.stdout)
+            self.assertGreaterEqual(proc.stdout.count("feedback_aggregator.py"), 3)
+            self.assertIn("seed_generator.py", proc.stdout)
+            self.assertIn("feedback reseed complete:", proc.stdout)
+
 
 if __name__ == "__main__":
     unittest.main()

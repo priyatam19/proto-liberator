@@ -380,6 +380,106 @@ def _auto_feedback_signal(
     )
 
 
+def _build_seed_generator_argv(
+    *,
+    python: str,
+    src_dir: Path,
+    conditions: Path,
+    seeds_dir: Path,
+    num_seeds: int,
+    seed_max_len: int,
+    seed_rng: int,
+    driver_meta_path: Path,
+    minimum_apis: Optional[str],
+    apipass_dir: Optional[str],
+    seed_constants_json: Optional[str],
+    novelty_signal_path: Optional[Path],
+    selected_graph: Optional[Path],
+    schedule_mode: str,
+    misuse_mode: bool,
+) -> List[str]:
+    seed_argv: List[str] = [
+        python,
+        str(src_dir / "seed_generator.py"),
+        "--conditions",
+        str(conditions),
+        "--output-dir",
+        str(seeds_dir),
+        "--num-seeds",
+        str(num_seeds),
+        "--max-len",
+        str(seed_max_len),
+        "--rng-seed",
+        str(seed_rng),
+        "--driver",
+        str(driver_meta_path),
+        "--mode",
+        "wire",
+    ]
+    if minimum_apis:
+        seed_argv += ["--minimum-apis", str(Path(minimum_apis).resolve())]
+    if apipass_dir:
+        seed_argv += ["--apipass-dir", str(Path(apipass_dir).resolve())]
+    if seed_constants_json:
+        seed_argv += ["--constants-json", str(Path(seed_constants_json).resolve())]
+    if novelty_signal_path:
+        seed_argv += ["--novelty-signal-json", str(novelty_signal_path)]
+    if selected_graph:
+        seed_argv += ["--constraint-graph", str(selected_graph)]
+        seed_argv += ["--schedule-mode", schedule_mode]
+        if misuse_mode:
+            seed_argv += ["--misuse-mode"]
+    return seed_argv
+
+
+def _refresh_feedback_and_reseed(
+    *,
+    out_dir: Path,
+    src_dir: Path,
+    python: str,
+    dry_run: bool,
+    causal_evidence_path: Optional[Path],
+    should_reseed: bool,
+    seed_argv: Optional[List[str]],
+) -> Optional[Path]:
+    refreshed_signal = _aggregate_feedback_signal_from_stats(
+        out_dir=out_dir,
+        src_dir=src_dir,
+        python=python,
+        dry_run=dry_run,
+        causal_evidence_path=causal_evidence_path,
+    )
+    if not refreshed_signal:
+        return None
+    stats_dir = out_dir / "api_stats"
+    learned_edges_path = stats_dir / "learned_edges.json"
+    prefix_weights_path = stats_dir / "prefix_weights.json"
+    metrics = _feedback_refresh_metrics(
+        stats_dir=stats_dir,
+        novelty_signal_path=refreshed_signal,
+    )
+    print(f"[Orch] feedback signal refreshed: {refreshed_signal}")
+    print(
+        "[Orch] feedback refresh metrics: "
+        f"apis={metrics['api_count']} "
+        f"pairs={metrics['pair_count']} "
+        f"prefixes={metrics['prefix_count']} "
+        f"learned_edges={metrics['learned_edges']} "
+        f"prefix_weights={metrics['prefix_weights']}"
+    )
+    print(
+        "[Orch] feedback refresh outputs: "
+        f"learned_edges={learned_edges_path} "
+        f"prefix_weights={prefix_weights_path}"
+    )
+    if should_reseed and seed_argv:
+        reseed_argv = list(seed_argv)
+        reseed_argv += ["--novelty-signal-json", str(refreshed_signal)]
+        _run(Cmd(reseed_argv), dry_run=dry_run)
+        print(f"[Orch] feedback reseed complete: {refreshed_signal}")
+    return refreshed_signal
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Proto-libErator Orchestrator")
 
@@ -550,6 +650,36 @@ def main() -> int:
         action="store_true",
         help="Enable LeakSanitizer detection (default: disabled via -detect_leaks=0)",
     )
+    parser.add_argument(
+        "--fuzz-runs",
+        type=int,
+        default=100,
+        help="libFuzzer -runs for non-duration fuzzing (default: 100)",
+    )
+    parser.add_argument(
+        "--fuzz-duration",
+        type=int,
+        default=0,
+        help="Timed fuzzing budget in seconds; if >0, run in feedback-refresh epochs",
+    )
+    parser.add_argument(
+        "--feedback-refresh-sec",
+        type=int,
+        default=300,
+        help="Feedback refresh period during timed fuzzing (default: 300 seconds)",
+    )
+    parser.add_argument(
+        "--feedback-reseed",
+        dest="feedback_reseed",
+        action="store_true",
+        help="Regenerate corpus seeds from refreshed novelty signal during fuzzing (default: enabled)",
+    )
+    parser.add_argument(
+        "--no-feedback-reseed",
+        dest="feedback_reseed",
+        action="store_false",
+        help="Disable periodic seed regeneration during fuzzing",
+    )
     parser.add_argument("--clang", default="clang", help="clang path")
     parser.add_argument("--cc-arg", action="append", default=[], help="Extra clang args (repeatable)")
     parser.add_argument("--target-include", action="append", default=[], help="Add -I<dir> (repeatable)")
@@ -571,6 +701,7 @@ def main() -> int:
     argv = _rewrite_flag_values_starting_with_dash(argv, flag="--cc-arg")
     parser.set_defaults(classify_crashes=True)
     parser.set_defaults(learn_crash_constraints=True)
+    parser.set_defaults(feedback_reseed=True)
     args = parser.parse_args(argv)
 
     root = _repo_root()
@@ -775,38 +906,24 @@ def main() -> int:
             python=python,
             dry_run=args.dry_run,
         )
-        seed_argv: List[str] = [
-            python,
-            str(src_dir / "seed_generator.py"),
-            "--conditions",
-            str(conditions),
-            "--output-dir",
-            str(seeds_dir),
-            "--num-seeds",
-            str(args.num_seeds),
-            "--max-len",
-            str(args.seed_max_len),
-            "--rng-seed",
-            str(args.seed_rng),
-            "--driver",
-            str(driver_meta_path),
-            "--mode",
-            "wire",
-        ]
-        if args.minimum_apis:
-            seed_argv += ["--minimum-apis", str(Path(args.minimum_apis).resolve())]
-        if args.apipass_dir:
-            seed_argv += ["--apipass-dir", str(Path(args.apipass_dir).resolve())]
-        if args.seed_constants_json:
-            seed_argv += ["--constants-json", str(Path(args.seed_constants_json).resolve())]
-        if novelty_signal_path:
-            seed_argv += ["--novelty-signal-json", str(novelty_signal_path)]
         selected_graph = Path(args.constraint_graph).resolve() if args.constraint_graph else auto_constraint_graph
-        if selected_graph:
-            seed_argv += ["--constraint-graph", str(selected_graph)]
-            seed_argv += ["--schedule-mode", args.schedule_mode]
-            if args.misuse_mode:
-                seed_argv += ["--misuse-mode"]
+        seed_argv = _build_seed_generator_argv(
+            python=python,
+            src_dir=src_dir,
+            conditions=conditions,
+            seeds_dir=seeds_dir,
+            num_seeds=int(args.num_seeds),
+            seed_max_len=int(args.seed_max_len),
+            seed_rng=int(args.seed_rng),
+            driver_meta_path=driver_meta_path,
+            minimum_apis=args.minimum_apis,
+            apipass_dir=args.apipass_dir,
+            seed_constants_json=args.seed_constants_json,
+            novelty_signal_path=novelty_signal_path,
+            selected_graph=selected_graph,
+            schedule_mode=args.schedule_mode,
+            misuse_mode=bool(args.misuse_mode),
+        )
         _run(Cmd(seed_argv), dry_run=args.dry_run)
 
     # 5) Build
@@ -1030,21 +1147,74 @@ def main() -> int:
     # 6) Fuzz
     if args.fuzz:
         artifacts_dir = out_dir / "artifacts"
+        corpus_dir = seeds_dir if args.generate_seeds else (out_dir / "corpus")
         if not args.dry_run:
             artifacts_dir.mkdir(parents=True, exist_ok=True)
-        fuzz_argv: List[str] = [str(fuzzer_bin)]
-        if args.generate_seeds:
-            fuzz_argv.append(str(seeds_dir))
-        if not args.detect_leaks:
-            fuzz_argv.append("-detect_leaks=0")
-        fuzz_argv.append(f"-artifact_prefix={artifacts_dir.as_posix()}/")
-        fuzz_argv.extend(["-runs=100"])
+            corpus_dir.mkdir(parents=True, exist_ok=True)
+
+        def _fuzz_argv_for_epoch(epoch_seconds: Optional[int]) -> List[str]:
+            fuzz_argv: List[str] = [str(fuzzer_bin), str(corpus_dir)]
+            if not args.detect_leaks:
+                fuzz_argv.append("-detect_leaks=0")
+            fuzz_argv.append(f"-artifact_prefix={artifacts_dir.as_posix()}/")
+            if epoch_seconds and epoch_seconds > 0:
+                fuzz_argv.append(f"-max_total_time={max(1, int(epoch_seconds))}")
+            else:
+                fuzz_argv.append(f"-runs={max(1, int(args.fuzz_runs))}")
+            return fuzz_argv
+
+        selected_graph = Path(args.constraint_graph).resolve() if args.constraint_graph else auto_constraint_graph
+        reseed_base_argv: Optional[List[str]] = None
+        if args.schema_mode == "v2":
+            reseed_base_argv = _build_seed_generator_argv(
+                python=python,
+                src_dir=src_dir,
+                conditions=conditions,
+                seeds_dir=corpus_dir,
+                num_seeds=int(args.num_seeds),
+                seed_max_len=int(args.seed_max_len),
+                seed_rng=int(args.seed_rng),
+                driver_meta_path=driver_meta_path,
+                minimum_apis=args.minimum_apis,
+                apipass_dir=args.apipass_dir,
+                seed_constants_json=args.seed_constants_json,
+                novelty_signal_path=None,
+                selected_graph=selected_graph,
+                schedule_mode=args.schedule_mode,
+                misuse_mode=bool(args.misuse_mode),
+            )
+
         env = os.environ.copy()
         if not args.detect_leaks:
             opts = env.get("ASAN_OPTIONS", "")
             if "detect_leaks=" not in opts:
                 env["ASAN_OPTIONS"] = (opts + ":" if opts else "") + "detect_leaks=0"
-        _run(Cmd(fuzz_argv, cwd=out_dir, env=env), dry_run=args.dry_run)
+        fuzz_duration = max(0, int(args.fuzz_duration))
+        if fuzz_duration > 0:
+            refresh_sec = max(1, int(args.feedback_refresh_sec))
+            remaining = fuzz_duration
+            epoch = 0
+            while remaining > 0:
+                epoch += 1
+                epoch_seconds = min(remaining, refresh_sec)
+                print(
+                    "[Orch] fuzz epoch "
+                    f"{epoch}: duration={epoch_seconds}s remaining_before={remaining}s"
+                )
+                _run(Cmd(_fuzz_argv_for_epoch(epoch_seconds), cwd=out_dir, env=env), dry_run=args.dry_run)
+                remaining -= epoch_seconds
+                if args.schema_mode == "v2":
+                    _refresh_feedback_and_reseed(
+                        out_dir=out_dir,
+                        src_dir=src_dir,
+                        python=python,
+                        dry_run=args.dry_run,
+                        causal_evidence_path=None,
+                        should_reseed=bool(args.feedback_reseed),
+                        seed_argv=reseed_base_argv,
+                    )
+        else:
+            _run(Cmd(_fuzz_argv_for_epoch(None), cwd=out_dir, env=env), dry_run=args.dry_run)
         if args.schema_mode == "v2":
             causal_evidence_path: Optional[Path] = None
             if args.verify_edges:
@@ -1071,34 +1241,20 @@ def main() -> int:
                 )
                 if causal_evidence_path:
                     print(f"[Orch] causal edge evidence: {causal_evidence_path}")
-            refreshed_signal = _aggregate_feedback_signal_from_stats(
+            final_signal = _refresh_feedback_and_reseed(
                 out_dir=out_dir,
                 src_dir=src_dir,
                 python=python,
                 dry_run=args.dry_run,
                 causal_evidence_path=causal_evidence_path,
+                should_reseed=bool(args.feedback_reseed),
+                seed_argv=reseed_base_argv,
             )
-            if refreshed_signal:
+            if not final_signal:
                 stats_dir = out_dir / "api_stats"
-                learned_edges_path = stats_dir / "learned_edges.json"
-                prefix_weights_path = stats_dir / "prefix_weights.json"
-                metrics = _feedback_refresh_metrics(
-                    stats_dir=stats_dir,
-                    novelty_signal_path=refreshed_signal,
-                )
-                print(f"[Orch] feedback signal refreshed: {refreshed_signal}")
                 print(
-                    "[Orch] feedback refresh metrics: "
-                    f"apis={metrics['api_count']} "
-                    f"pairs={metrics['pair_count']} "
-                    f"prefixes={metrics['prefix_count']} "
-                    f"learned_edges={metrics['learned_edges']} "
-                    f"prefix_weights={metrics['prefix_weights']}"
-                )
-                print(
-                    "[Orch] feedback refresh outputs: "
-                    f"learned_edges={learned_edges_path} "
-                    f"prefix_weights={prefix_weights_path}"
+                    "[Orch] feedback refresh skipped: no per-process stats found in "
+                    f"{stats_dir} (expected api_stats.*.json)"
                 )
         if args.classify_crashes:
             crashes_dir = out_dir / "crashes"
