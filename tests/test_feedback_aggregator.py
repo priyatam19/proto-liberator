@@ -101,6 +101,49 @@ class TestFeedbackAggregator(unittest.TestCase):
             self.assertIn("C,D", signal["prefix_weights"])
             self.assertNotIn("A,B", signal["prefix_weights"])
 
+    def test_applies_causal_evidence_promotions_and_demotions(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            p1 = root / "api_stats.100.json"
+            causal = root / "causal_edges.json"
+            p1.write_text(
+                json.dumps(
+                    {
+                        "apis": [
+                            {"name": "A", "seen": 10, "executed": 10, "skipped": 0},
+                            {"name": "B", "seen": 10, "executed": 10, "skipped": 0},
+                            {"name": "C", "seen": 2, "executed": 1, "skipped": 0},
+                            {"name": "D", "seen": 2, "executed": 1, "skipped": 0},
+                        ],
+                        "pairs": [{"src": "A", "dst": "B", "count": 5}],
+                    }
+                )
+            )
+            causal.write_text(
+                json.dumps(
+                    {
+                        "edges": [
+                            {"src": "A", "dst": "B", "supports": 0, "refutes": 8, "avg_drop": 0.0},
+                            {"src": "C", "dst": "D", "supports": 3, "refutes": 0, "avg_drop": 2.0},
+                        ]
+                    }
+                )
+            )
+
+            signal = build_feedback_signal(
+                [p1],
+                min_pair_count=1,
+                min_prefix_count=1,
+                causal_evidence_path=causal,
+            )
+            rows = {(e["src"], e["dst"]): e for e in signal["learned_edges"]}
+            self.assertIn(("A", "B"), rows)
+            self.assertIn(("C", "D"), rows)
+            self.assertEqual(signal["meta"]["causal_evidence_edge_count"], 2)
+            self.assertGreater(rows[("C", "D")]["confidence"], rows[("A", "B")]["confidence"])
+            self.assertEqual(rows[("C", "D")]["causal_supports"], 3)
+            self.assertEqual(rows[("A", "B")]["causal_refutes"], 8)
+
     def test_main_writes_default_api_stats_json(self):
         with tempfile.TemporaryDirectory() as td:
             stats_dir = Path(td) / "api_stats"

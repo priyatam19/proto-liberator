@@ -162,23 +162,77 @@ def _prefix_weights_from_counts(prefix_counts: Dict[str, int], *, min_prefix_cou
     return out
 
 
+def _load_causal_evidence(path: Optional[Path]) -> Dict[Tuple[str, str], dict]:
+    if not path or not path.exists():
+        return {}
+    obj = load_stats(path)
+    rows = obj.get("edges")
+    if not isinstance(rows, list):
+        return {}
+    out: Dict[Tuple[str, str], dict] = {}
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        src = str(row.get("src") or "")
+        dst = str(row.get("dst") or "")
+        if not src or not dst:
+            continue
+        supports = _to_non_negative_int(row.get("supports"))
+        refutes = _to_non_negative_int(row.get("refutes"))
+        avg_drop = _to_non_negative_float(row.get("avg_drop"))
+        support_ratio = _to_non_negative_float(row.get("support_ratio"))
+        out[(src, dst)] = {
+            "supports": supports,
+            "refutes": refutes,
+            "avg_drop": avg_drop,
+            "support_ratio": support_ratio,
+        }
+    return out
+
+
 def _learned_edges_from_pairs(
     pair_counts: Dict[Tuple[str, str], int],
     *,
     api_novelty: Dict[str, float],
     min_pair_count: int,
+    causal_evidence: Optional[Dict[Tuple[str, str], dict]] = None,
 ) -> List[dict]:
-    eligible = [(src, dst, c) for (src, dst), c in pair_counts.items() if c >= min_pair_count]
-    if not eligible:
+    causal = causal_evidence or {}
+    eligible_pairs: Dict[Tuple[str, str], int] = {
+        (src, dst): int(c)
+        for (src, dst), c in pair_counts.items()
+        if c >= min_pair_count
+    }
+    for key, ev in causal.items():
+        supports = _to_non_negative_int(ev.get("supports"))
+        refutes = _to_non_negative_int(ev.get("refutes"))
+        if supports > 0 or refutes > 0:
+            eligible_pairs.setdefault(key, _to_non_negative_int(pair_counts.get(key, 0)))
+
+    if not eligible_pairs:
         return []
-    max_count = max(c for _, _, c in eligible)
-    if max_count <= 0:
-        return []
+    max_count = max(eligible_pairs.values()) if eligible_pairs else 0
     out: List[dict] = []
-    for src, dst, count in eligible:
-        base = float(count) / float(max_count)
+    for (src, dst), count in sorted(eligible_pairs.items()):
+        base = (float(count) / float(max_count)) if max_count > 0 else 0.0
         novelty_boost = min(0.15, _to_non_negative_float(api_novelty.get(dst, 0.0)) * 0.3)
-        confidence = min(0.95, 0.35 + (0.6 * base) + novelty_boost)
+        confidence = 0.35 + (0.6 * base) + novelty_boost
+
+        ev = causal.get((src, dst), {})
+        supports = _to_non_negative_int(ev.get("supports"))
+        refutes = _to_non_negative_int(ev.get("refutes"))
+        avg_drop = _to_non_negative_float(ev.get("avg_drop"))
+        support_ratio = _to_non_negative_float(ev.get("support_ratio"))
+
+        if supports > 0:
+            confidence += min(0.35, (0.04 * float(supports)) + (0.08 * support_ratio) + (0.04 * avg_drop))
+        if refutes > 0:
+            if supports == 0:
+                confidence -= min(0.45, 0.07 * float(refutes))
+            else:
+                confidence -= min(0.15, 0.02 * float(refutes))
+        confidence = max(0.05, min(0.99, confidence))
+
         out.append(
             {
                 "src": src,
@@ -187,9 +241,20 @@ def _learned_edges_from_pairs(
                 "hardness": "soft",
                 "confidence": round(confidence, 6),
                 "count": int(count),
+                "causal_supports": int(supports),
+                "causal_refutes": int(refutes),
+                "causal_avg_drop": round(float(avg_drop), 6),
             }
         )
-    out.sort(key=lambda e: (-float(e.get("confidence", 0.0)), -int(e.get("count", 0)), str(e.get("src")), str(e.get("dst"))))
+    out.sort(
+        key=lambda e: (
+            -float(e.get("confidence", 0.0)),
+            -int(e.get("causal_supports", 0)),
+            -int(e.get("count", 0)),
+            str(e.get("src")),
+            str(e.get("dst")),
+        )
+    )
     return out
 
 
@@ -198,6 +263,7 @@ def build_feedback_signal(
     *,
     min_pair_count: int = 2,
     min_prefix_count: int = 2,
+    causal_evidence_path: Optional[Path] = None,
 ) -> dict:
     source_paths = list(paths)
     merged_apis: Dict[str, dict] = {}
@@ -205,6 +271,7 @@ def build_feedback_signal(
     merged_coverage_pairs: Dict[Tuple[str, str], int] = {}
     merged_prefixes: Dict[str, int] = {}
     merged_coverage_prefixes: Dict[str, int] = {}
+    causal_evidence = _load_causal_evidence(causal_evidence_path)
 
     for path in source_paths:
         obj = load_stats(path)
@@ -268,7 +335,12 @@ def build_feedback_signal(
         prefix_source = f"derived_from_{pair_source}" if learning_prefixes else "none"
 
     prefix_weights = _prefix_weights_from_counts(learning_prefixes, min_prefix_count=min_prefix_count)
-    learned_edges = _learned_edges_from_pairs(learning_pairs, api_novelty=api_novelty, min_pair_count=min_pair_count)
+    learned_edges = _learned_edges_from_pairs(
+        learning_pairs,
+        api_novelty=api_novelty,
+        min_pair_count=min_pair_count,
+        causal_evidence=causal_evidence,
+    )
 
     return {
         "apis": rows,
@@ -288,6 +360,7 @@ def build_feedback_signal(
             "prefix_count": len(prefix_rows),
             "coverage_prefix_count": len(coverage_prefix_rows),
             "learning_prefix_count": len(learning_prefixes),
+            "causal_evidence_edge_count": len(causal_evidence),
             "total_seen": total_seen,
             "total_executed": total_executed,
             "total_skipped": total_skipped,
@@ -341,6 +414,11 @@ def main(argv: Optional[List[str]] = None) -> int:
         default=2,
         help="Minimum prefix count to emit prefix weight (default: 2)",
     )
+    parser.add_argument(
+        "--causal-evidence-json",
+        default=None,
+        help="Optional causal evidence JSON from causal_edge_verifier.py to promote/demote learned edges",
+    )
     args = parser.parse_args(argv)
 
     input_dir = Path(args.input_dir)
@@ -349,6 +427,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         input_paths,
         min_pair_count=max(1, int(args.min_pair_count)),
         min_prefix_count=max(1, int(args.min_prefix_count)),
+        causal_evidence_path=Path(args.causal_evidence_json).resolve() if args.causal_evidence_json else None,
     )
 
     output_path = Path(args.output) if args.output else (input_dir / "api_stats.json")
