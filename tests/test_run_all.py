@@ -134,6 +134,10 @@ class TestRunAll(unittest.TestCase):
             self.assertIn("crash classification summary:", proc.stdout)
             self.assertIn("constraint_misuse=0", proc.stdout)
             self.assertIn(str(out_dir / "crashes" / "summary.json"), proc.stdout)
+            self.assertIn("crash_constraint_learner.py", proc.stdout)
+            self.assertIn("crash learning summary:", proc.stdout)
+            self.assertIn("constraints=0", proc.stdout)
+            self.assertIn(str(out_dir / "crashes" / "crash_learned_constraints.json"), proc.stdout)
 
 
 if __name__ == "__main__":

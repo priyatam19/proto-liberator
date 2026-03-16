@@ -120,6 +120,7 @@ def _aggregate_feedback_signal_from_stats(
     src_dir: Path,
     python: str,
     dry_run: bool,
+    causal_evidence_path: Optional[Path] = None,
 ) -> Optional[Path]:
     """
     Aggregate per-process API stats into a novelty signal JSON.
@@ -140,8 +141,62 @@ def _aggregate_feedback_signal_from_stats(
         "--output",
         str(output),
     ]
+    if causal_evidence_path:
+        agg_argv += ["--causal-evidence-json", str(causal_evidence_path)]
     _run(Cmd(agg_argv), dry_run=dry_run)
     return output
+
+
+def _run_causal_edge_verifier(
+    *,
+    src_dir: Path,
+    python: str,
+    dry_run: bool,
+    out_dir: Path,
+    fuzzer_bin: Path,
+    schema_proto: Path,
+    conditions: Path,
+    corpus_dir: Path,
+    max_inputs: int,
+    max_ablations_per_input: int,
+    min_drop: int,
+    timeout_sec: int,
+    protoc_bin: str,
+    proto_include_dirs: List[Path],
+) -> Optional[Path]:
+    if not corpus_dir.exists():
+        return None
+    if not any(corpus_dir.glob("*")):
+        return None
+    causal_out = (out_dir / "api_stats" / "causal_edges.json").resolve()
+    verify_argv: List[str] = [
+        python,
+        str(src_dir / "causal_edge_verifier.py"),
+        "--fuzzer-bin",
+        str(fuzzer_bin),
+        "--proto",
+        str(schema_proto),
+        "--conditions",
+        str(conditions),
+        "--corpus-dir",
+        str(corpus_dir),
+        "--output",
+        str(causal_out),
+        "--max-inputs",
+        str(max(1, int(max_inputs))),
+        "--max-ablations-per-input",
+        str(max(1, int(max_ablations_per_input))),
+        "--min-drop",
+        str(max(1, int(min_drop))),
+        "--timeout-sec",
+        str(max(1, int(timeout_sec))),
+        "--protoc-bin",
+        str(protoc_bin),
+    ]
+    for inc in proto_include_dirs:
+        verify_argv += ["--proto-include", str(inc)]
+    _run(Cmd(verify_argv), dry_run=dry_run)
+    return causal_out
 
 
 def _safe_int(value: object) -> int:
@@ -271,6 +326,33 @@ def _crash_classification_metrics(
     return metrics
 
 
+def _crash_learning_metrics(
+    *,
+    learned_constraints_path: Path,
+) -> Dict[str, int]:
+    metrics: Dict[str, int] = {
+        "constraints": 0,
+        "events": 0,
+        "reproducible": 0,
+        "input_crashes": 0,
+    }
+    if not learned_constraints_path.exists():
+        return metrics
+    try:
+        payload = json.loads(learned_constraints_path.read_text())
+    except Exception:
+        return metrics
+    if not isinstance(payload, dict):
+        return metrics
+    meta = payload.get("meta", {})
+    if isinstance(meta, dict):
+        metrics["constraints"] = _safe_int(meta.get("constraint_count"))
+        metrics["events"] = _safe_int(meta.get("successful_shadow_mutations"))
+        metrics["reproducible"] = _safe_int(meta.get("reproducible_crashes"))
+        metrics["input_crashes"] = _safe_int(meta.get("input_crashes"))
+    return metrics
+
+
 def _auto_feedback_signal(
     *,
     novelty_signal_json: Optional[str],
@@ -294,6 +376,7 @@ def _auto_feedback_signal(
         src_dir=src_dir,
         python=python,
         dry_run=dry_run,
+        causal_evidence_path=None,
     )
 
 
@@ -381,6 +464,40 @@ def main() -> int:
     )
     parser.add_argument("--fuzz", action="store_true", help="Run the fuzzer after build")
     parser.add_argument(
+        "--verify-edges",
+        action="store_true",
+        help="Run ablation-based causal edge verification on corpus and feed result into feedback aggregation",
+    )
+    parser.add_argument(
+        "--edge-verify-max-inputs",
+        type=int,
+        default=32,
+        help="Max corpus inputs used for causal edge verification (default: 32)",
+    )
+    parser.add_argument(
+        "--edge-verify-max-ablations",
+        type=int,
+        default=4,
+        help="Max ablations per input in causal edge verification (default: 4)",
+    )
+    parser.add_argument(
+        "--edge-verify-min-drop",
+        type=int,
+        default=1,
+        help="Minimum feature-count drop treated as causal support (default: 1)",
+    )
+    parser.add_argument(
+        "--edge-verify-timeout-sec",
+        type=int,
+        default=15,
+        help="Per-run timeout for causal edge verification (default: 15)",
+    )
+    parser.add_argument(
+        "--edge-verify-protoc",
+        default="protoc",
+        help="protoc binary used by causal edge verification (default: protoc)",
+    )
+    parser.add_argument(
         "--classify-crashes",
         dest="classify_crashes",
         action="store_true",
@@ -397,6 +514,36 @@ def main() -> int:
         type=int,
         default=20,
         help="Per-input replay timeout for crash classification (default: 20)",
+    )
+    parser.add_argument(
+        "--learn-crash-constraints",
+        dest="learn_crash_constraints",
+        action="store_true",
+        help="Learn parameter constraints from genuine crashes via shadow replays (default: enabled)",
+    )
+    parser.add_argument(
+        "--no-learn-crash-constraints",
+        dest="learn_crash_constraints",
+        action="store_false",
+        help="Disable post-fuzz crash-driven constraint learning",
+    )
+    parser.add_argument(
+        "--crash-learn-max-crashes",
+        type=int,
+        default=16,
+        help="Max genuine crashes to analyze in crash-constraint learner (default: 16)",
+    )
+    parser.add_argument(
+        "--crash-learn-max-byte-flips",
+        type=int,
+        default=64,
+        help="Max byte offsets tested per crash in crash-constraint learner (default: 64)",
+    )
+    parser.add_argument(
+        "--crash-learn-min-evidence",
+        type=int,
+        default=1,
+        help="Minimum evidence count to keep a learned crash constraint (default: 1)",
     )
     parser.add_argument(
         "--detect-leaks",
@@ -423,6 +570,7 @@ def main() -> int:
     argv = sys.argv[1:]
     argv = _rewrite_flag_values_starting_with_dash(argv, flag="--cc-arg")
     parser.set_defaults(classify_crashes=True)
+    parser.set_defaults(learn_crash_constraints=True)
     args = parser.parse_args(argv)
 
     root = _repo_root()
@@ -898,11 +1046,37 @@ def main() -> int:
                 env["ASAN_OPTIONS"] = (opts + ":" if opts else "") + "detect_leaks=0"
         _run(Cmd(fuzz_argv, cwd=out_dir, env=env), dry_run=args.dry_run)
         if args.schema_mode == "v2":
+            causal_evidence_path: Optional[Path] = None
+            if args.verify_edges:
+                candidate_corpus = seeds_dir if seeds_dir.exists() else (out_dir / "corpus")
+                proto_include_dirs: List[Path] = [schema_proto.parent]
+                nanopb_proto_inc = root / "external" / "nanopb" / "generator" / "proto"
+                if nanopb_proto_inc.exists():
+                    proto_include_dirs.append(nanopb_proto_inc)
+                causal_evidence_path = _run_causal_edge_verifier(
+                    src_dir=src_dir,
+                    python=python,
+                    dry_run=args.dry_run,
+                    out_dir=out_dir,
+                    fuzzer_bin=fuzzer_bin,
+                    schema_proto=schema_proto,
+                    conditions=conditions,
+                    corpus_dir=candidate_corpus,
+                    max_inputs=int(args.edge_verify_max_inputs),
+                    max_ablations_per_input=int(args.edge_verify_max_ablations),
+                    min_drop=int(args.edge_verify_min_drop),
+                    timeout_sec=int(args.edge_verify_timeout_sec),
+                    protoc_bin=str(args.edge_verify_protoc),
+                    proto_include_dirs=proto_include_dirs,
+                )
+                if causal_evidence_path:
+                    print(f"[Orch] causal edge evidence: {causal_evidence_path}")
             refreshed_signal = _aggregate_feedback_signal_from_stats(
                 out_dir=out_dir,
                 src_dir=src_dir,
                 python=python,
                 dry_run=args.dry_run,
+                causal_evidence_path=causal_evidence_path,
             )
             if refreshed_signal:
                 stats_dir = out_dir / "api_stats"
@@ -952,6 +1126,47 @@ def main() -> int:
                 f"constraint_misuse={crash_metrics['constraint_misuse']}"
             )
             print(f"[Orch] crash classification output: {summary_path}")
+            if args.learn_crash_constraints:
+                learned_constraints_path = crashes_dir / "crash_learned_constraints.json"
+                learner_argv: List[str] = [
+                    python,
+                    str(src_dir / "crash_constraint_learner.py"),
+                    "--workdir",
+                    str(out_dir),
+                    "--fuzzer-bin",
+                    str(fuzzer_bin),
+                    "--proto",
+                    str(schema_proto),
+                    "--crash-dir",
+                    str(crashes_dir / "genuine"),
+                    "--out-json",
+                    str(learned_constraints_path),
+                    "--timeout-sec",
+                    str(max(1, int(args.crash_timeout_sec))),
+                    "--max-crashes",
+                    str(max(0, int(args.crash_learn_max_crashes))),
+                    "--max-byte-flips",
+                    str(max(1, int(args.crash_learn_max_byte_flips))),
+                    "--min-evidence",
+                    str(max(1, int(args.crash_learn_min_evidence))),
+                ]
+                _run(Cmd(learner_argv), dry_run=args.dry_run)
+                learning_metrics = _crash_learning_metrics(
+                    learned_constraints_path=learned_constraints_path
+                )
+                print(
+                    "[Orch] crash learning summary: "
+                    f"input_crashes={learning_metrics['input_crashes']} "
+                    f"reproducible={learning_metrics['reproducible']} "
+                    f"events={learning_metrics['events']} "
+                    f"constraints={learning_metrics['constraints']}"
+                )
+                print(f"[Orch] crash learning output: {learned_constraints_path}")
+        elif args.learn_crash_constraints:
+            print(
+                "[Orch] crash learning skipped: requires crash classification "
+                "(disable --no-classify-crashes or pass --classify-crashes)"
+            )
 
     return 0
 

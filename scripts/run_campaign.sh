@@ -644,6 +644,19 @@ postprocess_variant() {
       --out-dir "${crashes_dir}" \
       --timeout-sec "${TIMEOUT_SEC}" \
       > "${crashes_dir}/summary.txt" 2>&1 || true
+
+    echo "[Campaign] Crash-driven constraint learning for '${variant}'..."
+    python3 "${ROOT_DIR}/src/crash_constraint_learner.py" \
+      --workdir "${out_dir}" \
+      --fuzzer-bin "${fuzzer_bin}" \
+      --proto "${out_dir}/${LIBRARY}.v2.proto" \
+      --crash-dir "${crashes_dir}/genuine" \
+      --out-json "${crashes_dir}/crash_learned_constraints.json" \
+      --timeout-sec "${TIMEOUT_SEC}" \
+      --max-crashes "${PROTO_LIBERATOR_CRASH_LEARN_MAX_CRASHES:-16}" \
+      --max-byte-flips "${PROTO_LIBERATOR_CRASH_LEARN_MAX_OFFSETS:-64}" \
+      --min-evidence "${PROTO_LIBERATOR_CRASH_LEARN_MIN_EVIDENCE:-1}" \
+      > "${crashes_dir}/learner.log" 2>&1 || true
   fi
 
   echo "[Campaign] Crash clustering for '${variant}'..."
