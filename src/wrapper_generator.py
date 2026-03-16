@@ -631,11 +631,12 @@ class WrapperGenerator:
                 merged[fn] = stub
         return merged
 
-    def _scalar_dependency_types_by_api(self) -> Dict[str, set]:
+    def _scalar_dependency_info_by_api(self) -> Dict[str, Dict[str, Dict[str, Any]]]:
         """
-        Build {consumer_api -> {scalar_type_key, ...}} from constraint graph edges.
+        Build scalar dependency metadata from inter_edges:
+          {consumer_api: {scalar_type_key: {"producers": set[str], "required": bool}}}
         """
-        out: Dict[str, set] = {}
+        out: Dict[str, Dict[str, Dict[str, Any]]] = {}
         if not self.emi_rules or not self.emi_rules.inter_edges:
             return out
         for edge in self.emi_rules.inter_edges:
@@ -644,12 +645,39 @@ class WrapperGenerator:
             if str(edge.get("relation") or "") != "producer_consumer":
                 continue
             dst = str(edge.get("dst") or "")
+            src = str(edge.get("src") or "")
             obj_t = str(edge.get("object_type") or "")
             if not dst or not obj_t:
                 continue
             if not (obj_t.startswith("scalar:") or obj_t.startswith("cscalar:")):
                 continue
-            out.setdefault(dst, set()).add(obj_t)
+            per_api = out.setdefault(dst, {})
+            row = per_api.setdefault(obj_t, {"producers": set(), "required": False})
+            if src:
+                row["producers"].add(src)
+            if str(edge.get("hardness") or "") == "hard":
+                row["required"] = True
+        return out
+
+    def _scalar_deleter_types_by_api(self) -> Dict[str, set]:
+        """
+        Build {api -> {scalar_type_key, ...}} for scalar invalidation sources.
+        """
+        out: Dict[str, set] = {}
+        if not self.emi_rules or not self.emi_rules.inter_edges:
+            return out
+        for edge in self.emi_rules.inter_edges:
+            if not isinstance(edge, dict):
+                continue
+            if str(edge.get("relation") or "") != "invalidates_before_use":
+                continue
+            src = str(edge.get("src") or "")
+            obj_t = str(edge.get("object_type") or "")
+            if not src or not obj_t:
+                continue
+            if not (obj_t.startswith("scalar:") or obj_t.startswith("cscalar:")):
+                continue
+            out.setdefault(src, set()).add(obj_t)
         return out
 
     def _prepare_context(self) -> Dict:
@@ -806,7 +834,8 @@ class WrapperGenerator:
         if self.minimum_apis:
             sorted_funcs = [fn for fn in sorted_funcs if fn in self.minimum_apis]
 
-        scalar_dep_types_by_api = self._scalar_dependency_types_by_api()
+        scalar_dep_info_by_api = self._scalar_dependency_info_by_api()
+        scalar_deleter_types_by_api = self._scalar_deleter_types_by_api()
 
         apis = []
         handle_type_keys: List[str] = []
@@ -853,14 +882,37 @@ class WrapperGenerator:
                     and is_integral_c_type(c_type)
                 )
                 scalar_dep_enabled = False
+                scalar_dep_required = False
+                scalar_dep_producers: List[str] = []
                 scalar_type_key = ""
+                explicit_set_by_producers: List[str] = []
+                raw_param_info = entry.get(f"param_{i}")
+                if isinstance(raw_param_info, dict):
+                    raw_set_by = raw_param_info.get("set_by")
+                    if isinstance(raw_set_by, list):
+                        for ref in raw_set_by:
+                            sref = str(ref or "")
+                            if not sref or sref.startswith("param_") or ":" not in sref:
+                                continue
+                            explicit_set_by_producers.append(sref.split(":", 1)[0])
                 if param_desc.get("kind") == "scalar" and is_integral_c_type(c_type):
                     scalar_type_key = scalar_type_key_for(
                         str(param_desc.get("type_key") or ""),
                         c_type,
                         self.mapper,
                     )
-                    scalar_dep_enabled = scalar_type_key in scalar_dep_types_by_api.get(func_name, set())
+                    dep_info = scalar_dep_info_by_api.get(func_name, {}).get(scalar_type_key)
+                    if dep_info:
+                        scalar_dep_enabled = True
+                        scalar_dep_required = bool(dep_info.get("required"))
+                        scalar_dep_producers = sorted(str(x) for x in dep_info.get("producers", set()) if str(x))
+                if scalar_slot_enabled:
+                    # Scalar set_by is an explicit hard dependency.
+                    scalar_dep_required = True
+                if explicit_set_by_producers:
+                    scalar_dep_enabled = True
+                    scalar_dep_required = True
+                    scalar_dep_producers = sorted(set(scalar_dep_producers).union(explicit_set_by_producers))
                 scalar_pool_enabled = bool(scalar_slot_enabled or scalar_dep_enabled)
                 if scalar_pool_enabled:
                     scalar_type_keys.append(scalar_type_key)
@@ -871,6 +923,8 @@ class WrapperGenerator:
                         "param": param_desc,
                         "scalar_slot_enabled": scalar_slot_enabled,
                         "scalar_pool_enabled": scalar_pool_enabled,
+                        "scalar_dep_required": scalar_dep_required,
+                        "scalar_dep_producers": scalar_dep_producers,
                         "scalar_type_key": scalar_type_key,
                         "is_char_ptr": is_char_ptr(c_type),
                         "is_char_ptr_ptr": is_char_ptr_ptr(c_type),
@@ -966,12 +1020,38 @@ class WrapperGenerator:
 
         scalar_types = [{"id": i, "key": k, "ident": _ident(k)} for i, k in enumerate(scalar_uniq)]
         scalar_key_to_id = {s["key"]: s["id"] for s in scalar_types}
+        api_name_to_idx = {api["name"]: i for i, api in enumerate(apis)}
         for api in apis:
             for a in api.get("args", []):
                 if a.get("scalar_pool_enabled"):
                     a["scalar_type_id"] = scalar_key_to_id.get(a.get("scalar_type_key", ""), 0)
+                    producer_ids = []
+                    for producer_name in a.get("scalar_dep_producers", []):
+                        if producer_name in api_name_to_idx:
+                            producer_ids.append(api_name_to_idx[producer_name])
+                    a["scalar_dep_producer_ids"] = sorted(set(producer_ids))
             if api.get("returns_scalar"):
                 api["return_scalar_type_id"] = scalar_key_to_id.get(api.get("return_scalar_type_key", ""), 0)
+
+        for api in apis:
+            invalidations = []
+            for scalar_t in sorted(scalar_deleter_types_by_api.get(api["name"], set())):
+                matched = None
+                for arg in api.get("args", []):
+                    if arg.get("param", {}).get("kind") != "scalar":
+                        continue
+                    if arg.get("scalar_type_key") != scalar_t:
+                        continue
+                    if not arg.get("scalar_pool_enabled"):
+                        continue
+                    matched = {
+                        "arg_index": int(arg["i"]),
+                        "scalar_type_id": int(arg.get("scalar_type_id", 0)),
+                    }
+                    break
+                if matched:
+                    invalidations.append(matched)
+            api["scalar_invalidations"] = invalidations
 
         # Build graph_edges from inter_edges for constraint-graph-guided mutator.
         graph_edges = []

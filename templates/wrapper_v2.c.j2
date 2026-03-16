@@ -35,6 +35,8 @@ static uint32_t g_handle_count[MAX_HANDLE_TYPES];
 #define MAX_SCALAR_SLOTS 1024
 #define MAX_SCALAR_TYPES {{ scalar_types|length }}
 static int64_t g_scalars[MAX_SCALAR_TYPES][MAX_SCALAR_SLOTS];
+static bool g_scalar_valid[MAX_SCALAR_TYPES][MAX_SCALAR_SLOTS];
+static uint32_t g_scalar_producer_api[MAX_SCALAR_TYPES][MAX_SCALAR_SLOTS];
 static uint32_t g_scalar_count[MAX_SCALAR_TYPES];
 static bool g_hard_constraint_redirected = false;
 
@@ -350,6 +352,15 @@ static uint32_t handle_register_typed(uint32_t type_id, void *ptr) {
     return id;
 }
 
+static int env_int(const char *name, int def_val) {
+    const char *raw = getenv(name);
+    if (!raw || !raw[0]) return def_val;
+    char *end = NULL;
+    long v = strtol(raw, &end, 10);
+    if (end == raw) return def_val;
+    return (v != 0) ? 1 : 0;
+}
+
 static uint32_t handle_select_typed(uint32_t type_id, uint32_t requested) {
     if (type_id >= MAX_HANDLE_TYPES) return 0;
     if (g_handle_count[type_id] == 0) return 0;
@@ -374,27 +385,81 @@ static void handle_invalidate_typed(uint32_t type_id, uint32_t selected) {
     g_handle_valid[type_id][selected] = false;
 }
 
-static uint32_t scalar_register_typed(uint32_t type_id, int64_t value) {
+static uint32_t scalar_register_typed(uint32_t type_id, int64_t value, uint32_t producer_api_idx) {
     if (type_id >= MAX_SCALAR_TYPES) return 0;
     if (g_scalar_count[type_id] + 1 >= MAX_SCALAR_SLOTS) return 0;
     uint32_t id = ++g_scalar_count[type_id];
     g_scalars[type_id][id] = value;
+    g_scalar_valid[type_id][id] = true;
+    g_scalar_producer_api[type_id][id] = producer_api_idx;
     return id;
 }
 
-static bool scalar_get_typed(uint32_t type_id, uint32_t requested, int64_t *out_value) {
-    if (type_id >= MAX_SCALAR_TYPES) return false;
-    if (g_scalar_count[type_id] == 0) return false;
-    uint32_t idx = requested;
-    if (idx == 0) {
-        idx = g_scalar_count[type_id]; /* latest */
-    } else {
-        idx = idx % g_scalar_count[type_id];
-        if (idx == 0) idx = g_scalar_count[type_id];
+static bool scalar_producer_allowed(uint32_t producer_api_idx, const uint32_t *allowed, size_t allowed_n) {
+    if (!allowed || allowed_n == 0) return true;
+    for (size_t i = 0; i < allowed_n; i++) {
+        if (allowed[i] == producer_api_idx) return true;
     }
-    if (idx == 0 || idx > g_scalar_count[type_id]) return false;
+    return false;
+}
+
+static bool scalar_get_typed(
+    uint32_t type_id,
+    uint32_t requested,
+    bool allow_stale,
+    const uint32_t *allowed_producers,
+    size_t allowed_n,
+    int64_t *out_value,
+    uint32_t *out_selected
+) {
+    if (type_id >= MAX_SCALAR_TYPES) return false;
+    uint32_t count = g_scalar_count[type_id];
+    if (count == 0) return false;
+
+    uint32_t idx = 0;
+    if (requested == 0) {
+        for (uint32_t i = count; i >= 1; i--) {
+            if (!scalar_producer_allowed(g_scalar_producer_api[type_id][i], allowed_producers, allowed_n)) {
+                if (i == 1) break;
+                continue;
+            }
+            if (allow_stale || g_scalar_valid[type_id][i]) {
+                idx = i;
+                break;
+            }
+            if (i == 1) break;
+        }
+    } else {
+        uint32_t matched = 0;
+        for (uint32_t i = 1; i <= count; i++) {
+            if (!scalar_producer_allowed(g_scalar_producer_api[type_id][i], allowed_producers, allowed_n)) continue;
+            if (!allow_stale && !g_scalar_valid[type_id][i]) continue;
+            matched++;
+        }
+        if (matched == 0) return false;
+        uint32_t target = requested % matched;
+        if (target == 0) target = matched;
+        uint32_t seen = 0;
+        for (uint32_t i = 1; i <= count; i++) {
+            if (!scalar_producer_allowed(g_scalar_producer_api[type_id][i], allowed_producers, allowed_n)) continue;
+            if (!allow_stale && !g_scalar_valid[type_id][i]) continue;
+            seen++;
+            if (seen == target) {
+                idx = i;
+                break;
+            }
+        }
+    }
+    if (idx == 0 || idx > count) return false;
     if (out_value) *out_value = g_scalars[type_id][idx];
+    if (out_selected) *out_selected = idx;
     return true;
+}
+
+static void scalar_invalidate_typed(uint32_t type_id, uint32_t selected) {
+    if (type_id >= MAX_SCALAR_TYPES) return;
+    if (selected == 0 || selected > g_scalar_count[type_id]) return;
+    g_scalar_valid[type_id][selected] = false;
 }
 
 static char *alloc_cstring_from_bytes(const pb_bytes_array_t *b, size_t n_override) {
@@ -434,7 +499,10 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
     memset(g_handle_valid, 0, sizeof(g_handle_valid));
     memset(g_scalar_count, 0, sizeof(g_scalar_count));
     memset(g_scalars, 0, sizeof(g_scalars));
+    memset(g_scalar_valid, 0, sizeof(g_scalar_valid));
+    memset(g_scalar_producer_api, 0, sizeof(g_scalar_producer_api));
     g_hard_constraint_redirected = false;
+    bool strict_scalar_deps = env_int("PROTO_LIBERATOR_STRICT_SCALAR_DEPS", 1) != 0;
 
     /* Dynamic Dispatch Loop */
     uint32_t executed_api_seq[{{ max_actions }}];
@@ -468,25 +536,56 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
                 {% for arg in api.args %}
                 {{ arg.c_type }} arg{{ arg.i }};
                 memset(&arg{{ arg.i }}, 0, sizeof(arg{{ arg.i }}));
+                {% if arg.scalar_pool_enabled %}
+                uint32_t sel_scalar_{{ arg.i }} = 0;
+                {% endif %}
 
                 {% if arg.param.kind == "scalar" %}
                 {% if arg.scalar_slot_enabled %}
                 {
                     uint32_t requested_slot = params->has_{{ arg.param.slot_field }} ? params->{{ arg.param.slot_field }} : 0;
                     int64_t slot_value = 0;
-                    if (scalar_get_typed({{ arg.scalar_type_id }}, requested_slot, &slot_value)) {
+                    {% if arg.scalar_dep_producer_ids|length > 0 %}
+                    static const uint32_t kAllowedScalarProducers_{{ api.field_name }}_{{ arg.i }}[] = { {% for pid in arg.scalar_dep_producer_ids %}{{ pid }}{% if not loop.last %}, {% endif %}{% endfor %} };
+                    {% endif %}
+                    if (scalar_get_typed(
+                            {{ arg.scalar_type_id }},
+                            requested_slot,
+                            allow_stale,
+                            {% if arg.scalar_dep_producer_ids|length > 0 %}kAllowedScalarProducers_{{ api.field_name }}_{{ arg.i }}{% else %}NULL{% endif %},
+                            {% if arg.scalar_dep_producer_ids|length > 0 %}sizeof(kAllowedScalarProducers_{{ api.field_name }}_{{ arg.i }}) / sizeof(kAllowedScalarProducers_{{ api.field_name }}_{{ arg.i }}[0]){% else %}0{% endif %},
+                            &slot_value,
+                            &sel_scalar_{{ arg.i }}
+                        )) {
                         arg{{ arg.i }} = ({{ arg.c_type }})slot_value;
                     } else if (params->has_param_{{ arg.i }}) {
                         arg{{ arg.i }} = ({{ arg.c_type }})params->param_{{ arg.i }};
+                    } else if (strict_scalar_deps && {{ "true" if arg.scalar_dep_required else "false" }} && !allow_stale) {
+                        should_skip_call = true;
+                        g_hard_constraint_redirected = true;
                     }
                 }
                 {% elif arg.scalar_pool_enabled %}
                 {
                     int64_t slot_value = 0;
-                    if (scalar_get_typed({{ arg.scalar_type_id }}, 0, &slot_value)) {
+                    {% if arg.scalar_dep_producer_ids|length > 0 %}
+                    static const uint32_t kAllowedScalarProducers_{{ api.field_name }}_{{ arg.i }}[] = { {% for pid in arg.scalar_dep_producer_ids %}{{ pid }}{% if not loop.last %}, {% endif %}{% endfor %} };
+                    {% endif %}
+                    if (scalar_get_typed(
+                            {{ arg.scalar_type_id }},
+                            0,
+                            allow_stale,
+                            {% if arg.scalar_dep_producer_ids|length > 0 %}kAllowedScalarProducers_{{ api.field_name }}_{{ arg.i }}{% else %}NULL{% endif %},
+                            {% if arg.scalar_dep_producer_ids|length > 0 %}sizeof(kAllowedScalarProducers_{{ api.field_name }}_{{ arg.i }}) / sizeof(kAllowedScalarProducers_{{ api.field_name }}_{{ arg.i }}[0]){% else %}0{% endif %},
+                            &slot_value,
+                            &sel_scalar_{{ arg.i }}
+                        )) {
                         arg{{ arg.i }} = ({{ arg.c_type }})slot_value;
                     } else if (params->has_param_{{ arg.i }}) {
                         arg{{ arg.i }} = ({{ arg.c_type }})params->param_{{ arg.i }};
+                    } else if (strict_scalar_deps && {{ "true" if arg.scalar_dep_required else "false" }} && !allow_stale) {
+                        should_skip_call = true;
+                        g_hard_constraint_redirected = true;
                     }
                 }
                 {% else %}
@@ -629,7 +728,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
                 handle_register_typed({{ api.return_type_id }}, (void*)ret);
                 {% endif %}
                 {% if api.returns_scalar %}
-                scalar_register_typed({{ api.return_scalar_type_id }}, (int64_t)ret);
+                scalar_register_typed({{ api.return_scalar_type_id }}, (int64_t)ret, (uint32_t)api_idx);
                 {% endif %}
                 g_api_executed[api_idx]++;
                 if (executed_api_n < (size_t){{ max_actions }}) {
@@ -647,6 +746,11 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
                 }
                 {% endif %}
                 {% endif %}
+                {% for inv in api.scalar_invalidations %}
+                if (!allow_double_delete) {
+                    scalar_invalidate_typed({{ inv.scalar_type_id }}, sel_scalar_{{ inv.arg_index }});
+                }
+                {% endfor %}
 
                 /* Cleanup temp allocations */
                 {% for arg in api.args %}
