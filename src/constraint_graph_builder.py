@@ -23,10 +23,16 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
 
+try:
+    from type_mapper import TypeMapper
+except ImportError:  # pragma: no cover
+    from src.type_mapper import TypeMapper
+
 
 _PARAM_RE = re.compile(r"^param_(\d+)$")
 _STRUCT_RE = re.compile(r"%struct\.([^*\s=,]+)")
 _TRAILING_DOT_NUM_RE = re.compile(r"\.\d+$")
+_CLANG_CLEAN_RE = re.compile(r"\b(const|volatile|restrict|struct|enum)\b")
 
 
 @dataclass
@@ -87,6 +93,50 @@ def _normalize_object_type(type_string: str) -> Optional[str]:
     return name or None
 
 
+def _clang_type_token(type_string: str) -> str:
+    """
+    Extract a coarse type token from clang signature text.
+
+    Examples:
+      "const struct foo *" -> "foo"
+      "unsigned long" -> "unsigned long"
+      "char *" -> "char"
+    """
+    t = str(type_string or "").strip()
+    if not t:
+        return ""
+    t = _CLANG_CLEAN_RE.sub(" ", t)
+    t = t.replace("*", " ").replace("&", " ")
+    t = " ".join(t.split()).strip().lower()
+    return t
+
+
+def _is_informative_signature_token(tok: str) -> bool:
+    if not tok:
+        return False
+    noise = {
+        "void",
+        "int",
+        "unsigned int",
+        "char",
+        "unsigned char",
+        "short",
+        "unsigned short",
+        "long",
+        "unsigned long",
+        "long long",
+        "unsigned long long",
+        "float",
+        "double",
+        "bool",
+        "_bool",
+        "size_t",
+        "ssize_t",
+        "ptrdiff_t",
+    }
+    return tok not in noise
+
+
 def _extract_type_string(info: Dict[str, Any]) -> str:
     t = info.get("type_string") or info.get("type") or ""
     if t:
@@ -100,6 +150,37 @@ def _extract_type_string(info: Dict[str, Any]) -> str:
             if tt:
                 return str(tt)
     return ""
+
+
+def _scalar_type_key_from_llvm(type_string: str) -> Optional[str]:
+    clean = TypeMapper.normalize_llvm_type(type_string)
+    if not clean:
+        return None
+    if not TypeMapper.is_scalar_producer_return(clean):
+        return None
+    return TypeMapper.type_key(clean)
+
+
+def _looks_like_scalar_producer_name(fn: str) -> bool:
+    lowered = str(fn or "").lower()
+    return any(
+        tok in lowered
+        for tok in (
+            "open",
+            "create",
+            "init",
+            "new",
+            "alloc",
+            "socket",
+            "accept",
+            "connect",
+            "dup",
+            "register",
+            "begin",
+            "start",
+            "acquire",
+        )
+    )
 
 
 def _access_entries(info: Dict[str, Any]) -> List[Dict[str, Any]]:
@@ -158,17 +239,26 @@ def _build_graph_for_apipass(apipass_dir: Path, library: Optional[str] = None) -
     weak_producers_by_type: Dict[str, Set[str]] = defaultdict(set)
     consumers_by_type: Dict[str, Set[str]] = defaultdict(set)
     deleters_by_type: Dict[str, Set[str]] = defaultdict(set)
+    scalar_producers_by_type: Dict[str, Set[str]] = defaultdict(set)
+    scalar_weak_producers_by_type: Dict[str, Set[str]] = defaultdict(set)
+    scalar_consumers_by_type: Dict[str, Set[str]] = defaultdict(set)
+    scalar_deleters_by_type: Dict[str, Set[str]] = defaultdict(set)
 
     errors: List[str] = []
     warnings: List[str] = []
 
     set_by_constraints = 0
     len_constraints = 0
+    stub_nodes = 0
+    phase3_synth_edges = 0
+
+    existing_funcs: Set[str] = set()
 
     for entry in sorted(entries, key=lambda e: str(e.get("function_name") or e.get("functionName") or "")):
         fn = str(entry.get("function_name") or entry.get("functionName") or "").strip()
         if not fn:
             continue
+        existing_funcs.add(fn)
 
         sig = sig_idx.get(fn, {})
         node = {
@@ -201,6 +291,7 @@ def _build_graph_for_apipass(apipass_dir: Path, library: Optional[str] = None) -
 
             llvm_t = _extract_type_string(p)
             obj_t = _normalize_object_type(llvm_t)
+            scalar_t = _scalar_type_key_from_llvm(llvm_t)
             accesses = sorted({str(a.get("access") or "") for a in _access_entries(p) if a.get("access")})
             is_array = bool(p.get("is_array"))
             is_malloc_size = bool(p.get("is_malloc_size"))
@@ -246,15 +337,22 @@ def _build_graph_for_apipass(apipass_dir: Path, library: Optional[str] = None) -
                     consumers_by_type[obj_t].add(fn)
                 if "delete" in accesses:
                     deleters_by_type[obj_t].add(fn)
+            elif scalar_t:
+                if any(a in ("read", "write", "create", "delete") for a in accesses):
+                    scalar_consumers_by_type[scalar_t].add(fn)
+                if "delete" in accesses:
+                    scalar_deleters_by_type[scalar_t].add(fn)
 
         ret = entry.get("return")
         if isinstance(ret, dict):
             ret_t = _extract_type_string(ret)
             ret_obj = _normalize_object_type(ret_t)
+            ret_scalar_t = _scalar_type_key_from_llvm(ret_t)
             ret_accesses = sorted({str(a.get("access") or "") for a in _access_entries(ret) if a.get("access")})
             fn_intra["return"] = {
                 "llvm_type": ret_t,
                 "object_type": ret_obj,
+                "scalar_type": ret_scalar_t,
                 "accesses": ret_accesses,
             }
             if ret_obj:
@@ -263,10 +361,63 @@ def _build_graph_for_apipass(apipass_dir: Path, library: Optional[str] = None) -
                 elif any(a in ("write", "read") for a in ret_accesses):
                     # weaker producer-like signal (e.g., pointer return with write/read only)
                     weak_producers_by_type[ret_obj].add(fn)
+            elif ret_scalar_t:
+                if "create" in ret_accesses:
+                    scalar_producers_by_type[ret_scalar_t].add(fn)
+                elif any(a in ("write", "read") for a in ret_accesses):
+                    scalar_weak_producers_by_type[ret_scalar_t].add(fn)
+                elif _looks_like_scalar_producer_name(fn):
+                    # Signature-only fallback for APIs that return scalar handles/fds
+                    # but have sparse access metadata in conditions.json.
+                    scalar_weak_producers_by_type[ret_scalar_t].add(fn)
         else:
             fn_intra["return"] = {}
 
         intra[fn] = fn_intra
+
+    # Phase 3: Add stub nodes for APIs present in apis_clang.json but absent
+    # in conditions.json, so downstream schema/planning can still include them.
+    clang_only = sorted(fn for fn in sig_idx.keys() if fn not in existing_funcs)
+    for fn in clang_only:
+        sig = sig_idx.get(fn, {})
+        arg_infos = sig.get("arguments_info", []) or []
+        arg_types = [a.get("type_clang") for a in arg_infos if isinstance(a, dict)]
+        ret_type = (sig.get("return_info", {}) or {}).get("type_clang")
+        node = {
+            "id": fn,
+            "name": fn,
+            "stub": "phase3_clang_only",
+            "signature": {
+                "return_type": ret_type,
+                "arg_types": arg_types,
+            },
+        }
+        nodes.append(node)
+
+        fn_intra = {"params": {}, "return": {}, "stub": "phase3_clang_only"}
+        for i, at in enumerate(arg_types):
+            fn_intra["params"][f"param_{i}"] = {
+                "index": i,
+                "llvm_type": str(at or ""),
+                "object_type": None,
+                "is_array": False,
+                "is_malloc_size": False,
+                "set_by": [],
+                "len_depends_on": "",
+                "accesses": [],
+                "validation": {
+                    "bad_set_by": [],
+                    "bad_len_depends_on": None,
+                },
+            }
+        fn_intra["return"] = {
+            "llvm_type": str(ret_type or ""),
+            "object_type": None,
+            "scalar_type": None,
+            "accesses": [],
+        }
+        intra[fn] = fn_intra
+        stub_nodes += 1
 
     # Build inter edges.
     edges: List[Dict[str, Any]] = []
@@ -290,13 +441,38 @@ def _build_graph_for_apipass(apipass_dir: Path, library: Optional[str] = None) -
             }
         )
 
-    all_types = sorted(set(list(producers_by_type.keys()) + list(weak_producers_by_type.keys()) + list(consumers_by_type.keys()) + list(deleters_by_type.keys())))
+    def add_phase3_edge(src: str, dst: str, rel: str, obj_t: str, reason: str) -> None:
+        nonlocal phase3_synth_edges
+        before = len(edges)
+        add_edge(src, dst, rel, obj_t, "soft", 0.3, reason)
+        if len(edges) != before:
+            phase3_synth_edges += 1
+
+    all_types = sorted(
+        set(
+            list(producers_by_type.keys())
+            + list(weak_producers_by_type.keys())
+            + list(consumers_by_type.keys())
+            + list(deleters_by_type.keys())
+            + list(scalar_producers_by_type.keys())
+            + list(scalar_weak_producers_by_type.keys())
+            + list(scalar_consumers_by_type.keys())
+            + list(scalar_deleters_by_type.keys())
+        )
+    )
 
     for obj_t in all_types:
-        producers = sorted(producers_by_type.get(obj_t, set()))
-        weak_producers = sorted(weak_producers_by_type.get(obj_t, set()))
-        consumers = sorted(consumers_by_type.get(obj_t, set()))
-        deleters = sorted(deleters_by_type.get(obj_t, set()))
+        is_scalar_t = obj_t.startswith("scalar:")
+        if is_scalar_t:
+            producers = sorted(scalar_producers_by_type.get(obj_t, set()))
+            weak_producers = sorted(scalar_weak_producers_by_type.get(obj_t, set()))
+            consumers = sorted(scalar_consumers_by_type.get(obj_t, set()))
+            deleters = sorted(scalar_deleters_by_type.get(obj_t, set()))
+        else:
+            producers = sorted(producers_by_type.get(obj_t, set()))
+            weak_producers = sorted(weak_producers_by_type.get(obj_t, set()))
+            consumers = sorted(consumers_by_type.get(obj_t, set()))
+            deleters = sorted(deleters_by_type.get(obj_t, set()))
 
         if not producers and weak_producers and consumers:
             warnings.append(
@@ -348,16 +524,84 @@ def _build_graph_for_apipass(apipass_dir: Path, library: Optional[str] = None) -
                     "param(delete) for object type",
                 )
 
+    # Phase 3 synthetic neighbors from clang-only stubs:
+    # infer weak producer_consumer adjacency from signature token matching.
+    sig_ret_tok: Dict[str, str] = {}
+    sig_arg_toks: Dict[str, Set[str]] = {}
+    for n in nodes:
+        fn = str(n.get("id") or "")
+        sig = n.get("signature", {}) if isinstance(n.get("signature"), dict) else {}
+        rt = _clang_type_token(str(sig.get("return_type") or ""))
+        if _is_informative_signature_token(rt):
+            sig_ret_tok[fn] = rt
+        arg_tokens: Set[str] = set()
+        for at in sig.get("arg_types", []) or []:
+            tok = _clang_type_token(str(at or ""))
+            if _is_informative_signature_token(tok):
+                arg_tokens.add(tok)
+        sig_arg_toks[fn] = arg_tokens
+
+    producers_by_tok: Dict[str, Set[str]] = defaultdict(set)
+    consumers_by_tok: Dict[str, Set[str]] = defaultdict(set)
+    for fn, tok in sig_ret_tok.items():
+        producers_by_tok[tok].add(fn)
+    for fn, toks in sig_arg_toks.items():
+        for tok in toks:
+            consumers_by_tok[tok].add(fn)
+
+    for fn in clang_only:
+        rt = sig_ret_tok.get(fn, "")
+        if rt:
+            for c in sorted(consumers_by_tok.get(rt, set())):
+                if fn == c:
+                    continue
+                add_phase3_edge(
+                    fn,
+                    c,
+                    "producer_consumer",
+                    f"clang:{rt}",
+                    "phase3 stub return-token neighbor",
+                )
+        for tok in sorted(sig_arg_toks.get(fn, set())):
+            for p in sorted(producers_by_tok.get(tok, set())):
+                if fn == p:
+                    continue
+                add_phase3_edge(
+                    p,
+                    fn,
+                    "producer_consumer",
+                    f"clang:{tok}",
+                    "phase3 stub arg-token neighbor",
+                )
+
     # Build object catalog.
     object_catalog = []
     for obj_t in all_types:
+        is_scalar_t = obj_t.startswith("scalar:")
         object_catalog.append(
             {
                 "object_type": obj_t,
-                "producers": sorted(producers_by_type.get(obj_t, set())),
-                "weak_producers": sorted(weak_producers_by_type.get(obj_t, set())),
-                "consumers": sorted(consumers_by_type.get(obj_t, set())),
-                "deleters": sorted(deleters_by_type.get(obj_t, set())),
+                "kind": "scalar" if is_scalar_t else "handle",
+                "producers": sorted(
+                    scalar_producers_by_type.get(obj_t, set())
+                    if is_scalar_t
+                    else producers_by_type.get(obj_t, set())
+                ),
+                "weak_producers": sorted(
+                    scalar_weak_producers_by_type.get(obj_t, set())
+                    if is_scalar_t
+                    else weak_producers_by_type.get(obj_t, set())
+                ),
+                "consumers": sorted(
+                    scalar_consumers_by_type.get(obj_t, set())
+                    if is_scalar_t
+                    else consumers_by_type.get(obj_t, set())
+                ),
+                "deleters": sorted(
+                    scalar_deleters_by_type.get(obj_t, set())
+                    if is_scalar_t
+                    else deleters_by_type.get(obj_t, set())
+                ),
             }
         )
 
@@ -370,6 +614,8 @@ def _build_graph_for_apipass(apipass_dir: Path, library: Optional[str] = None) -
     missing_sig_count = sum(1 for n in nodes if not n["signature"].get("return_type") and not n["signature"].get("arg_types"))
     if missing_sig_count:
         warnings.append(f"{missing_sig_count} functions missing apis_clang signature rows")
+    if stub_nodes:
+        warnings.append(f"phase3 added {stub_nodes} clang-only stub nodes")
 
     # Validate that every hard producer-consumer edge has a known object type and confidence >= 0.8.
     for e in edges:
@@ -378,9 +624,12 @@ def _build_graph_for_apipass(apipass_dir: Path, library: Optional[str] = None) -
 
     stats = {
         "functions": len(nodes),
+        "phase3_stub_nodes": stub_nodes,
+        "phase3_synthetic_edges": phase3_synth_edges,
         "intra_set_by_constraints": set_by_constraints,
         "intra_len_constraints": len_constraints,
         "object_types": len(object_catalog),
+        "scalar_object_types": len([o for o in object_catalog if o.get("kind") == "scalar"]),
         "explicit_producer_object_types": len([o for o in object_catalog if o["producers"]]),
         "inter_edges": len(edges),
         "hard_edges": len([e for e in edges if e["hardness"] == "hard"]),

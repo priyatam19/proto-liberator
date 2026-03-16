@@ -480,6 +480,15 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
                         arg{{ arg.i }} = ({{ arg.c_type }})params->param_{{ arg.i }};
                     }
                 }
+                {% elif arg.scalar_pool_enabled %}
+                {
+                    int64_t slot_value = 0;
+                    if (scalar_get_typed({{ arg.scalar_type_id }}, 0, &slot_value)) {
+                        arg{{ arg.i }} = ({{ arg.c_type }})slot_value;
+                    } else if (params->has_param_{{ arg.i }}) {
+                        arg{{ arg.i }} = ({{ arg.c_type }})params->param_{{ arg.i }};
+                    }
+                }
                 {% else %}
                 if (params->has_param_{{ arg.i }}) {
                     arg{{ arg.i }} = ({{ arg.c_type }})params->param_{{ arg.i }};

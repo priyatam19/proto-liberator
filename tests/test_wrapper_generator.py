@@ -17,6 +17,95 @@ from wrapper_generator import WrapperGenerator  # noqa: E402
 
 
 class TestWrapperGenerator(unittest.TestCase):
+    def _write_scalar_slot_fixture(self, tmp: Path) -> tuple[Path, Path]:
+        conditions = tmp / "conditions.json"
+        apis = tmp / "apis_clang.jsonl"
+        conditions.write_text(
+            json.dumps(
+                [
+                    {
+                        "function_name": "MakeVal",
+                        "return": {
+                            "type_string": "i32",
+                            "access_type_set": [{"access": "create", "type_string": "i32"}],
+                        },
+                    },
+                    {
+                        "function_name": "ConsumeVal",
+                        "param_0": {
+                            "type_string": "i32",
+                            "set_by": ["MakeVal:return"],
+                            "access_type_set": [{"access": "read", "type_string": "i32"}],
+                        },
+                    },
+                ]
+            ),
+            encoding="utf-8",
+        )
+        apis.write_text(
+            "\n".join(
+                [
+                    '{"function_name":"MakeVal","return_info":{"type_clang":"int"},"arguments_info":[]}',
+                    '{"function_name":"ConsumeVal","return_info":{"type_clang":"void"},"arguments_info":[{"type_clang":"int"}]}',
+                ]
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+        return conditions, apis
+
+    def _write_scalar_edge_fixture(self, tmp: Path) -> tuple[Path, Path, Path]:
+        conditions = tmp / "conditions.json"
+        apis = tmp / "apis_clang.jsonl"
+        graph = tmp / "constraint_graph.json"
+        conditions.write_text(
+            json.dumps(
+                [
+                    {
+                        "function_name": "MakeVal",
+                        "return": {"type_string": "i32"},
+                    },
+                    {
+                        "function_name": "ConsumeVal",
+                        "param_0": {
+                            "type_string": "i32",
+                            "access_type_set": [{"access": "read", "type_string": "i32"}],
+                        },
+                    },
+                ]
+            ),
+            encoding="utf-8",
+        )
+        apis.write_text(
+            "\n".join(
+                [
+                    '{"function_name":"MakeVal","return_info":{"type_clang":"int"},"arguments_info":[]}',
+                    '{"function_name":"ConsumeVal","return_info":{"type_clang":"void"},"arguments_info":[{"type_clang":"int"}]}',
+                ]
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+        graph.write_text(
+            json.dumps(
+                {
+                    "inter_edges": [
+                        {
+                            "src": "MakeVal",
+                            "dst": "ConsumeVal",
+                            "relation": "producer_consumer",
+                            "object_type": "scalar:int32",
+                            "hardness": "hard",
+                            "confidence": 0.95,
+                        }
+                    ],
+                    "intra_constraints": {},
+                }
+            ),
+            encoding="utf-8",
+        )
+        return conditions, apis, graph
+
     def test_v2_emits_typed_handle_table_and_calls(self):
         conditions = FIXTURES / "cjsonish_conditions.json"
 
@@ -60,11 +149,80 @@ class TestWrapperGenerator(unittest.TestCase):
 
         # API call-sites use typed helpers with rendered numeric type_id.
         self.assertRegex(text, r"handle_get_typed\(\d+,\s*hid,\s*allow_stale,\s*&selected\)")
-        self.assertRegex(text, r"handle_register_typed\(\d+,\s*\(void\*\)result\)")
+        self.assertRegex(text, r"handle_register_typed\(\d+,\s*\(void\*\)ret\)")
 
         # Legacy flat table should not be present.
         self.assertNotIn("static void *g_handles[MAX_HANDLES];", text)
         self.assertNotIn("static uint32_t g_handle_count = 0;", text)
+
+    def test_v2_emits_scalar_slot_pool_and_wiring(self):
+        with tempfile.TemporaryDirectory() as td:
+            tmp = Path(td)
+            proto = tmp / "demo.v2.proto"
+            driver = tmp / "driver.meta.json"
+            out = tmp / "harness.c"
+            conditions, apis = self._write_scalar_slot_fixture(tmp)
+
+            proto.write_text('syntax = "proto2";\nmessage FuzzInput {}\n', encoding="utf-8")
+            driver.write_text(json.dumps({"headers": []}), encoding="utf-8")
+
+            gen = WrapperGenerator(
+                proto,
+                driver,
+                conditions,
+                apis_path=apis,
+                minimum_apis=None,
+                package_name="demo_fuzzer",
+                schema_mode="v2",
+                mutation_mode="nanopb",
+                max_actions=64,
+                extra_headers=[],
+                apipass_dir=None,
+                harness_style="strict",
+            )
+            gen.generate(out)
+            text = out.read_text(encoding="utf-8")
+
+        self.assertIn("#define MAX_SCALAR_TYPES", text)
+        self.assertIn("static int64_t g_scalars[MAX_SCALAR_TYPES][MAX_SCALAR_SLOTS];", text)
+        self.assertIn("static uint32_t scalar_register_typed(uint32_t type_id, int64_t value)", text)
+        self.assertIn("static bool scalar_get_typed(uint32_t type_id, uint32_t requested, int64_t *out_value)", text)
+        self.assertIn("params->has_param_0_slot ? params->param_0_slot : 0", text)
+        self.assertIn("if (scalar_get_typed(", text)
+        self.assertRegex(text, r"scalar_register_typed\(\d+,\s*\(int64_t\)ret\)")
+
+    def test_v2_uses_scalar_pool_from_constraint_edge_without_slot_field(self):
+        with tempfile.TemporaryDirectory() as td:
+            tmp = Path(td)
+            proto = tmp / "demo.v2.proto"
+            driver = tmp / "driver.meta.json"
+            out = tmp / "harness.c"
+            conditions, apis, graph = self._write_scalar_edge_fixture(tmp)
+
+            proto.write_text('syntax = "proto2";\nmessage FuzzInput {}\n', encoding="utf-8")
+            driver.write_text(json.dumps({"headers": []}), encoding="utf-8")
+
+            gen = WrapperGenerator(
+                proto,
+                driver,
+                conditions,
+                apis_path=apis,
+                minimum_apis=None,
+                package_name="demo_fuzzer",
+                schema_mode="v2",
+                mutation_mode="nanopb",
+                max_actions=64,
+                extra_headers=[],
+                apipass_dir=None,
+                constraint_graph_path=graph,
+                harness_style="strict",
+            )
+            gen.generate(out)
+            text = out.read_text(encoding="utf-8")
+
+        self.assertIn("if (scalar_get_typed(", text)
+        self.assertIn("scalar_get_typed(0, 0, &slot_value)", text)
+        self.assertNotIn("has_param_0_slot", text)
 
     def test_v2_emits_set_by_guard_from_constraint_graph(self):
         conditions = FIXTURES / "minimal_conditions.json"
@@ -212,6 +370,12 @@ class TestWrapperGenerator(unittest.TestCase):
         self.assertIn("static bool plb_make_producer(", text)
         self.assertIn("static int plb_repair_sequence(", text)
         self.assertIn("static bool plb_enforce_hard_validity(", text)
+        self.assertIn("static void plb_cache_record_payload(", text)
+        self.assertIn("static bool plb_try_apply_cached_params(", text)
+        self.assertIn("static bool plb_reuse_cached_producer_args(", text)
+        self.assertIn("PROTO_LIBERATOR_EFFECTIVE_ARG_REUSE", text)
+        self.assertIn("PROTO_LIBERATOR_EFFECTIVE_ARG_REUSE_PCT", text)
+        self.assertIn("effective_arg_cache", text)
         self.assertIn("PROTO_LIBERATOR_ENFORCE_HARD_VALIDITY", text)
         self.assertIn("PROTO_LIBERATOR_ENFORCE_HARD_MAX_INSERTS", text)
         self.assertIn("PROTO_LIBERATOR_MUTATOR_MISUSE_MODE", text)
@@ -277,6 +441,221 @@ class TestWrapperGenerator(unittest.TestCase):
         self.assertIn("kCJsonParse", edges_block)
         self.assertIn("kCJsonPrintUnformatted", edges_block)
         self.assertNotIn("kCJsonDelete", edges_block)
+
+    def test_lpm_records_effective_args_for_successful_producers(self):
+        conditions = FIXTURES / "cjsonish_conditions.json"
+
+        with tempfile.TemporaryDirectory() as td:
+            tmp = Path(td)
+            proto = tmp / "demo.v2.proto"
+            driver = tmp / "driver.meta.json"
+            out = tmp / "harness.cc"
+
+            proto.write_text('syntax = "proto2";\nmessage FuzzInput {}\n', encoding="utf-8")
+            driver.write_text(json.dumps({"headers": []}), encoding="utf-8")
+
+            gen = WrapperGenerator(
+                proto,
+                driver,
+                conditions,
+                apis_path=None,
+                minimum_apis=None,
+                package_name="demo_fuzzer",
+                schema_mode="v2",
+                mutation_mode="lpm",
+                max_actions=64,
+                extra_headers=[],
+                apipass_dir=None,
+                harness_style="strict",
+            )
+            gen.generate(out)
+            text = out.read_text(encoding="utf-8")
+
+        self.assertIn("if (plb_handle_is_valid(ret))", text)
+        self.assertIn("plb_cache_record_params(", text)
+        self.assertIn("demo_fuzzer::Action::kCJsonParse", text)
+
+    def test_v2_emits_post_call_guard_for_producer_like_return(self):
+        conditions = FIXTURES / "cjsonish_conditions.json"
+
+        with tempfile.TemporaryDirectory() as td:
+            tmp = Path(td)
+            proto = tmp / "demo.v2.proto"
+            driver = tmp / "driver.meta.json"
+            out = tmp / "harness.c"
+            graph = tmp / "constraint_graph.json"
+
+            proto.write_text('syntax = "proto2";\nmessage FuzzInput {}\n', encoding="utf-8")
+            driver.write_text(json.dumps({"headers": []}), encoding="utf-8")
+            graph.write_text(
+                json.dumps(
+                    {
+                        "intra_constraints": {
+                            "cJSON_Parse": {
+                                "return": {
+                                    "llvm_type": "%struct.cJSON*",
+                                    "object_type": "cJSON",
+                                    "accesses": ["create"],
+                                },
+                            }
+                        }
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            gen = WrapperGenerator(
+                proto,
+                driver,
+                conditions,
+                apis_path=None,
+                minimum_apis=None,
+                package_name="demo_fuzzer",
+                schema_mode="v2",
+                mutation_mode="nanopb",
+                max_actions=64,
+                extra_headers=[],
+                apipass_dir=None,
+                constraint_graph_path=graph,
+                harness_style="strict",
+            )
+            gen.generate(out)
+            text = out.read_text(encoding="utf-8")
+
+        self.assertIn("Constraint-graph post-call guards", text)
+        self.assertIn("if (!allow_stale && ret == NULL)", text)
+        self.assertIn("g_hard_constraint_redirected = true;", text)
+
+    def test_lpm_emits_post_call_guard_for_producer_like_return(self):
+        conditions = FIXTURES / "cjsonish_conditions.json"
+
+        with tempfile.TemporaryDirectory() as td:
+            tmp = Path(td)
+            proto = tmp / "demo.v2.proto"
+            driver = tmp / "driver.meta.json"
+            out = tmp / "harness.cc"
+            graph = tmp / "constraint_graph.json"
+
+            proto.write_text('syntax = "proto2";\nmessage FuzzInput {}\n', encoding="utf-8")
+            driver.write_text(json.dumps({"headers": []}), encoding="utf-8")
+            graph.write_text(
+                json.dumps(
+                    {
+                        "intra_constraints": {
+                            "cJSON_Parse": {
+                                "return": {
+                                    "llvm_type": "%struct.cJSON*",
+                                    "object_type": "cJSON",
+                                    "accesses": ["create"],
+                                },
+                            }
+                        }
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            gen = WrapperGenerator(
+                proto,
+                driver,
+                conditions,
+                apis_path=None,
+                minimum_apis=None,
+                package_name="demo_fuzzer",
+                schema_mode="v2",
+                mutation_mode="lpm",
+                max_actions=64,
+                extra_headers=[],
+                apipass_dir=None,
+                constraint_graph_path=graph,
+                harness_style="strict",
+            )
+            gen.generate(out)
+            text = out.read_text(encoding="utf-8")
+
+        self.assertIn("Constraint-graph post-call guards", text)
+        self.assertIn("if (!allow_stale && ret == NULL)", text)
+        self.assertIn("g_hard_constraint_redirected = true;", text)
+
+    def test_lpm_emits_scalar_slot_pool_and_wiring(self):
+        with tempfile.TemporaryDirectory() as td:
+            tmp = Path(td)
+            proto = tmp / "demo.v2.proto"
+            driver = tmp / "driver.meta.json"
+            out = tmp / "harness.cc"
+            conditions, apis = self._write_scalar_slot_fixture(tmp)
+
+            proto.write_text('syntax = "proto2";\nmessage FuzzInput {}\n', encoding="utf-8")
+            driver.write_text(json.dumps({"headers": []}), encoding="utf-8")
+
+            gen = WrapperGenerator(
+                proto,
+                driver,
+                conditions,
+                apis_path=apis,
+                minimum_apis=None,
+                package_name="demo_fuzzer",
+                schema_mode="v2",
+                mutation_mode="lpm",
+                max_actions=64,
+                extra_headers=[],
+                apipass_dir=None,
+                harness_style="strict",
+            )
+            gen.generate(out)
+            text = out.read_text(encoding="utf-8")
+
+        self.assertIn("enum ScalarTypeId", text)
+        self.assertIn("static ScalarTable g_scalar_tables[ST__COUNT];", text)
+        self.assertIn("static uint32_t scalar_register_typed(uint32_t type_id, int64_t value)", text)
+        self.assertIn("static bool scalar_get_typed(uint32_t type_id, uint32_t requested, int64_t* out_value)", text)
+        self.assertIn("params.has_param_0_slot() ? params.param_0_slot() : 0", text)
+        self.assertIn("scalars_reset();", text)
+        self.assertRegex(text, r"scalar_register_typed\(\d+,\s*\(int64_t\)ret\)")
+
+    def test_v2_includes_phase3_stub_api_from_apis_clang(self):
+        conditions = FIXTURES / "minimal_conditions.json"
+
+        with tempfile.TemporaryDirectory() as td:
+            tmp = Path(td)
+            proto = tmp / "demo.v2.proto"
+            driver = tmp / "driver.meta.json"
+            apis = tmp / "apis_clang.jsonl"
+            out = tmp / "harness.c"
+
+            proto.write_text('syntax = "proto2";\nmessage FuzzInput {}\n', encoding="utf-8")
+            driver.write_text(json.dumps({"headers": []}), encoding="utf-8")
+            apis.write_text(
+                "\n".join(
+                    [
+                        '{"function_name":"Foo","return_info":{"type_clang":"int"},"arguments_info":[{"type_clang":"struct bar *"},{"type_clang":"char *"}]}',
+                        '{"function_name":"BarMissing","return_info":{"type_clang":"void"},"arguments_info":[{"type_clang":"int *"},{"type_clang":"char *"}]}',
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+            gen = WrapperGenerator(
+                proto,
+                driver,
+                conditions,
+                apis_path=apis,
+                minimum_apis=None,
+                package_name="demo_fuzzer",
+                schema_mode="v2",
+                mutation_mode="nanopb",
+                max_actions=64,
+                extra_headers=[],
+                apipass_dir=None,
+                harness_style="strict",
+            )
+            gen.generate(out)
+            text = out.read_text(encoding="utf-8")
+
+        self.assertIn("/* BarMissing */", text)
+        self.assertIn("case demo_fuzzer_Action_bar_missing_tag:", text)
+        self.assertIn("BarMissing(", text)
 
 
 if __name__ == "__main__":

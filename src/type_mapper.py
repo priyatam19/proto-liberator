@@ -446,6 +446,53 @@ class TypeMapper:
         )
 
     @staticmethod
+    def is_pointer_like_llvm(llvm_type_str: str) -> bool:
+        clean = TypeMapper.normalize_llvm_type(llvm_type_str)
+        if not clean:
+            return False
+        if clean.endswith("*"):
+            return True
+        if clean.startswith("%struct."):
+            return True
+        if "[" in clean and "]" in clean:
+            return True
+        if "(" in clean and ")" in clean:
+            return True
+        return False
+
+    @staticmethod
+    def is_integral_proto_type(proto_type: str) -> bool:
+        return proto_type in {
+            "int32",
+            "int64",
+            "uint32",
+            "uint64",
+            "sint32",
+            "sint64",
+            "fixed32",
+            "fixed64",
+            "sfixed32",
+            "sfixed64",
+        }
+
+    @staticmethod
+    def is_scalar_producer_return(llvm_type_str: str) -> bool:
+        """
+        True for scalar (non-pointer, non-void) integral returns suitable for
+        value-flow binding into downstream scalar params.
+        """
+        clean = TypeMapper.normalize_llvm_type(llvm_type_str)
+        if not clean or clean == "void":
+            return False
+        if TypeMapper.is_pointer_like_llvm(clean):
+            return False
+        # Unknown 32-hex hashes are treated as pointer-like/opaque.
+        if _TYPE_HASH_RE.match(clean or "") and clean not in TypeMapper.LLVM_TO_PROTO:
+            return False
+        proto = TypeMapper.map_llvm_to_proto(clean)
+        return TypeMapper.is_integral_proto_type(proto)
+
+    @staticmethod
     def is_unsupported_vararg(function_name: str, *, context: Optional[TypeContext] = None) -> bool:
         """
         Placeholder policy: treat all vararg APIs as unsupported unless explicitly modeled.

@@ -169,6 +169,33 @@ def is_size_like_c_type(c_type: str) -> bool:
     return bool(re.search(r"\b(size_t|ssize_t|ptrdiff_t|uintptr_t|intptr_t|u?int(8|16|32|64)_t)\b", t))
 
 
+def infer_return_llvm_type(entry: Dict[str, Any]) -> str:
+    ret = entry.get("return")
+    if not isinstance(ret, dict):
+        return ""
+    llvm_t = str(ret.get("type_string") or ret.get("type") or "")
+    if llvm_t:
+        return llvm_t
+    access = ret.get("access_type_set", [])
+    if isinstance(access, list) and access and isinstance(access[0], dict):
+        return str(access[0].get("type_string") or access[0].get("type") or "")
+    return ""
+
+
+def scalar_type_key_for(llvm_type: str, c_type: str, mapper: TypeMapper) -> str:
+    if llvm_type.startswith("scalar:") or llvm_type.startswith("cscalar:"):
+        return llvm_type
+    key = mapper.type_key(llvm_type) if llvm_type else ""
+    if key.startswith("scalar:"):
+        return key
+    c_norm = normalize_c_type(c_type)
+    c_norm = c_norm.replace("const", "").replace("volatile", "").strip()
+    c_norm = re.sub(r"\s+", "_", c_norm)
+    c_norm = re.sub(r"[^A-Za-z0-9_]", "_", c_norm)
+    c_norm = c_norm.strip("_") or "int64"
+    return f"cscalar:{c_norm}"
+
+
 def infer_len_depends_on_index(args: List[Dict[str, Any]], index: int) -> Optional[int]:
     candidates: List[Dict[str, Any]] = []
     for arg in args:
@@ -308,7 +335,14 @@ def classify_param(
     key = f"param_{param_index}"
     info = entry.get(key)
     if not isinstance(info, dict):
-        return {"kind": "scalar", "field": key, "index": param_index, "has_is_null": False}
+        return {
+            "kind": "scalar",
+            "field": key,
+            "index": param_index,
+            "has_is_null": False,
+            "has_slot_selector": False,
+            "slot_field": f"{key}_slot",
+        }
 
     llvm_type = str(info.get("type_string") or info.get("type") or "")
     if not llvm_type:
@@ -419,6 +453,8 @@ def classify_param(
             "type_key": mapper.type_key(llvm_type),
             "len_depends_on": len_depends_on,
             "len_depends_on_index": len_depends_on_index,
+            "has_slot_selector": has_set_by,
+            "slot_field": f"{key}_slot",
         }
 
     if proto_type == "uint32":
@@ -451,6 +487,8 @@ def classify_param(
         "type_key": mapper.type_key(llvm_type),
         "len_depends_on": len_depends_on,
         "len_depends_on_index": len_depends_on_index,
+        "has_slot_selector": False,
+        "slot_field": f"{key}_slot",
     }
 
 
@@ -553,6 +591,67 @@ class WrapperGenerator:
                 out.add(name)
         return out
 
+    def _phase3_stub_entry(self, func_name: str, sig: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+        """
+        Build synthetic metadata for APIs present in apis_clang.json but absent
+        from conditions.json.
+
+        Stub policy mirrors proto_generator:
+        - one generic pointer-like param per clang argument (mapped as bytes in schema)
+        - no inferred inter/intra constraints
+        """
+        fn = str(func_name or "").strip()
+        if not fn:
+            return None
+
+        args = []
+        if isinstance(sig, dict):
+            raw_args = sig.get("arguments_info")
+            if isinstance(raw_args, list):
+                args = raw_args
+
+        entry: Dict[str, Any] = {"function_name": fn, "_phase3_stub": True}
+        for i, _ in enumerate(args):
+            entry[f"param_{i}"] = {
+                "type_string": "i8*",
+                "_phase3_stub_param": True,
+            }
+        return entry
+
+    def _conditions_with_phase3_stubs(self) -> Dict[str, Dict[str, Any]]:
+        """
+        Merge conditions metadata with phase-3 synthetic metadata for clang-only APIs.
+        """
+        merged: Dict[str, Dict[str, Any]] = dict(self.conditions)
+        for fn, sig in self.api_sigs.items():
+            if fn in merged:
+                continue
+            stub = self._phase3_stub_entry(fn, sig)
+            if stub:
+                merged[fn] = stub
+        return merged
+
+    def _scalar_dependency_types_by_api(self) -> Dict[str, set]:
+        """
+        Build {consumer_api -> {scalar_type_key, ...}} from constraint graph edges.
+        """
+        out: Dict[str, set] = {}
+        if not self.emi_rules or not self.emi_rules.inter_edges:
+            return out
+        for edge in self.emi_rules.inter_edges:
+            if not isinstance(edge, dict):
+                continue
+            if str(edge.get("relation") or "") != "producer_consumer":
+                continue
+            dst = str(edge.get("dst") or "")
+            obj_t = str(edge.get("object_type") or "")
+            if not dst or not obj_t:
+                continue
+            if not (obj_t.startswith("scalar:") or obj_t.startswith("cscalar:")):
+                continue
+            out.setdefault(dst, set()).add(obj_t)
+        return out
+
     def _prepare_context(self) -> Dict:
         if self.schema_mode == "v2":
             return self._prepare_context_v2()
@@ -570,6 +669,8 @@ class WrapperGenerator:
         seen = set()
         headers = [h for h in headers if isinstance(h, str) and not (h in seen or seen.add(h))]
 
+        entries = self._conditions_with_phase3_stubs()
+
         raw_sequence = self.driver_meta.get("api_sequence", [])
         if not raw_sequence:
             multiset = self.driver_meta.get("api_multiset", {})
@@ -581,7 +682,7 @@ class WrapperGenerator:
                 print(
                     "[Wrapper-Gen] Warning: No 'api_sequence' or 'api_multiset' in driver.meta. Using all functions."
                 )
-                raw_sequence = sorted(self.conditions.keys())
+                raw_sequence = sorted(entries.keys())
 
         prefix = f"{self.package_name}_" if self.package_name else ""
         fuzz_input_type = f"{prefix}{MSG_FUZZ_INPUT}"
@@ -591,13 +692,13 @@ class WrapperGenerator:
         unique_apis = []
 
         for func_name in raw_sequence:
-            if func_name not in self.conditions:
-                print(f"[Wrapper-Gen] Warning: Function {func_name} in sequence but not in conditions.json")
+            if func_name not in entries:
+                print(f"[Wrapper-Gen] Warning: Function {func_name} in sequence but not in metadata")
                 continue
             if self.minimum_apis and func_name not in self.minimum_apis:
                 continue
 
-            entry = self.conditions[func_name]
+            entry = entries[func_name]
             sig = self.api_sigs.get(func_name)
 
             arg_types: List[str] = []
@@ -700,14 +801,18 @@ class WrapperGenerator:
             fuzz_input_type = f"{prefix}{MSG_FUZZ_INPUT}"
             action_type = f"{prefix}{MSG_ACTION}"
 
-        sorted_funcs = sorted(self.conditions.keys())
+        entries = self._conditions_with_phase3_stubs()
+        sorted_funcs = sorted(entries.keys())
         if self.minimum_apis:
             sorted_funcs = [fn for fn in sorted_funcs if fn in self.minimum_apis]
 
+        scalar_dep_types_by_api = self._scalar_dependency_types_by_api()
+
         apis = []
         handle_type_keys: List[str] = []
+        scalar_type_keys: List[str] = []
         for func_name in sorted_funcs:
-            entry = self.conditions[func_name]
+            entry = entries[func_name]
             sig = self.api_sigs.get(func_name)
 
             arg_types: List[str] = []
@@ -742,11 +847,31 @@ class WrapperGenerator:
                 c_type = arg_types[i] if i < len(arg_types) else "int"
                 if param_desc.get("kind") == "handle":
                     handle_type_keys.append(str(param_desc.get("type_key") or ""))
+                scalar_slot_enabled = bool(
+                    param_desc.get("kind") == "scalar"
+                    and param_desc.get("has_slot_selector")
+                    and is_integral_c_type(c_type)
+                )
+                scalar_dep_enabled = False
+                scalar_type_key = ""
+                if param_desc.get("kind") == "scalar" and is_integral_c_type(c_type):
+                    scalar_type_key = scalar_type_key_for(
+                        str(param_desc.get("type_key") or ""),
+                        c_type,
+                        self.mapper,
+                    )
+                    scalar_dep_enabled = scalar_type_key in scalar_dep_types_by_api.get(func_name, set())
+                scalar_pool_enabled = bool(scalar_slot_enabled or scalar_dep_enabled)
+                if scalar_pool_enabled:
+                    scalar_type_keys.append(scalar_type_key)
                 args.append(
                     {
                         "i": i,
                         "c_type": c_type,
                         "param": param_desc,
+                        "scalar_slot_enabled": scalar_slot_enabled,
+                        "scalar_pool_enabled": scalar_pool_enabled,
+                        "scalar_type_key": scalar_type_key,
                         "is_char_ptr": is_char_ptr(c_type),
                         "is_char_ptr_ptr": is_char_ptr_ptr(c_type),
                         "is_void_ptr": is_void_ptr(c_type),
@@ -757,11 +882,27 @@ class WrapperGenerator:
             apply_len_depends_on_heuristics(args)
 
             returns_handle = conditions_return_is_handle(entry, self.mapper, ret_c_type=ret_type)
-            return_type_key = self.mapper.type_key(str(entry.get("return", {}).get("type_string") or "")) if returns_handle else ""
+            if returns_handle and is_void_return(ret_type):
+                # Fallback when signature metadata is missing but conditions indicate handle return.
+                ret_type = "void *"
+            return_is_void = is_void_return(ret_type)
+            ret_llvm_type = infer_return_llvm_type(entry)
+            return_type_key = self.mapper.type_key(ret_llvm_type) if returns_handle else ""
             if returns_handle and return_type_key:
                 handle_type_keys.append(return_type_key)
+            returns_scalar = bool(
+                not return_is_void
+                and not returns_handle
+                and not is_pointer_type(ret_type)
+                and is_integral_c_type(ret_type)
+            )
+            return_scalar_type_key = ""
+            if returns_scalar:
+                return_scalar_type_key = scalar_type_key_for(ret_llvm_type, ret_type, self.mapper)
+                scalar_type_keys.append(return_scalar_type_key)
             field_name = to_proto_field_name(func_name)
             unsupported_vararg = self.mapper.is_unsupported_vararg(func_name, context=self.type_context)
+            post_call_check = self.emi_rules.get_post_call_check(func_name, "ret") if not return_is_void else None
 
             apis.append(
                 {
@@ -771,14 +912,17 @@ class WrapperGenerator:
                     "oneof_tag": f"{action_type}_{field_name}_tag",
                     "args": args,
                     "return_type": ret_type,
-                    "return_is_void": is_void_return(ret_type),
+                    "return_is_void": return_is_void,
                     "returns_handle": returns_handle,
                     "return_type_key": return_type_key,
+                    "returns_scalar": returns_scalar,
+                    "return_scalar_type_key": return_scalar_type_key,
                     "has_skip_dependency_check": function_has_deps(entry),
                     "has_allow_double_delete": "return" in entry,
                     "is_destructor": is_destructor_name(func_name),
                     "unsupported_vararg": unsupported_vararg,
                     "pre_call_guards": self.emi_rules.get_guard_for_api(func_name, args),
+                    "post_call_check": post_call_check,
                 }
             )
 
@@ -809,6 +953,25 @@ class WrapperGenerator:
                     p["type_id"] = key_to_id.get(p.get("type_key", ""), 0)
             if api.get("returns_handle"):
                 api["return_type_id"] = key_to_id.get(api.get("return_type_key", ""), 0)
+
+        scalar_uniq: List[str] = []
+        scalar_seen = set()
+        for k in scalar_type_keys:
+            if not k or k in scalar_seen:
+                continue
+            scalar_seen.add(k)
+            scalar_uniq.append(k)
+        if not scalar_uniq:
+            scalar_uniq = ["default"]
+
+        scalar_types = [{"id": i, "key": k, "ident": _ident(k)} for i, k in enumerate(scalar_uniq)]
+        scalar_key_to_id = {s["key"]: s["id"] for s in scalar_types}
+        for api in apis:
+            for a in api.get("args", []):
+                if a.get("scalar_pool_enabled"):
+                    a["scalar_type_id"] = scalar_key_to_id.get(a.get("scalar_type_key", ""), 0)
+            if api.get("returns_scalar"):
+                api["return_scalar_type_id"] = scalar_key_to_id.get(api.get("return_scalar_type_key", ""), 0)
 
         # Build graph_edges from inter_edges for constraint-graph-guided mutator.
         graph_edges = []
@@ -843,6 +1006,7 @@ class WrapperGenerator:
             "max_actions": self.max_actions,
             "apis": apis,
             "handle_types": handle_types,
+            "scalar_types": scalar_types,
             "harness_style": self.harness_style,
             "graph_edges": graph_edges,
         }

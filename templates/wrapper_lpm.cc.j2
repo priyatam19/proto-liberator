@@ -1267,6 +1267,15 @@ DEFINE_BINARY_PROTO_FUZZER(const {{ package_name }}::{{ fuzz_input_type }}& inpu
                         arg_{{ arg.i }} = ({{ arg.c_type }})params.param_{{ arg.i }}();
                     }
                 }
+                {% elif arg.scalar_pool_enabled %}
+                {
+                    int64_t slot_value = 0;
+                    if (scalar_get_typed({{ arg.scalar_type_id }}, 0, &slot_value)) {
+                        arg_{{ arg.i }} = ({{ arg.c_type }})slot_value;
+                    } else if (params.has_param_{{ arg.i }}()) {
+                        arg_{{ arg.i }} = ({{ arg.c_type }})params.param_{{ arg.i }}();
+                    }
+                }
                 {% else %}
                 if (params.has_param_{{ arg.i }}()) {
                     arg_{{ arg.i }} = ({{ arg.c_type }})params.param_{{ arg.i }}();
