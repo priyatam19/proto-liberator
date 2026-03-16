@@ -43,7 +43,12 @@ class EmiGuardRules:
                 self.intra_constraints = {}
                 self.inter_edges = []
 
-    def get_guard_for_api(self, api_name: str, params: List[Dict[str, Any]]) -> List[str]:
+    def get_guard_for_api(
+        self,
+        api_name: str,
+        params: List[Dict[str, Any]],
+        target_lang: str = "c",
+    ) -> List[str]:
         """
         Return pre-call C snippets for one API call-site.
 
@@ -69,6 +74,16 @@ class EmiGuardRules:
             arg_by_index[idx] = a
 
         snippets: List[str] = []
+        is_cpp = str(target_lang).lower() in ("cpp", "c++")
+
+        def _arg(idx: int) -> str:
+            return f"arg_{idx}" if is_cpp else f"arg{idx}"
+
+        def _has_param(idx: int) -> str:
+            return f"params.has_param_{idx}()" if is_cpp else f"params->has_param_{idx}"
+
+        def _param_size(idx: int) -> str:
+            return f"params.param_{idx}().size()" if is_cpp else f"params->param_{idx}.size"
 
         # 1) set_by guards: require referenced handle arg to be non-NULL.
         emitted_set_by = set()
@@ -93,11 +108,11 @@ class EmiGuardRules:
                 dep_type_id = int(dep_param.get("type_id", 0))
                 dep_c_type = str(dep_arg.get("c_type") or "void *")
                 snippets.append(
-                    f"if (!allow_stale && arg{dep_idx} == NULL) {{\n"
+                    f"if (!allow_stale && {_arg(dep_idx)} == NULL) {{\n"
                     f"    /* Repair: redirect to latest live handle of this type */\n"
                     f"    void *_repair = handle_get_typed({dep_type_id}, 0, false, NULL);\n"
                     f"    if (_repair) {{\n"
-                    f"        arg{dep_idx} = ({dep_c_type})_repair;\n"
+                    f"        {_arg(dep_idx)} = ({dep_c_type})_repair;\n"
                     f"        g_hard_constraint_redirected = true;\n"
                     f"    }} else {{\n"
                     f"        break; /* type pool empty, nothing to redirect to */\n"
@@ -129,10 +144,10 @@ class EmiGuardRules:
 
             dep_c_type = str(dep_arg.get("c_type") or "size_t")
             snippets.append(
-                f"if (params->has_param_{p_idx}) {{\n"
-                f"    size_t _avail_param_{p_idx} = (size_t)params->param_{p_idx}.size;\n"
-                f"    if ((size_t)arg{dep_idx} > _avail_param_{p_idx}) {{\n"
-                f"        arg{dep_idx} = ({dep_c_type})_avail_param_{p_idx};\n"
+                f"if ({_has_param(p_idx)}) {{\n"
+                f"    size_t _avail_param_{p_idx} = (size_t){_param_size(p_idx)};\n"
+                f"    if ((size_t){_arg(dep_idx)} > _avail_param_{p_idx}) {{\n"
+                f"        {_arg(dep_idx)} = ({dep_c_type})_avail_param_{p_idx};\n"
                 f"    }}\n"
                 f"}}"
             )

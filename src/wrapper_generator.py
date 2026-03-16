@@ -854,6 +854,7 @@ class WrapperGenerator:
         scalar_deleter_types_by_api = self._scalar_deleter_types_by_api()
 
         apis = []
+        guard_lang = "cpp" if self.mutation_mode == "lpm" else "c"
         handle_type_keys: List[str] = []
         scalar_type_keys: List[str] = []
         for func_name in sorted_funcs:
@@ -991,7 +992,7 @@ class WrapperGenerator:
                     "has_allow_double_delete": "return" in entry,
                     "is_destructor": is_destructor_name(func_name),
                     "unsupported_vararg": unsupported_vararg,
-                    "pre_call_guards": self.emi_rules.get_guard_for_api(func_name, args),
+                    "pre_call_guards": self.emi_rules.get_guard_for_api(func_name, args, target_lang=guard_lang),
                     "post_call_check": post_call_check,
                 }
             )
