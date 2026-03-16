@@ -531,6 +531,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
                     allow_stale = true;
                 }
                 {% endif %}
+                bool should_skip_call = false;
 
                 /* Argument conversions (protobuf -> C) */
                 {% for arg in api.args %}
@@ -706,6 +707,11 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
                 }
                 {% endif %}
                 {% endfor %}
+
+                if (should_skip_call) {
+                    g_api_skipped[api_idx]++;
+                    break;
+                }
 
                 // Call API
                 {% if api.return_is_void %}
