@@ -194,6 +194,29 @@ class ProtoGenerator:
         self.max_bytes_size = max_bytes_size
         self.minimum_apis = set(minimum_apis or [])
 
+    def _phase3_stub_metadata(self, api_row: Dict) -> Optional[Dict]:
+        """
+        Build synthetic metadata for APIs present in apis_clang.json but absent
+        from conditions.json.
+
+        Stub policy:
+        - one generic `bytes` field per clang argument
+        - no inferred inter/intra constraints
+        """
+        fn = str(api_row.get("function_name") or "").strip()
+        if not fn:
+            return None
+        args = api_row.get("arguments_info") or []
+        if not isinstance(args, list):
+            args = []
+        meta: Dict = {"function_name": fn, "_phase3_stub": True}
+        for i, _ in enumerate(args):
+            meta[f"param_{i}"] = {
+                "type_string": "i8*",
+                "_phase3_stub_param": True,
+            }
+        return meta
+
     def _infer_managed_struct_names(self) -> Set[str]:
         """
         Heuristic: treat struct pointer types returned by any API as "managed objects"
@@ -279,6 +302,7 @@ class ProtoGenerator:
         )
 
         function_names: List[str] = []
+        seen_functions: Set[str] = set()
         for func_entry in func_entries:
             func_name = func_entry.get("function_name") or func_entry.get("functionName")
             if not func_name:
@@ -286,7 +310,26 @@ class ProtoGenerator:
             if self.minimum_apis and func_name not in self.minimum_apis:
                 continue
             function_names.append(func_name)
+            seen_functions.add(str(func_name))
             schema.add_message(self.generate_param_message(func_name, func_entry))
+
+        # Phase 3: synthesize param messages for clang-only APIs.
+        stub_entries: List[Tuple[str, Dict]] = []
+        for api_row in sorted(self.apis, key=lambda r: str(r.get("function_name") or "")):
+            stub_meta = self._phase3_stub_metadata(api_row)
+            if not stub_meta:
+                continue
+            fn = str(stub_meta.get("function_name") or "")
+            if not fn or fn in seen_functions:
+                continue
+            if self.minimum_apis and fn not in self.minimum_apis:
+                continue
+            stub_entries.append((fn, stub_meta))
+            seen_functions.add(fn)
+
+        for fn, stub_meta in stub_entries:
+            function_names.append(fn)
+            schema.add_message(self.generate_param_message(fn, stub_meta))
 
         if self.schema_mode == "v2":
             schema.add_message(self.generate_action_message(function_names))
@@ -377,6 +420,22 @@ class ProtoGenerator:
         """
         msg = ProtoMessage(f'{func_name}_Params')
         msg.add_comment(f'Parameters for {func_name}')
+        is_phase3_stub = bool(func_metadata.get("_phase3_stub"))
+
+        if is_phase3_stub:
+            msg.add_comment("Phase 3 stub (clang-only API): generic bytes params.")
+            nanopb_bytes_opt = f'[(nanopb).max_size = {self.max_bytes_size}]' if self.mutation_mode == "nanopb" else ""
+            param_idxs: List[int] = []
+            for key in func_metadata.keys():
+                if not (isinstance(key, str) and key.startswith("param_")):
+                    continue
+                try:
+                    param_idxs.append(int(key.split("_", 1)[1]))
+                except Exception:
+                    continue
+            for idx in sorted(set(param_idxs)):
+                msg.add_field("optional", "bytes", f"param_{idx}", nanopb_bytes_opt)
+            return msg
 
         # Process each parameter in numeric order for stable field numbering.
         # This is critical for:
@@ -441,6 +500,8 @@ class ProtoGenerator:
 
         nanopb_bytes_opt = f'[(nanopb).max_size = {self.max_bytes_size}]' if self.mutation_mode == "nanopb" else ""
 
+        add_scalar_slot = False
+
         # RULE 1: Array parameters
         # NOTE: Some targets mark struct pointers as `is_array`. Prefer struct-pointer handling in that case.
         is_struct_ptr = llvm_type.startswith("%struct.") or (
@@ -468,6 +529,8 @@ class ProtoGenerator:
                 # Keep scalars as scalars even if libErator reported set_by/write artifacts.
                 msg.add_field('optional', proto_type, param_name)
                 msg.add_comment('  ↳ Scalar (deps ignored for schema shape)')
+                if self.schema_mode == "v2" and self.type_mapper.is_integral_proto_type(proto_type):
+                    add_scalar_slot = True
 
         # RULE 3: Struct pointer → Struct blob (if layout known) else Handle.
         elif is_struct_ptr:
@@ -508,6 +571,12 @@ class ProtoGenerator:
                 )
             else:
                 msg.add_field('optional', proto_type, param_name)
+                if self.schema_mode == "v2" and self.type_mapper.is_integral_proto_type(proto_type):
+                    add_scalar_slot = True
+
+        if add_scalar_slot:
+            msg.add_field('optional', 'uint32', f'{param_name}_slot')
+            msg.add_comment('  ↳ Scalar slot selector (0=latest, >0=requested slot)')
 
         # RULE 4: Nullable flag
         if self._is_nullable(param_info, llvm_type):

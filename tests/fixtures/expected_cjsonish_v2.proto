@@ -6,7 +6,7 @@ import "nanopb.proto";
 
 // Parameters for cJSON_Delete
 // param_0: %struct.cJSON*
-//   ↳ Handle to %struct.cJSON* object
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
 //   ↳ Nullable exploration knob
 // 
 // Contract violation knobs for semantic bug exploration

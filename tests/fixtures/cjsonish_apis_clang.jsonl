@@ -1,0 +1,3 @@
+{"function_name": "cJSON_Delete", "namespace": [], "return_info": {"type_clang": "void", "const": [false]}, "arguments_info": [{"type_clang": "cJSON *", "const": [false, false]}]}
+{"function_name": "cJSON_Parse", "namespace": [], "return_info": {"type_clang": "cJSON *", "const": [false, false]}, "arguments_info": [{"type_clang": "char *", "const": [false, false]}]}
+{"function_name": "cJSON_PrintUnformatted", "namespace": [], "return_info": {"type_clang": "char *", "const": [false]}, "arguments_info": [{"type_clang": "cJSON *", "const": [false, false]}]}

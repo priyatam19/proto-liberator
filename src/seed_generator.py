@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 import importlib.util
 import random
+import re
 import sys
 from dataclasses import dataclass
 from pathlib import Path
@@ -207,6 +208,14 @@ class SeedGenerator:
             fn for fn in self.functions_sorted
             if self._function_has_handle_param(self.func_entries[fn])
         ]
+        self.scalar_slot_params_by_function: Dict[str, List[Tuple[int, str]]] = {}
+        self.scalar_return_key_by_function: Dict[str, str] = {}
+        for fn in self.functions_sorted:
+            entry = self.func_entries.get(fn, {})
+            self.scalar_slot_params_by_function[fn] = self._scalar_slot_params(entry)
+            ret_key = self._scalar_return_key(entry)
+            if ret_key:
+                self.scalar_return_key_by_function[fn] = ret_key
 
     def _infer_managed_struct_names(self) -> set:
         """
@@ -310,6 +319,7 @@ class SeedGenerator:
             is_struct_ptr = llvm_type.startswith("%struct.") or (
                 llvm_type.endswith("*") and llvm_type.replace("const ", "").strip().startswith("%struct.")
             )
+            add_scalar_slot = False
 
             # Mirror proto_generator.py ordering rules.
             if is_struct_ptr:
@@ -334,17 +344,27 @@ class SeedGenerator:
                 fields[param_name + "_length_override"] = field_no
                 field_no += 1
             elif has_set_by or has_delete_access:
-                if llvm_type.endswith("*") or llvm_type.startswith("%struct.") or proto_type in ("bytes", "uint32"):
+                is_ptr_like = bool(
+                    llvm_type.endswith("*")
+                    or llvm_type.startswith("%struct.")
+                    or proto_type in ("bytes", "uint32")
+                )
+                if is_ptr_like:
                     fields[param_name + "_handle"] = field_no
                     field_no += 1
                 else:
                     fields[param_name] = field_no
                     field_no += 1
+                    add_scalar_slot = has_set_by and proto_type != "bytes"
             elif proto_type == "uint32":
                 fields[param_name + "_handle"] = field_no
                 field_no += 1
             else:
                 fields[param_name] = field_no
+                field_no += 1
+
+            if add_scalar_slot:
+                fields[param_name + "_slot"] = field_no
                 field_no += 1
 
             # Nullable knob (mirrors proto_generator._is_nullable)
@@ -371,6 +391,53 @@ class SeedGenerator:
 
         return fields
 
+    def _scalar_type_key_for_llvm(self, llvm_type: str) -> Optional[str]:
+        clean = TypeMapper.normalize_llvm_type(llvm_type or "")
+        if not clean:
+            return None
+        # Conservative: hash-only types map to C-signature-derived keys in wrappers;
+        # without signature data we avoid emitting mismatched slot requests.
+        if re.fullmatch(r"[0-9a-f]{32}", clean):
+            return None
+        if clean.endswith("*") or clean.startswith("%struct."):
+            return None
+        proto_type = self.mapper.map_llvm_to_proto(clean)
+        if proto_type in ("bytes", "uint32"):
+            return None
+        return f"scalar:{proto_type}"
+
+    def _scalar_slot_params(self, entry: Dict[str, Any]) -> List[Tuple[int, str]]:
+        out: List[Tuple[int, str]] = []
+        field_nums = self._field_numbers_for_entry(entry)
+        param_infos: List[Tuple[int, Dict[str, Any]]] = []
+        for k, v in entry.items():
+            if not (isinstance(k, str) and k.startswith("param_") and isinstance(v, dict)):
+                continue
+            try:
+                idx = int(k.split("_", 1)[1])
+            except Exception:
+                continue
+            param_infos.append((idx, v))
+        param_infos.sort(key=lambda t: t[0])
+        for idx, info in param_infos:
+            if f"param_{idx}_slot" not in field_nums:
+                continue
+            key = self._scalar_type_key_for_llvm(self._infer_llvm_type(info))
+            if key:
+                out.append((idx, key))
+        return out
+
+    def _scalar_return_key(self, entry: Dict[str, Any]) -> Optional[str]:
+        ret = entry.get("return")
+        if not isinstance(ret, dict):
+            return None
+        llvm_type = str(ret.get("type_string") or ret.get("type") or "")
+        if not llvm_type:
+            access = ret.get("access_type_set", [])
+            if isinstance(access, list) and access and isinstance(access[0], dict):
+                llvm_type = str(access[0].get("type_string") or access[0].get("type") or "")
+        return self._scalar_type_key_for_llvm(llvm_type)
+
     def _default_payloads_for_function(self, func_name: str) -> List[bytes]:
         lowered = func_name.lower()
         if "json" in lowered or "parse" in lowered:
@@ -384,6 +451,7 @@ class SeedGenerator:
         set_skip_dependency_check: bool = False,
         set_allow_double_delete: bool = False,
         set_first_is_null: bool = False,
+        scalar_slot_overrides: Optional[Dict[int, int]] = None,
     ) -> bytes:
         """
         Best-effort small params message.
@@ -483,6 +551,20 @@ class SeedGenerator:
                 if k in field_nums:
                     chunks.append(_encode_uint32(field_nums[k], int(v)))
 
+        # Explicit scalar slot reuse knobs (param_i_slot fields).
+        if isinstance(scalar_slot_overrides, dict):
+            for param_idx, slot_id in scalar_slot_overrides.items():
+                try:
+                    idx = int(param_idx)
+                    slot = int(slot_id)
+                except Exception:
+                    continue
+                if slot < 0:
+                    continue
+                field = f"param_{idx}_slot"
+                if field in field_nums:
+                    chunks.append(_encode_uint32(field_nums[field], slot))
+
         # Optional: flip a nullable knob for "NULL path" exploration.
         if set_first_is_null:
             for key in ("param_0_is_null", "param_1_is_null", "param_2_is_null"):
@@ -504,6 +586,7 @@ class SeedGenerator:
         set_skip_dependency_check: bool = False,
         set_allow_double_delete: bool = False,
         set_first_is_null: bool = False,
+        scalar_slot_overrides: Optional[Dict[int, int]] = None,
     ) -> ActionVariant:
         tag = self.oneof_tag_by_function[func_name]
         params_bytes = self._encode_params_for_function(
@@ -511,6 +594,7 @@ class SeedGenerator:
             set_skip_dependency_check=set_skip_dependency_check,
             set_allow_double_delete=set_allow_double_delete,
             set_first_is_null=set_first_is_null,
+            scalar_slot_overrides=scalar_slot_overrides,
         )
         return ActionVariant(function_name=func_name, oneof_tag=tag, params_bytes=params_bytes)
 
@@ -586,12 +670,16 @@ class SeedGenerator:
         misuse_mode: bool,
         novelty_provider: Optional[Callable[[str], float]] = None,
         prefixes: Optional[List[List[str]]] = None,
+        learned_edges_path: Optional[Path] = None,
+        prefix_weights_path: Optional[Path] = None,
     ) -> List[List[str]]:
         planner = SequencePlanner(
             graph_path=constraint_graph,
             rng_seed=self.rng.randint(0, 2**31 - 1),
             config=PlannerConfig(mode=mode, misuse_mode=misuse_mode),
             novelty_provider=novelty_provider,
+            learned_edges_path=learned_edges_path,
+            prefix_weights_path=prefix_weights_path,
         )
         sequences: List[List[str]] = []
 
@@ -640,6 +728,14 @@ def main() -> int:
     parser.add_argument(
         "--novelty-signal-json",
         help="Optional JSON signal (api_stats/coverage) used to bias sequence planning novelty",
+    )
+    parser.add_argument(
+        "--learned-edges-json",
+        help="Optional learned_edges.json to merge learned soft edges into planning",
+    )
+    parser.add_argument(
+        "--prefix-weights-json",
+        help="Optional prefix_weights.json to bias sequence-prefix continuation",
     )
     parser.add_argument("--constraint-graph", help="Optional constraint_graph.json for stateful planning")
     parser.add_argument(
@@ -696,10 +792,22 @@ def main() -> int:
         sequences.extend(gen.seed_sequences_from_driver(meta))
 
     novelty_provider: Optional[Callable[[str], float]] = None
+    learned_edges_path: Optional[Path] = Path(args.learned_edges_json).resolve() if args.learned_edges_json else None
+    prefix_weights_path: Optional[Path] = Path(args.prefix_weights_json).resolve() if args.prefix_weights_json else None
     if args.novelty_signal_json:
-        signal = load_json(Path(args.novelty_signal_json))
+        novelty_path = Path(args.novelty_signal_json).resolve()
+        signal = load_json(novelty_path)
         novelty_scores = build_novelty_scores(signal)
         novelty_provider = lambda api: float(novelty_scores.get(api, 0.0))
+        # Auto-discover online-learning sidecars produced by feedback_aggregator.py.
+        if learned_edges_path is None:
+            cand = novelty_path.with_name("learned_edges.json")
+            if cand.exists():
+                learned_edges_path = cand
+        if prefix_weights_path is None:
+            cand = novelty_path.with_name("prefix_weights.json")
+            if cand.exists():
+                prefix_weights_path = cand
 
     if args.constraint_graph:
         sequences = gen.seed_sequences_with_planner(
@@ -710,6 +818,8 @@ def main() -> int:
             misuse_mode=bool(args.misuse_mode),
             novelty_provider=novelty_provider,
             prefixes=sequences if sequences else None,
+            learned_edges_path=learned_edges_path,
+            prefix_weights_path=prefix_weights_path,
         )
     elif not sequences:
         sequences = gen.seed_sequences_default(args.num_seeds, args.max_len)
@@ -718,19 +828,36 @@ def main() -> int:
         actions: List[ActionVariant] = []
         creators_set = set(gen.creators)
         destructors_set = set(gen.destructors)
+        scalar_slots_by_key: Dict[str, List[int]] = {}
         for j, fn in enumerate(seq):
             if fn not in gen.oneof_tag_by_function:
                 continue
             is_first = j == 0
             is_creator = fn in creators_set
+            scalar_slot_overrides: Dict[int, int] = {}
+            for param_idx, key in gen.scalar_slot_params_by_function.get(fn, []):
+                pool = scalar_slots_by_key.get(key, [])
+                if not pool:
+                    continue
+                # Prefer latest value to model common producer->consumer dataflow.
+                if len(pool) == 1 or gen.rng.random() < 0.8:
+                    requested = pool[-1]
+                else:
+                    requested = gen.rng.choice(pool)
+                scalar_slot_overrides[param_idx] = requested
             actions.append(
                 gen.action_for_function(
                     fn,
                     set_skip_dependency_check=(not is_first and not is_creator),
                     set_allow_double_delete=(fn in destructors_set and not is_first),
                     set_first_is_null=(fn in destructors_set and not is_first),
+                    scalar_slot_overrides=scalar_slot_overrides if scalar_slot_overrides else None,
                 )
             )
+            ret_key = gen.scalar_return_key_by_function.get(fn)
+            if ret_key:
+                slots = scalar_slots_by_key.setdefault(ret_key, [])
+                slots.append(len(slots) + 1)
         data = gen.encode_fuzz_input(actions, global_seed=i)
         (out_dir / f"seed_{i:04d}.bin").write_bytes(data)
 

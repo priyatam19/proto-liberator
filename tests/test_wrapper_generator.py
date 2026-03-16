@@ -286,8 +286,11 @@ class TestWrapperGenerator(unittest.TestCase):
 
         self.assertIn("if (scalar_get_typed(", text)
         self.assertIn("kAllowedScalarProducers_consume_val_0[] = { 1 }", text)
-        self.assertRegex(text, r"scalar_get_typed\(\s*0,\s*0,\s*allow_stale,\s*kAllowedScalarProducers_consume_val_0")
-        self.assertNotIn("has_param_0_slot", text)
+        self.assertRegex(
+            text,
+            r"scalar_get_typed\(\s*0,\s*requested_slot,\s*allow_stale,\s*kAllowedScalarProducers_consume_val_0",
+        )
+        self.assertIn("params->has_param_0_slot ? params->param_0_slot : 0", text)
         self.assertIn("PROTO_LIBERATOR_STRICT_SCALAR_DEPS", text)
         self.assertIn("strict_scalar_deps && true && !allow_stale", text)
 

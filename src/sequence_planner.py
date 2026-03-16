@@ -12,7 +12,7 @@ import json
 import random
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Callable, Dict, List, Optional, Set
+from typing import Callable, Dict, List, Optional, Set, Tuple
 
 
 @dataclass
@@ -48,17 +48,28 @@ class SequencePlanner:
         rng_seed: int = 0,
         config: Optional[PlannerConfig] = None,
         novelty_provider: Optional[Callable[[str], float]] = None,
+        learned_edges_path: Optional[Path] = None,
+        prefix_weights_path: Optional[Path] = None,
     ):
         graph = json.loads(Path(graph_path).read_text())
         self.rng = random.Random(rng_seed)
         self.config = config or PlannerConfig()
+        self.mode = self.config.mode if self.config.mode in {"strict", "balanced", "explore"} else "strict"
         self.novelty_provider = novelty_provider or (lambda _api: 0.0)
+        self.learned_edges_path = learned_edges_path
+        self.prefix_weights_path = prefix_weights_path
+        self._learned_edges_mtime_ns: int = -1
+        self._prefix_weights_mtime_ns: int = -1
+        self.prefix_weights: Dict[str, float] = {}
 
         self.nodes: List[str] = [str(n.get("id")) for n in graph.get("nodes", []) if isinstance(n, dict) and n.get("id")]
         self.nodes = sorted(_uniq(self.nodes))
 
         self.required_types_hard: Dict[str, Set[str]] = {api: set() for api in self.nodes}
+        self.required_types_soft: Dict[str, Set[str]] = {api: set() for api in self.nodes}
+        self.required_types_soft_conf: Dict[str, Dict[str, float]] = {api: {} for api in self.nodes}
         self.invalidates_in_hard: Dict[str, Set[str]] = {api: set() for api in self.nodes}
+        self.incoming_edges: Dict[str, List[Tuple[str, str, float, str, bool]]] = {api: [] for api in self.nodes}
 
         for e in graph.get("inter_edges", []):
             if not isinstance(e, dict):
@@ -72,11 +83,22 @@ class SequencePlanner:
                 continue
             if dst not in self.required_types_hard:
                 self.required_types_hard[dst] = set()
+                self.required_types_soft[dst] = set()
+                self.required_types_soft_conf[dst] = {}
                 self.invalidates_in_hard[dst] = set()
             if rel == "producer_consumer" and hard:
                 self.required_types_hard[dst].add(obj_t)
+            elif rel == "producer_consumer" and not hard:
+                self.required_types_soft[dst].add(obj_t)
+                prev = self.required_types_soft_conf[dst].get(obj_t, 0.0)
+                self.required_types_soft_conf[dst][obj_t] = max(prev, float(e.get("confidence") or 0.0))
             if rel == "invalidates_before_use" and hard:
                 self.invalidates_in_hard[dst].add(obj_t)
+            try:
+                conf = float(e.get("confidence", 0.0))
+            except Exception:
+                conf = 0.0
+            self._merge_incoming_edge(dst, src, obj_t, conf, rel, hard)
 
         # Role map from object catalog.
         self.produced_types_by_api: Dict[str, Set[str]] = {api: set() for api in self.nodes}
@@ -92,6 +114,10 @@ class SequencePlanner:
                 fns = str(fn)
                 if fns in self.produced_types_by_api:
                     self.produced_types_by_api[fns].add(obj_t)
+            for fn in obj.get("weak_producers", []):
+                fns = str(fn)
+                if fns in self.produced_types_by_api:
+                    self.produced_types_by_api[fns].add(obj_t)
             for fn in obj.get("deleters", []):
                 fns = str(fn)
                 if fns in self.deleted_types_by_api:
@@ -101,25 +127,104 @@ class SequencePlanner:
                 if fns in self.consumed_types_by_api:
                     self.consumed_types_by_api[fns].add(obj_t)
 
-        # Incoming edge weights for scoring.
-        self.incoming_conf: Dict[str, List[tuple[str, str, float]]] = {api: [] for api in self.nodes}
-        for e in graph.get("inter_edges", []):
+    def _merge_incoming_edge(self, dst: str, src: str, obj_t: str, conf: float, rel: str, hard: bool) -> None:
+        if not src or not dst or dst not in self.incoming_edges:
+            return
+        rows = self.incoming_edges[dst]
+        for i, (s, o, c, r, h) in enumerate(rows):
+            if s == src and o == obj_t and r == rel and h == hard:
+                if conf > c:
+                    rows[i] = (s, o, conf, r, h)
+                return
+        rows.append((src, obj_t, conf, rel, hard))
+
+    def _reload_learned_edges(self) -> None:
+        path = self.learned_edges_path
+        if not path:
+            return
+        try:
+            st = path.stat()
+        except Exception:
+            return
+        if st.st_mtime_ns == self._learned_edges_mtime_ns:
+            return
+        self._learned_edges_mtime_ns = st.st_mtime_ns
+        try:
+            raw = json.loads(path.read_text())
+        except Exception:
+            return
+        rows = raw.get("edges")
+        if not isinstance(rows, list):
+            rows = raw.get("learned_edges")
+        if not isinstance(rows, list):
+            return
+        for e in rows:
             if not isinstance(e, dict):
                 continue
             src = str(e.get("src") or "")
             dst = str(e.get("dst") or "")
-            obj_t = str(e.get("object_type") or "")
+            if not src or not dst or dst not in self.required_types_soft:
+                continue
+            rel = str(e.get("relation") or "producer_consumer")
+            if rel != "producer_consumer":
+                continue
             try:
                 conf = float(e.get("confidence", 0.0))
             except Exception:
                 conf = 0.0
-            if src and dst and dst in self.incoming_conf:
-                self.incoming_conf[dst].append((src, obj_t, conf))
+            if conf <= 0.0:
+                continue
+            obj_t = str(e.get("object_type") or "")
+            if obj_t:
+                self.required_types_soft[dst].add(obj_t)
+                prev = self.required_types_soft_conf[dst].get(obj_t, 0.0)
+                self.required_types_soft_conf[dst][obj_t] = max(prev, conf)
+            self._merge_incoming_edge(dst, src, obj_t, conf, rel, False)
+
+    def _reload_prefix_weights(self) -> None:
+        path = self.prefix_weights_path
+        if not path:
+            return
+        try:
+            st = path.stat()
+        except Exception:
+            return
+        if st.st_mtime_ns == self._prefix_weights_mtime_ns:
+            return
+        self._prefix_weights_mtime_ns = st.st_mtime_ns
+        try:
+            raw = json.loads(path.read_text())
+        except Exception:
+            return
+
+        weights_src = raw
+        if isinstance(raw, dict) and isinstance(raw.get("weights"), dict):
+            weights_src = raw.get("weights")
+        if not isinstance(weights_src, dict):
+            return
+        parsed: Dict[str, float] = {}
+        for k, v in weights_src.items():
+            if not isinstance(k, str):
+                continue
+            try:
+                w = float(v)
+            except Exception:
+                continue
+            if w > 0.0:
+                parsed[k] = w
+        self.prefix_weights = parsed
+
+    def _reload_online_signals(self) -> None:
+        self._reload_learned_edges()
+        self._reload_prefix_weights()
 
     def _has_live(self, state: PlannerState, obj_t: str) -> bool:
         return bool(state.live_handles.get(obj_t))
 
     def _hard_filter(self, state: PlannerState, api: str) -> bool:
+        if self.mode == "explore":
+            return True
+
         # Require live handles for all hard producer_consumer dependencies.
         for obj_t in self.required_types_hard.get(api, set()):
             if not self._has_live(state, obj_t):
@@ -137,12 +242,30 @@ class SequencePlanner:
 
         # Confidence-weighted score for relations connected to already-seen APIs.
         seen = set(state.seq)
-        for src, _obj_t, conf in self.incoming_conf.get(api, []):
+        for src, _obj_t, conf, rel, _hard in self.incoming_edges.get(api, []):
             if src in seen:
-                score += conf
+                if rel == "producer_consumer":
+                    score += conf
+                elif rel == "invalidates_before_use" and not self.config.misuse_mode:
+                    # Penalize sequencing a likely invalidated consumer after deleter.
+                    score -= conf
+
+        # Balanced mode: apply soft dependency penalty when producer type is not live.
+        if self.mode == "balanced":
+            for obj_t in self.required_types_soft.get(api, set()):
+                if not self._has_live(state, obj_t):
+                    score -= float(self.required_types_soft_conf.get(api, {}).get(obj_t, 0.6))
 
         # Coverage novelty signal (external).
         score += max(0.0, float(self.novelty_provider(api)))
+
+        # Optional prefix continuation bias from online feedback.
+        if self.prefix_weights:
+            candidate = state.seq + [api]
+            max_k = min(4, len(candidate))
+            for k in range(2, max_k + 1):
+                key = ",".join(candidate[:k])
+                score += float(self.prefix_weights.get(key, 0.0))
 
         # Diversity penalty for immediate revisits.
         if state.seq and state.seq[-1] == api:
@@ -162,6 +285,13 @@ class SequencePlanner:
         cands = self._candidate_apis(state)
         if not cands:
             return None
+
+        if self.mode == "explore":
+            scored = [(self._score(state, api), api) for api in cands]
+            min_score = min(s for s, _ in scored)
+            # Shift all scores positive and sample proportionally for exploration.
+            weights = [max(0.001, (s - min_score) + 0.001) for s, _ in scored]
+            return self.rng.choices([api for _, api in scored], weights=weights, k=1)[0]
 
         scored = [(self._score(state, api), api) for api in cands]
         scored.sort(key=lambda t: (t[0], t[1]), reverse=True)
@@ -187,6 +317,7 @@ class SequencePlanner:
             state.live_handles[obj_t] = pool
 
     def plan_sequence(self, *, max_len: int, prefix: Optional[List[str]] = None) -> List[str]:
+        self._reload_online_signals()
         state = PlannerState()
         prefix = prefix or []
         for fn in prefix:

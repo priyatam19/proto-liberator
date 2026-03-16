@@ -140,6 +140,37 @@ class EmiGuardRules:
         return snippets
 
     def get_post_call_check(self, api_name: str, return_var: str) -> Optional[str]:
-        _ = api_name
-        _ = return_var
-        return None
+        """
+        Return post-call C/C++ snippet for one API call-site.
+
+        Implemented check:
+        - producer-like return should be non-NULL when not explicitly in stale mode.
+          (A producer-like return is inferred from intra.return metadata.)
+        """
+        api = self.intra_constraints.get(api_name)
+        if not isinstance(api, dict):
+            return None
+
+        ret_meta = api.get("return")
+        if not isinstance(ret_meta, dict):
+            return None
+
+        llvm_type = str(ret_meta.get("llvm_type") or "")
+        object_type = str(ret_meta.get("object_type") or "")
+        accesses = ret_meta.get("accesses", [])
+        if not isinstance(accesses, list):
+            accesses = []
+        access_set = {str(x) for x in accesses}
+
+        producer_like = ("create" in access_set) or bool(object_type)
+        pointer_like = llvm_type.endswith("*") or llvm_type.startswith("%struct.") or bool(object_type)
+        if not (producer_like and pointer_like):
+            return None
+
+        return (
+            f"if (!allow_stale && {return_var} == NULL) {{\n"
+            f"    /* Post-call guard: producer-like API returned NULL */\n"
+            f"    g_hard_constraint_redirected = true;\n"
+            f"    break;\n"
+            f"}}"
+        )

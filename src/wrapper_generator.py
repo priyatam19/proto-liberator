@@ -169,6 +169,21 @@ def is_size_like_c_type(c_type: str) -> bool:
     return bool(re.search(r"\b(size_t|ssize_t|ptrdiff_t|uintptr_t|intptr_t|u?int(8|16|32|64)_t)\b", t))
 
 
+def is_integral_proto_type(proto_type: str) -> bool:
+    return proto_type in {
+        "int32",
+        "int64",
+        "uint32",
+        "uint64",
+        "sint32",
+        "sint64",
+        "fixed32",
+        "fixed64",
+        "sfixed32",
+        "sfixed64",
+    }
+
+
 def infer_return_llvm_type(entry: Dict[str, Any]) -> str:
     ret = entry.get("return")
     if not isinstance(ret, dict):
@@ -368,6 +383,7 @@ def classify_param(
         except Exception:
             len_depends_on_index = None
     proto_type = mapper.map_llvm_to_proto(llvm_type) if llvm_type else "bytes"
+    scalar_slot_capable = bool(is_integral_proto_type(proto_type))
     is_ptr_like = bool(
         is_array
         or llvm_type.endswith("*")
@@ -453,7 +469,7 @@ def classify_param(
             "type_key": mapper.type_key(llvm_type),
             "len_depends_on": len_depends_on,
             "len_depends_on_index": len_depends_on_index,
-            "has_slot_selector": has_set_by,
+            "has_slot_selector": scalar_slot_capable,
             "slot_field": f"{key}_slot",
         }
 
@@ -487,7 +503,7 @@ def classify_param(
         "type_key": mapper.type_key(llvm_type),
         "len_depends_on": len_depends_on,
         "len_depends_on_index": len_depends_on_index,
-        "has_slot_selector": False,
+        "has_slot_selector": scalar_slot_capable,
         "slot_field": f"{key}_slot",
     }
 

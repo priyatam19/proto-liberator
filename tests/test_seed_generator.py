@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -40,6 +41,86 @@ class TestSeedGenerator(unittest.TestCase):
         self.assertIn("A", scores)
         self.assertIn("B", scores)
         self.assertGreater(scores["A"], scores["B"])
+
+    def test_field_numbering_includes_scalar_slot_for_set_by_scalar(self):
+        with tempfile.TemporaryDirectory() as td:
+            tmp = Path(td)
+            conditions = tmp / "conditions.json"
+            conditions.write_text(
+                """[
+  {
+    "function_name": "ConsumeVal",
+    "param_0": {
+      "type_string": "i32",
+      "set_by": ["MakeVal:return"],
+      "access_type_set": [{"access": "read", "type_string": "i32"}]
+    }
+  }
+]
+""",
+                encoding="utf-8",
+            )
+            gen = SeedGenerator(conditions_path=conditions, rng_seed=0)
+            entry = gen.func_entries["ConsumeVal"]
+            fields = gen._field_numbers_for_entry(entry)
+
+        self.assertEqual(fields.get("param_0"), 1)
+        self.assertEqual(fields.get("param_0_slot"), 2)
+        self.assertEqual(fields.get("skip_dependency_check"), 3)
+
+    def test_action_encodes_scalar_slot_override(self):
+        with tempfile.TemporaryDirectory() as td:
+            tmp = Path(td)
+            conditions = tmp / "conditions.json"
+            conditions.write_text(
+                """[
+  {
+    "function_name": "ConsumeVal",
+    "param_0": {
+      "type_string": "i32",
+      "set_by": ["MakeVal:return"],
+      "access_type_set": [{"access": "read", "type_string": "i32"}]
+    }
+  }
+]
+""",
+                encoding="utf-8",
+            )
+            gen = SeedGenerator(conditions_path=conditions, rng_seed=0)
+            variant = gen.action_for_function("ConsumeVal", scalar_slot_overrides={0: 1})
+
+        # param_0_slot is field #2 => varint key 0x10, value 0x01
+        self.assertIn(bytes([0x10, 0x01]), variant.params_bytes)
+
+    def test_scalar_slot_metadata_infers_producer_consumer_key(self):
+        with tempfile.TemporaryDirectory() as td:
+            tmp = Path(td)
+            conditions = tmp / "conditions.json"
+            conditions.write_text(
+                """[
+  {
+    "function_name": "MakeVal",
+    "return": {
+      "type_string": "i32",
+      "access_type_set": [{"access": "create", "type_string": "i32"}]
+    }
+  },
+  {
+    "function_name": "ConsumeVal",
+    "param_0": {
+      "type_string": "i32",
+      "set_by": ["MakeVal:return"],
+      "access_type_set": [{"access": "read", "type_string": "i32"}]
+    }
+  }
+]
+""",
+                encoding="utf-8",
+            )
+            gen = SeedGenerator(conditions_path=conditions, rng_seed=0)
+
+        self.assertEqual(gen.scalar_return_key_by_function.get("MakeVal"), "scalar:int32")
+        self.assertEqual(gen.scalar_slot_params_by_function.get("ConsumeVal"), [(0, "scalar:int32")])
 
 
 if __name__ == "__main__":

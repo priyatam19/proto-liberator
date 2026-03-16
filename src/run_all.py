@@ -353,6 +353,64 @@ def _crash_learning_metrics(
     return metrics
 
 
+def _crash_constraints_to_seed_constants(
+    *,
+    learned_constraints_path: Path,
+) -> Dict[str, Dict[str, int]]:
+    if not learned_constraints_path.exists():
+        return {}
+    try:
+        payload = json.loads(learned_constraints_path.read_text())
+    except Exception:
+        return {}
+    if not isinstance(payload, dict):
+        return {}
+    rows = payload.get("constraints")
+    if not isinstance(rows, list):
+        return {}
+
+    out: Dict[str, Dict[str, int]] = {}
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        api = str(row.get("api") or "").strip()
+        param = str(row.get("param") or "").strip()
+        if not api or not param or not param.startswith("param_"):
+            continue
+
+        value: Optional[int] = None
+        learnt_vals = row.get("learnt_vals")
+        if isinstance(learnt_vals, list) and learnt_vals:
+            ints: List[int] = []
+            for v in learnt_vals:
+                try:
+                    ints.append(int(v))
+                except Exception:
+                    continue
+            if ints:
+                ints.sort()
+                value = ints[len(ints) // 2]
+
+        if value is None:
+            ranges = row.get("ranges")
+            if isinstance(ranges, list) and ranges:
+                first = ranges[0] if isinstance(ranges[0], dict) else {}
+                if isinstance(first, dict):
+                    try:
+                        lo = int(first.get("min"))
+                        hi = int(first.get("max"))
+                        if hi < lo:
+                            lo, hi = hi, lo
+                        value = lo + ((hi - lo) // 2)
+                    except Exception:
+                        value = None
+
+        if value is None:
+            continue
+        out.setdefault(api, {})[param] = int(value)
+    return out
+
+
 def _auto_feedback_signal(
     *,
     novelty_signal_json: Optional[str],
@@ -565,8 +623,15 @@ def main() -> int:
     parser.add_argument("--fuzz", action="store_true", help="Run the fuzzer after build")
     parser.add_argument(
         "--verify-edges",
+        dest="verify_edges",
         action="store_true",
-        help="Run ablation-based causal edge verification on corpus and feed result into feedback aggregation",
+        help="Run ablation-based causal edge verification on corpus and feed result into feedback aggregation (default: enabled)",
+    )
+    parser.add_argument(
+        "--no-verify-edges",
+        dest="verify_edges",
+        action="store_false",
+        help="Disable ablation-based causal edge verification",
     )
     parser.add_argument(
         "--edge-verify-max-inputs",
@@ -702,6 +767,7 @@ def main() -> int:
     parser.set_defaults(classify_crashes=True)
     parser.set_defaults(learn_crash_constraints=True)
     parser.set_defaults(feedback_reseed=True)
+    parser.set_defaults(verify_edges=True)
     args = parser.parse_args(argv)
 
     root = _repo_root()
@@ -1164,7 +1230,13 @@ def main() -> int:
             return fuzz_argv
 
         selected_graph = Path(args.constraint_graph).resolve() if args.constraint_graph else auto_constraint_graph
+        candidate_corpus = seeds_dir if seeds_dir.exists() else (out_dir / "corpus")
+        proto_include_dirs: List[Path] = [schema_proto.parent]
+        nanopb_proto_inc = root / "external" / "nanopb" / "generator" / "proto"
+        if nanopb_proto_inc.exists():
+            proto_include_dirs.append(nanopb_proto_inc)
         reseed_base_argv: Optional[List[str]] = None
+        latest_feedback_signal: Optional[Path] = None
         if args.schema_mode == "v2":
             reseed_base_argv = _build_seed_generator_argv(
                 python=python,
@@ -1204,12 +1276,30 @@ def main() -> int:
                 _run(Cmd(_fuzz_argv_for_epoch(epoch_seconds), cwd=out_dir, env=env), dry_run=args.dry_run)
                 remaining -= epoch_seconds
                 if args.schema_mode == "v2":
-                    _refresh_feedback_and_reseed(
+                    epoch_causal: Optional[Path] = None
+                    if args.verify_edges:
+                        epoch_causal = _run_causal_edge_verifier(
+                            src_dir=src_dir,
+                            python=python,
+                            dry_run=args.dry_run,
+                            out_dir=out_dir,
+                            fuzzer_bin=fuzzer_bin,
+                            schema_proto=schema_proto,
+                            conditions=conditions,
+                            corpus_dir=candidate_corpus,
+                            max_inputs=int(args.edge_verify_max_inputs),
+                            max_ablations_per_input=int(args.edge_verify_max_ablations),
+                            min_drop=int(args.edge_verify_min_drop),
+                            timeout_sec=int(args.edge_verify_timeout_sec),
+                            protoc_bin=str(args.edge_verify_protoc),
+                            proto_include_dirs=proto_include_dirs,
+                        )
+                    latest_feedback_signal = _refresh_feedback_and_reseed(
                         out_dir=out_dir,
                         src_dir=src_dir,
                         python=python,
                         dry_run=args.dry_run,
-                        causal_evidence_path=None,
+                        causal_evidence_path=epoch_causal,
                         should_reseed=bool(args.feedback_reseed),
                         seed_argv=reseed_base_argv,
                     )
@@ -1218,11 +1308,6 @@ def main() -> int:
         if args.schema_mode == "v2":
             causal_evidence_path: Optional[Path] = None
             if args.verify_edges:
-                candidate_corpus = seeds_dir if seeds_dir.exists() else (out_dir / "corpus")
-                proto_include_dirs: List[Path] = [schema_proto.parent]
-                nanopb_proto_inc = root / "external" / "nanopb" / "generator" / "proto"
-                if nanopb_proto_inc.exists():
-                    proto_include_dirs.append(nanopb_proto_inc)
                 causal_evidence_path = _run_causal_edge_verifier(
                     src_dir=src_dir,
                     python=python,
@@ -1250,6 +1335,7 @@ def main() -> int:
                 should_reseed=bool(args.feedback_reseed),
                 seed_argv=reseed_base_argv,
             )
+            latest_feedback_signal = final_signal or latest_feedback_signal
             if not final_signal:
                 stats_dir = out_dir / "api_stats"
                 print(
@@ -1318,6 +1404,33 @@ def main() -> int:
                     f"constraints={learning_metrics['constraints']}"
                 )
                 print(f"[Orch] crash learning output: {learned_constraints_path}")
+                crash_constants = _crash_constraints_to_seed_constants(
+                    learned_constraints_path=learned_constraints_path
+                )
+                if crash_constants:
+                    crash_constants_path = crashes_dir / "crash_seed_constants.json"
+                    _write_json(crash_constants_path, crash_constants, dry_run=args.dry_run)
+                    print(f"[Orch] crash-derived seed constants: {crash_constants_path}")
+                    if args.schema_mode == "v2":
+                        crash_seed_argv = _build_seed_generator_argv(
+                            python=python,
+                            src_dir=src_dir,
+                            conditions=conditions,
+                            seeds_dir=corpus_dir,
+                            num_seeds=int(args.num_seeds),
+                            seed_max_len=int(args.seed_max_len),
+                            seed_rng=int(args.seed_rng),
+                            driver_meta_path=driver_meta_path,
+                            minimum_apis=args.minimum_apis,
+                            apipass_dir=args.apipass_dir,
+                            seed_constants_json=str(crash_constants_path),
+                            novelty_signal_path=latest_feedback_signal,
+                            selected_graph=selected_graph,
+                            schedule_mode=args.schedule_mode,
+                            misuse_mode=bool(args.misuse_mode),
+                        )
+                        _run(Cmd(crash_seed_argv), dry_run=args.dry_run)
+                        print("[Orch] crash-driven reseed complete")
         elif args.learn_crash_constraints:
             print(
                 "[Orch] crash learning skipped: requires crash classification "
