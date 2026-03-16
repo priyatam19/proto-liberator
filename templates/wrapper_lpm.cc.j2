@@ -1191,7 +1191,17 @@ static bool allow_with_budget(int* budget, int prob_num, int prob_den, uint32_t 
 
 static const bool kSimpleHarness = {{ "true" if harness_style == "simple" else "false" }};
 
-DEFINE_BINARY_PROTO_FUZZER(const {{ package_name }}::{{ fuzz_input_type }}& input) {
+static void TestOneProtoInput(const {{ package_name }}::{{ fuzz_input_type }}& input);
+
+extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
+    {{ package_name }}::{{ fuzz_input_type }} input;
+    if (protobuf_mutator::libfuzzer::LoadProtoInput(true, data, size, &input)) {
+        TestOneProtoInput(input);
+    }
+    return 0;
+}
+
+static void TestOneProtoInput(const {{ package_name }}::{{ fuzz_input_type }}& input) {
     // Reset handles
     handles_reset();
     scalars_reset();
