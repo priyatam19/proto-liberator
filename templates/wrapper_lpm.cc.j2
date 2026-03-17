@@ -1215,6 +1215,8 @@ static void TestOneProtoInput(const {{ package_name }}::{{ fuzz_input_type }}& i
     int charpp_fallback_default = env_int("PROTO_LIBERATOR_CHARPP_FALLBACK", kSimpleHarness ? 1 : 0);
     int resize_bytes_default = env_int("PROTO_LIBERATOR_RESIZE_BYTES", kSimpleHarness ? 1 : 0);
     bool strict_scalar_deps = env_int("PROTO_LIBERATOR_STRICT_SCALAR_DEPS", 1) != 0;
+    bool strict_multi_handle = env_int("PROTO_LIBERATOR_STRICT_MULTI_HANDLE", 1) != 0;
+    bool block_allocator_apis = env_int("PROTO_LIBERATOR_BLOCK_ALLOCATOR_APIS", 1) != 0;
     const char* null_allowlist = std::getenv("PROTO_LIBERATOR_NULL_ALLOWLIST");
     const char* stale_allowlist = std::getenv("PROTO_LIBERATOR_STALE_ALLOWLIST");
 
@@ -1279,6 +1281,22 @@ static void TestOneProtoInput(const {{ package_name }}::{{ fuzz_input_type }}& i
                 bool allow_stale = false;
                 bool allow_double_delete = false;
                 bool allow_stale_request = false;
+                {% if api.unsafe_multi_handle %}
+                if (strict_multi_handle) {
+                    // Multi-handle API without explicit handle-handle intra constraints.
+                    // Type-valid but relation-invalid bindings are overwhelmingly crash-prone.
+                    should_skip_call = true;
+                    g_hard_constraint_redirected = true;
+                }
+                {% endif %}
+                {% if api.name in ["cJSON_malloc", "cJSON_free", "cJSON_InitHooks"] %}
+                if (block_allocator_apis) {
+                    // These APIs are relation-unsafe in full-library mode and dominate with
+                    // allocator-size and hook misuse crashes before useful exploration starts.
+                    should_skip_call = true;
+                    g_hard_constraint_redirected = true;
+                }
+                {% endif %}
                 {% if api.has_skip_dependency_check %}
                 if (params.has_skip_dependency_check() && params.skip_dependency_check()) {
                     allow_stale_request = true;
