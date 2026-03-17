@@ -184,6 +184,80 @@ def is_integral_proto_type(proto_type: str) -> bool:
     }
 
 
+def _parse_param_ref_index(ref: Any) -> Optional[int]:
+    sref = str(ref or "")
+    if not sref.startswith("param_"):
+        return None
+    try:
+        return int(sref.split("_", 1)[1])
+    except Exception:
+        return None
+
+
+def is_relation_unsafe_multi_handle(entry: Dict[str, Any], args: List[Dict[str, Any]]) -> bool:
+    """
+    Classify multi-handle APIs that are likely relation-unsafe at runtime.
+
+    We consider the API unsafe when it has >=2 handle args but does not have a
+    directional/cross-type relation that can guide correct pairing. In
+    particular, symmetric same-type set_by cycles (A<->B) are treated as unsafe:
+    they encode "related somehow" but not "which object should come from where".
+    """
+    handle_arg_info: Dict[int, str] = {}
+    for a in args:
+        param = a.get("param") if isinstance(a.get("param"), dict) else {}
+        if param.get("kind") != "handle":
+            continue
+        try:
+            idx = int(a.get("i"))
+        except Exception:
+            continue
+        type_token = (
+            str(param.get("type_key") or "")
+            or str(param.get("type_string") or "")
+            or str(param.get("type") or "")
+            or str(a.get("c_type") or "")
+            or f"handle_{idx}"
+        )
+        handle_arg_info[idx] = type_token
+
+    if len(handle_arg_info) < 2:
+        return False
+
+    handle_arg_set = set(handle_arg_info.keys())
+    relation_edges = set()
+    for hidx in handle_arg_set:
+        raw_param_info = entry.get(f"param_{hidx}")
+        if not isinstance(raw_param_info, dict):
+            continue
+        raw_set_by = raw_param_info.get("set_by")
+        if not isinstance(raw_set_by, list):
+            continue
+        for dep in raw_set_by:
+            dep_idx = _parse_param_ref_index(dep)
+            if dep_idx is None or dep_idx == hidx or dep_idx not in handle_arg_set:
+                continue
+            relation_edges.add((hidx, dep_idx))
+
+    # No handle-handle relation at all: unsafe by default.
+    if not relation_edges:
+        return True
+
+    # Strong relation if:
+    #   1) relation crosses handle types, or
+    #   2) same-type relation is directional (not a symmetric cycle).
+    for src, dst in relation_edges:
+        src_t = handle_arg_info.get(src)
+        dst_t = handle_arg_info.get(dst)
+        if src_t != dst_t:
+            return False
+        if (dst, src) not in relation_edges:
+            return False
+
+    # Only symmetric same-type cycles remain: relation-unsafe.
+    return True
+
+
 def infer_return_llvm_type(entry: Dict[str, Any]) -> str:
     ret = entry.get("return")
     if not isinstance(ret, dict):
@@ -789,6 +863,9 @@ class WrapperGenerator:
 
             apply_len_depends_on_heuristics(args)
 
+            # Guard against relation-unsafe multi-handle APIs.
+            unsafe_multi_handle = is_relation_unsafe_multi_handle(entry, args)
+
             returns_handle = conditions_return_is_handle(entry, self.mapper, ret_c_type=ret_type)
 
             call = {
@@ -952,6 +1029,9 @@ class WrapperGenerator:
 
             apply_len_depends_on_heuristics(args)
 
+            # Guard against relation-unsafe multi-handle APIs.
+            unsafe_multi_handle = is_relation_unsafe_multi_handle(entry, args)
+
             returns_handle = conditions_return_is_handle(entry, self.mapper, ret_c_type=ret_type)
             if returns_handle and is_void_return(ret_type):
                 # Fallback when signature metadata is missing but conditions indicate handle return.
@@ -992,6 +1072,7 @@ class WrapperGenerator:
                     "has_allow_double_delete": "return" in entry,
                     "is_destructor": is_destructor_name(func_name),
                     "unsupported_vararg": unsupported_vararg,
+                    "unsafe_multi_handle": unsafe_multi_handle,
                     "pre_call_guards": self.emi_rules.get_guard_for_api(func_name, args, target_lang=guard_lang),
                     "post_call_check": post_call_check,
                 }
