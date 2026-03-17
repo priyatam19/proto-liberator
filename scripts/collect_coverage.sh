@@ -97,8 +97,38 @@ if [ -n "${IGNORE_FILE}" ]; then
 fi
 
 # Find LLVM tools
-LLVM_PROFDATA="${LLVM_PROFDATA:-$(which llvm-profdata-14 2>/dev/null || which llvm-profdata 2>/dev/null)}"
-LLVM_COV="${LLVM_COV:-$(which llvm-cov-14 2>/dev/null || which llvm-cov 2>/dev/null)}"
+#
+# Prefer binaries from the same toolchain as `clang` to avoid profile-format
+# mismatches (e.g. clang-18 generating profraw consumed by llvm-profdata-14).
+resolve_llvm_tool_from_clang() {
+    local tool_name="$1"
+    local clang_bin
+    clang_bin="${CLANG_BIN:-$(which clang 2>/dev/null || true)}"
+    if [ -z "${clang_bin}" ]; then
+        return 1
+    fi
+    local candidate
+    candidate="$("${clang_bin}" --print-prog-name="${tool_name}" 2>/dev/null || true)"
+    if [ -n "${candidate}" ] && [ "${candidate}" != "${tool_name}" ] && [ -x "${candidate}" ]; then
+        printf "%s" "${candidate}"
+        return 0
+    fi
+    return 1
+}
+
+if [ -z "${LLVM_PROFDATA:-}" ]; then
+    LLVM_PROFDATA="$(resolve_llvm_tool_from_clang llvm-profdata 2>/dev/null || true)"
+    if [ -z "${LLVM_PROFDATA}" ]; then
+        LLVM_PROFDATA="$(which llvm-profdata 2>/dev/null || which llvm-profdata-14 2>/dev/null || true)"
+    fi
+fi
+
+if [ -z "${LLVM_COV:-}" ]; then
+    LLVM_COV="$(resolve_llvm_tool_from_clang llvm-cov 2>/dev/null || true)"
+    if [ -z "${LLVM_COV}" ]; then
+        LLVM_COV="$(which llvm-cov 2>/dev/null || which llvm-cov-14 2>/dev/null || true)"
+    fi
+fi
 
 if [ -z "$LLVM_PROFDATA" ] || [ -z "$LLVM_COV" ]; then
     echo "[ERROR] llvm-profdata and llvm-cov required"
