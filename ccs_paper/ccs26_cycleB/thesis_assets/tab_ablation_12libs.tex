@@ -1,0 +1,29 @@
+% Auto-generated from artifacts/ablation_line_coverage_evalset.csv
+\begin{table}[htb]
+\centering
+\caption{Ablation isolating Repair-Not-Reject (RNR) guards across 11 libraries (30-minute budget).
+  \textbf{Both conditions} use the SCG-guided seed corpus and the LPM semantic mutator.
+  \textbf{$-$RNR}: actions whose required handle pool is empty are \emph{skipped} (standard behavior).
+  \textbf{$+$RNR}: a missing handle triggers an inline creator call; execution continues with the repaired handle.}
+\label{tab:ablation_12libs}
+\small
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{lrrrr}
+\toprule
+\textbf{Library} & \textbf{Class} & \textbf{$-$RNR (skip)} & \textbf{$+$RNR (repair)} & \textbf{$\Delta$ pp} \\
+\midrule
+pthreadpool & S  & 12.92\% & \textbf{80.11\%} & \textbf{+67.19} \\
+c-ares      & E  &  2.26\% & \textbf{42.82\%} & \textbf{+40.56} \\
+libhtp      & E  &  7.90\% & \textbf{42.87\%} & \textbf{+34.97} \\
+libplist    & SL &  7.72\% & \textbf{41.71\%} & \textbf{+33.99} \\
+cjson       & S+ & 33.85\% & \textbf{57.61\%} & \textbf{+23.76} \\
+cpu\_features & SL & 16.82\% & \textbf{37.88\%} & \textbf{+21.06} \\
+libpcap     & E  &  4.12\% & \textbf{22.67\%} & \textbf{+18.55} \\
+libtiff     & S  &  1.47\% & \textbf{19.53\%} & \textbf{+18.06} \\
+libdwarf    & S+ &  6.33\% & \textbf{22.24\%} & \textbf{+15.91} \\
+minijail    & E  & 12.61\% & \textbf{28.32\%} & \textbf{+15.71} \\
+libsndfile  & S  &  1.52\% & \textbf{10.79\%} &  \textbf{+9.27} \\
+\bottomrule
+\end{tabular}
+}
+\end{table}

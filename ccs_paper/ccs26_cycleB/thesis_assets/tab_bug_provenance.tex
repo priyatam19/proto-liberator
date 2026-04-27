@@ -1,0 +1,78 @@
+%% Bug provenance table -- generated from validated_bug_casebook_latest.md
+%% Cross-referenced against NVD, OSS-Fuzz, and per-library upstream trackers.
+%%
+%% Provenance codes:
+%%   N = Novel/Pending -- no matching CVE or public issue found; pending upstream disclosure
+%%   K = Known-unpatched -- matches an open upstream issue with no CVE assigned, no patch shipped
+%%   S = Suspicious -- crash site is a libc function (vsnprintf, __asan_memcpy); likely
+%%       harness-induced artifact or mis-symbolized frame; requires stack-trace verification
+%%   V = Verify -- a related fix landed in a recent upstream release; version pinning needed
+%%       to confirm the campaign binary predates or postdates the fix
+\begin{table}[htb]
+\centering
+\caption{Bug provenance classification for 36 validated crashes across 8 libraries.
+  \textbf{N} = novel (no public CVE/issue); \textbf{K} = known-unpatched (open upstream issue,
+  no CVE, no patch); \textbf{S} = suspicious (crash site in libc; possible harness-induced
+  artifact); \textbf{V} = needs version verification.
+  Bug class: \textbf{HBO-w} = heap-buffer-overflow (write); \textbf{UAF-w} = heap-use-after-free (write).}
+\label{tab:bug_provenance}
+\small
+\setlength{\tabcolsep}{3pt}
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{lllcl}
+\toprule
+\textbf{Library} & \textbf{Crash site (function)} & \textbf{Class} & \textbf{P} & \textbf{Notes} \\
+\midrule
+\multirow{6}{*}{c-ares}
+  & \texttt{ares\_create\_query\_int}  & HBO-w & N & No CVE for this helper; CVE-2016-5180 was in public wrapper, fixed \\
+  & \texttt{ares\_dns\_pton}           & HBO-w & N & New DNS API (v1.28+); no public report \\
+  & \texttt{ares\_dns\_rr\_get\_keys}  & HBO-w & N & New DNS record accessor; no public report \\
+  & \texttt{ares\_dns\_rr\_get\_opt\_byid} & HBO-w & N & New DNS record accessor; no public report \\
+  & \texttt{ares\_expand\_name}        & HBO-w & N & No matching 2024--2026 CVE or commit \\
+  & \texttt{ares\_version}             & HBO-w & S & Returns string constant + writes one int; heap write impossible by inspection \\
+\midrule
+\multirow{5}{*}{cjson}
+  & \texttt{print\_string\_ptr}        & HBO-w & K & GitHub issue \#923 (Jan 2025), open, no CVE, no patch in v1.7.18/v1.7.19 \\
+  & \texttt{print\_array}              & HBO-w & K & Same root cause as \#923 (print subsystem buffer sizing) \\
+  & \texttt{print\_number}             & HBO-w & V & v1.7.19 added number-buffer fix; confirm campaign binary version \\
+  & \texttt{print\_object}             & HBO-w & K & Same root cause as \#923 \\
+  & \texttt{cJSON\_ReplaceItemViaPointer} & UAF-w & N & UAF write via \texttt{cJSON\_ReplaceItemInArray}; no CVE or fix commit \\
+\midrule
+\multirow{10}{*}{libdwarf}
+  & \texttt{\_dwarf\_get\_fde\_list\_internal}           & HBO-w & N & Not in official bug DB (prevanders.net/dwarfbug.html) \\
+  & \texttt{dwarf\_get\_loclist\_offset\_index\_value}   & HBO-w & N & No match in NVD or libdwarf bugxml \\
+  & \texttt{dwarf\_get\_rnglist\_offset\_index\_value}   & HBO-w & N & No match in NVD or libdwarf bugxml \\
+  & \texttt{dwarf\_get\_section\_info\_by\_index\_a}~(×2) & HBO-w & N & Two distinct crash PCs; no public report \\
+  & \texttt{dwarf\_get\_section\_info\_by\_name\_a}~(×4) & HBO-w & N & Four distinct crash PCs; no public report \\
+  & \texttt{dwarf\_globals\_by\_type}                    & HBO-w & N & DW202508-001 fixed \texttt{dwarf\_globals.c} in Aug 2025; distinct entry point \\
+  & \texttt{dwarf\_hasattr}                              & HBO-w & N & No match in NVD or libdwarf bugxml \\
+  & \texttt{dwarf\_offset\_list}                         & HBO-w & N & No match in NVD or libdwarf bugxml \\
+  & \texttt{dwarf\_uncompress\_integer\_block\_a}        & HBO-w & N & No match in NVD or libdwarf bugxml \\
+\midrule
+libhtp
+  & \texttt{bstr\_alloc} (bstr.c:48)  & HBO-w & N & No CVE; published advisories cover resource exhaustion, not allocator OOB \\
+\midrule
+\multirow{3}{*}{libpcap}
+  & \texttt{pcap\_lookupnet}           & HBO-w & N & Not in 2024--2026 CVE list (CVE-2023-7256, CVE-2024-8006, CVE-2025-11961 unrelated) \\
+  & \texttt{pcapint\_parsesrcstr\_ex}  & HBO-w & N & Internal API; no public report \\
+  & \texttt{vsnprintf} (libpcap ctx)   & HBO-w & S & libc function; errbuf sizing or harness scaffolding likely source \\
+\midrule
+\multirow{3}{*}{libplist}
+  & \texttt{plist\_from\_memory}       & HBO-w & N & Issue \#244 was a READ OOB (fixed 2023); write OOB is distinct \\
+  & \texttt{node\_attach}              & UAF-w & N & No public CVE; issue \#276 named different functions \\
+  & \texttt{node\_insert}              & UAF-w & N & No public CVE; sibling to \texttt{node\_attach} \\
+\midrule
+libsndfile
+  & \texttt{vsnprintf} (sndfile ctx)   & HBO-w & S & libc function; crash in internal log-format buffer; harness involvement likely \\
+\midrule
+\multirow{4}{*}{libtiff}
+  & \texttt{LogLuv24toXYZ}             & HBO-w & N & 2016-era LUV codec fix unrelated; no 2024--2026 CVE for this function \\
+  & \texttt{LogLuv32toXYZ}             & HBO-w & N & Same as above \\
+  & \texttt{TIFFYCbCrToRGBInit}        & HBO-w & N & 2016/2017 int overflow fixed in v4.0.8; write OOB variant has no matching CVE \\
+  & \texttt{\_TIFFGetStrileOffset\ldots} & HBO-w & N & tif\_dirread.c; no 2024--2026 CVE for this accessor \\
+\midrule
+\multicolumn{2}{l}{\textbf{Total}} & & & \textbf{29~N, 3~K, 1~V, 3~S} \\
+\bottomrule
+\end{tabular}
+}
+\end{table}
