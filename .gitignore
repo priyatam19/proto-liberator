@@ -33,6 +33,10 @@ crash-*
 /A
 /-*
 
+# Ephemeral fuzzing run outputs
+api_stats/
+oom-*
+
 # Test outputs (generated)
 tests/output/
 tests/output_v2/
