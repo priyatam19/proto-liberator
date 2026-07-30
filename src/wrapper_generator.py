@@ -486,6 +486,33 @@ def normalize_handle_key(key: str) -> str:
     return key
 
 
+def _is_size_like_param_name(name: str) -> bool:
+    low = name.lower()
+    return any(tok in low for tok in (
+        "size", "len", "count", "num", "nelem", "nbytes",
+        "capacity", "range", "threads",
+    ))
+
+
+def _infer_clamp_max(c_type: str, param_name: str) -> Optional[int]:
+    """Heuristic max clamp for size-like parameters."""
+    low = param_name.lower()
+    if any(tok in low for tok in ("thread", "worker", "job")):
+        return 8
+    if any(tok in low for tok in ("tile",)):
+        return 64
+    if is_size_like_c_type(c_type) or _is_size_like_param_name(param_name):
+        return 4096
+    # Clang often reports size_t as `unsigned long` and uint32_t as `__uint32_t`.
+    # Treat bare unsigned integer types as size-like when no name is available.
+    t = normalize_c_type(c_type).replace("const", "").replace("volatile", "").strip()
+    if not t.endswith("*") and re.search(
+        r"\b(unsigned\s+(long\s+long|long|int)|__uint(8|16|32|64)_t)\b", t
+    ):
+        return 4096
+    return None
+
+
 def classify_param(
     entry: Dict[str, Any],
     param_index: int,
