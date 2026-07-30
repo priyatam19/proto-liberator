@@ -1,341 +1,142 @@
-# Proto-libErator: LLM-Free Protobuf Integration for libErator
+# Proto-libErator
 
-**Version:** 1.0.0
-**Status:** Implementation Phase
-**License:** MIT
+LLM-free, structure-aware C library fuzzing on top of [libErator](https://github.com/HexHive/liberator). Consumes libErator's static analysis outputs and generates protobuf schemas, LPM harnesses, and seed corpora — no manual harness writing, no LLMs.
 
 ---
 
-## Overview
+## Prerequisites
 
-Proto-libErator extends [libErator](https://github.com/HexHive/liberator) with structure-aware protobuf-based fuzzing using **libprotobuf-mutator**, achieving 95-99% valid input rates without requiring any LLM API calls.
+- **Python 3.10+** and `pip install -r requirements.txt`
+- **clang-14** (or newer) + **llvm-14**
+- `cmake`, `ninja-build`, `protobuf-compiler` (`protoc`)
+- External C++ deps built once via `./scripts/build_dependencies.sh` (libprotobuf-mutator + nanopb)
 
-### Key Features
-
-- **LLM-Free**: 100% rule-based transformations from libErator's static analysis
-- **Parameter-Level Fuzzing**: Protobuf for function parameters, not full API sequences
-- **Adaptive EMI Guards**: Metrics-driven refinement without LLM interpretation
-- **libErator Integration**: Reuses NDA-generated API sequences (libErator's strength)
-- **Zero Cost**: No API fees, fully offline, deterministic
-
-### Architecture
-
-```
-libErator Static Analysis → Proto Generation → Wrapper Generation → Fuzzing
-      (SVF/LLVM)              (Rule-Based)      (Template-Based)    (LPM + LibFuzzer)
-```
-
----
-
-## Directory Structure
-
-```
-proto-liberator/
-├── README.md                           # This file
-├── docs/                               # Documentation
-│   ├── LIBERATOR_COMPLETE_MANUAL.md    # Full libErator reference
-│   ├── LIBERATOR_PROTOBUF_INTEGRATION.md  # Original integration design
-│   ├── LLM_FREE_ARCHITECTURE.md        # LLM-free revision analysis
-│   └── API_REFERENCE.md                # Code API documentation
-├── src/                                # Source code
-│   ├── proto_generator.py              # conditions.json → .proto
-│   ├── wrapper_generator.py            # .proto + driver.meta → C harness
-│   ├── refinement_loop.py              # Adaptive EMI adjustment
-│   ├── type_mapper.py                  # LLVM type → protobuf type
-│   ├── emi_guard_rules.py              # EMI guard generation rules
-│   └── utils.py                        # Common utilities
-├── examples/                           # Example targets
-│   ├── cjson/                          # cJSON example
-│   │   ├── input/                      # libErator analysis outputs
-│   │   ├── generated/                  # Generated proto + wrappers
-│   │   └── README.md                   # cJSON-specific guide
-│   └── libtiff/                        # libTIFF example
-├── scripts/                            # Build & run scripts
-│   ├── build_proto_fuzzer.sh           # Complete build pipeline
-│   ├── run_adaptive_fuzzing.sh         # Adaptive fuzzing campaign
-│   └── analyze_results.sh              # Result analysis
-├── tests/                              # Unit tests
-│   ├── test_proto_generator.py
-│   ├── test_wrapper_generator.py
-│   └── test_type_mapper.py
-├── external/                           # External dependencies
-│   ├── libprotobuf-mutator/            # LPM (git submodule)
-│   └── nanopb/                         # Nanopb (git submodule)
-├── lib/                                # Generated libraries
-└── build/                              # Build artifacts
+```bash
+sudo apt-get install -y clang llvm protobuf-compiler libprotobuf-dev cmake ninja-build python3 python3-pip
+pip3 install -r requirements.txt
+./scripts/build_dependencies.sh
 ```
 
 ---
 
 ## Quick Start
 
-### Prerequisites
+Proto-libErator takes `conditions.json` and `apis_clang.json` from libErator's `apipass` stage. If you already have analysis outputs for a library, point directly to them:
 
 ```bash
-# System dependencies
-sudo apt-get update
-sudo apt-get install -y \
-    clang-14 llvm-14 \
-    protobuf-compiler libprotobuf-dev \
-    cmake ninja-build \
-    python3 python3-pip
-
-# Python dependencies
-pip3 install pyyaml jinja2
+python3 src/run_all.py \
+  --library pthreadpool \
+  --conditions /path/to/apipass/conditions.json \
+  --apis /path/to/apipass/apis_clang.json \
+  --out-dir workdir/pthreadpool_demo \
+  --schema-mode v2
 ```
 
-### Optional: Full Automation via libErator (Docker)
+Expected output in `workdir/pthreadpool_demo/`:
+- `pthreadpool.v2.proto` — protobuf schema with `Action.oneof` for all 30 APIs
+- `harness.cc` — LPM C++ harness (~11k lines): typed handle pools, callback trampolines, ensure_live factories, size clamping, per-iteration cleanup
+- `bindings/*.pb.{h,cc}` — generated protobuf bindings
 
-If you have a working libErator checkout and Docker, you can run analysis + driver generation + proto-liberator in one step via:
+To also build the fuzzer binary and run it:
+```bash
+python3 src/run_all.py \
+  ... \
+  --header /path/to/pthreadpool.h \
+  --target-lib /path/to/libpthreadpool.a \
+  --build \
+  --fuzz --fuzz-duration 3600
+```
+
+---
+
+## How It Works
+
+Proto-libErator wraps libErator's static constraint metadata (what parameters each API reads/writes, which APIs produce or consume which handle types) into a structure-aware fuzzing pipeline:
+
+```
+libErator apipass outputs (conditions.json, apis_clang.json)
+  -> proto_generator.py       — emit .proto schema (v1 fixed or v2 dynamic dispatch)
+  -> wrapper_generator.py     — render Jinja2 harness template with EMI guards + handle pools
+  -> seed_generator.py        — build planned seed corpus from API lifecycle graph
+  -> build (clang + LPM)
+  -> fuzz (LibFuzzer + libprotobuf-mutator custom mutator)
+  -> feedback_aggregator.py   — merge runtime API stats into novelty/edge/prefix weights
+  -> crash_classifier.py      — separate genuine crashes from constraint-misuse replays
+  -> crash_constraint_learner.py — learn parameter bounds from genuine crashes
+```
+
+**Two schema modes:**
+- `--schema-mode v1` — fixed API sequence from `driver.meta` (one repeated-params struct per API)
+- `--schema-mode v2` — dynamic dispatch super-harness (`repeated Action` + `oneof`; fuzzer decides call order)
+
+**LPM harness features** (v2, `--mutation-mode lpm`):
+- Typed handle tables prevent cross-type handle reuse
+- Callback trampolines replace raw fn-ptr bytes with safe static stubs
+- `ensure_live_<type>()` factories seed the handle pool before the action loop
+- Size-like parameters clamped to avoid OOM before reaching interesting code
+- `cleanup_all_handles()` after each iteration prevents handle leaks
+- Multi-pass semantic repair mutator: `SEQ_REPAIR`, `NORM_HANDLES`, `SYNC_LENGTHS`, opt-in `UAF_PROBE`
+
+---
+
+## Repository Layout
+
+| Path | Contents |
+|---|---|
+| `src/` | 14 Python pipeline modules (see below) |
+| `templates/` | Jinja2 harness templates (`wrapper_lpm.cc.j2`, `wrapper_v2.c.j2`, `wrapper.c.j2`) |
+| `scripts/` | Build, campaign, coverage, and analysis shell/Python scripts |
+| `tests/` | 46-test pytest suite + shell compile tests + fixtures |
+| `docs/` | Schema contracts, architecture docs, toolchain explanation, workflow guides |
+| `external/` | libprotobuf-mutator and nanopb (built by `build_dependencies.sh`; only `.gitkeep` in repo) |
+| `examples/` | Minimal worked example inputs |
+
+### Source modules (`src/`)
+
+| Module | Role |
+|---|---|
+| `run_all.py` | End-to-end orchestrator: generate → build → fuzz → feedback → triage |
+| `proto_generator.py` | Emit `.proto` schema from `conditions.json` + `apis_clang.json` |
+| `wrapper_generator.py` | Render Jinja2 harness with EMI guards, handle pools, trampolines, clamping |
+| `seed_generator.py` | Wire-encoded seed corpus from API lifecycle graph (no protoc needed) |
+| `sequence_planner.py` | Stateful sequence planning: `strict`, `balanced`, `explore` modes |
+| `constraint_graph_builder.py` | Build inter/intra API dependency graph (producers, consumers, invalidators) |
+| `emi_guard_rules.py` | Generate set_by repair guards and len_depends_on clamping snippets |
+| `feedback_aggregator.py` | Merge runtime API stats into novelty scores, learned edges, prefix weights |
+| `causal_edge_verifier.py` | Ablation-based edge validation (promote/demote confidence) |
+| `crash_classifier.py` | Classify replayed crashes as `genuine` vs. `constraint_misuse` |
+| `crash_constraint_learner.py` | Learn parameter bounds from genuine crashes via shadow-byte replay |
+| `type_mapper.py` | Map LLVM IR types to protobuf field types (struct ptrs → handles, etc.) |
+| `contracts.py` | Protobuf schema contract definitions and field name constants |
+| `utils.py` | Shared utilities: JSON loading, path helpers, field name normalization |
+
+---
+
+## Running Tests
 
 ```bash
-LIBERATOR_ROOT=../liberator \
-  ./scripts/fuzz_library.sh cjson \
-    --schema-mode v2 \
-    --out-dir workdir/cjson_auto \
-    --header cjson/cJSON.h \
-    -- --build --fuzz --generate-seeds
+python3 -m pytest tests/ -v    # 46 tests, all should pass
 ```
 
-### Installation
-
-```bash
-# Clone repo
-cd /home/priyatam/pin_compete/tools/proto-liberator
-
-# Initialize submodules
-git submodule update --init --recursive
-
-# Build libprotobuf-mutator
-./scripts/build_dependencies.sh
-
-# Verify installation
-python3 tests/test_installation.py
-```
-
-### Usage (cJSON Example)
-
-```bash
-# Step 1: Run libErator static analysis (already done)
-# Output: /home/priyatam/pin_compete/tools/liberator/analysis/cjson/work/apipass/
-
-# Step 2: Generate protobuf schemas (LLM-free)
-# Schema modes:
-#   - v1 (default): repeated params per API function (fixed-sequence harnesses)
-#   - v2: dynamic dispatch via Action.oneof + repeated actions (super harness)
-python3 src/proto_generator.py \
-  --conditions ../liberator/analysis/cjson/work/apipass/conditions.json \
-  --apis ../liberator/analysis/cjson/work/apipass/apis_clang.json \
-  --output examples/cjson/generated/cjson_params.proto \
-  --library cjson
-
-# v2 example:
-python3 src/proto_generator.py \
-  --conditions ../liberator/analysis/cjson/work/apipass/conditions.json \
-  --apis ../liberator/analysis/cjson/work/apipass/apis_clang.json \
-  --output examples/cjson/generated/cjson_params_v2.proto \
-  --library cjson \
-  --schema-mode v2 \
-  --max-actions 64
-
-# Step 3: Generate fuzzing wrappers (LLM-free)
-python3 src/wrapper_generator.py \
-  --proto examples/cjson/generated/cjson_params.proto \
-  --driver ../liberator/workdir/cjson/metadata/driver0.meta \
-  --conditions ../liberator/analysis/cjson/work/apipass/conditions.json \
-  --output examples/cjson/generated/driver0_proto.c
-
-# Step 4: Build fuzzer
-./scripts/build_proto_fuzzer.sh \
-  --library cjson \
-  --wrapper examples/cjson/generated/driver0_proto.c \
-  --proto examples/cjson/generated/cjson_params.proto
-
-# Step 5: Run adaptive fuzzing
-./scripts/run_adaptive_fuzzing.sh \
-  --fuzzer build/cjson_proto_fuzzer \
-  --duration 3600 \
-  --iterations 5
-```
+The test suite is self-contained — no library builds required, uses in-tree fixtures.
 
 ---
 
-## Key Components
+## Further Reading
 
-### 1. Proto Generator (`src/proto_generator.py`)
-
-**Input**: libErator's `conditions.json`
-**Output**: Protobuf schema (`.proto` file)
-**Method**: Rule-based transformations (NO LLM)
-
-**Features**:
-- LLVM type → Protobuf type mapping
-- Automatic length fields for arrays (`is_array` flag)
-- Nullable flags from access type analysis
-- malloc size override fields (`is_malloc_size` flag)
-- Contract violation knobs for UAF/double-free exploration
-
-### 2. Wrapper Generator (`src/wrapper_generator.py`)
-
-**Input**: Protobuf schema + libErator driver metadata
-**Output**: C fuzzing harness
-**Method**: Template-based generation (NO LLM)
-
-**Features**:
-- EMI guards from conditions.json constraints
-- API sequence from libErator's NDA-generated drivers
-- Handle management for stateful fuzzing
-- Adaptive validation with contract violation knobs
-- Nanopb deserialization
-
-### 2b. Seed Generator (`src/seed_generator.py`)
-
-**Purpose**: Generate an initial **seed corpus** for the v2 dynamic-dispatch harness (`FuzzInput.actions`).
-
-**Wire-only mode (no protoc required)**:
-```bash
-python3 src/seed_generator.py \
-  --conditions ../liberator/analysis/cjson/work/apipass/conditions.json \
-  --output-dir corpus/ \
-  --num-seeds 64 \
-  --max-len 16
-```
-
-### 3. Refinement Loop (`src/refinement_loop.py`)
-
-**Input**: Fuzzer metrics (coverage, reject rate)
-**Output**: Adjusted EMI configuration
-**Method**: Threshold-based adjustments (NO LLM)
-
-**Features**:
-- Reject rate monitoring → widen guards
-- Coverage feedback → add exploration knobs
-- Iterative recompilation and re-fuzzing
-- Metrics logging and visualization
+| Document | What it covers |
+|---|---|
+| [`docs/SCHEMA_CONTRACT_V2.md`](docs/SCHEMA_CONTRACT_V2.md) | Protobuf schema spec for v2 dynamic dispatch mode |
+| [`docs/SCHEMA_CONTRACT.md`](docs/SCHEMA_CONTRACT.md) | Protobuf schema spec for v1 fixed-sequence mode |
+| [`docs/LLM_FREE_ARCHITECTURE.md`](docs/LLM_FREE_ARCHITECTURE.md) | Why no LLMs are needed; design rationale |
+| [`docs/TOOLCHAIN_EXPLANATION.md`](docs/TOOLCHAIN_EXPLANATION.md) | End-to-end data-flow walkthrough with worked examples |
+| [`docs/GROUND_TRUTH_WORKFLOW.md`](docs/GROUND_TRUTH_WORKFLOW.md) | Ground-truth-first evaluation methodology |
+| [`CLAUDE.md`](CLAUDE.md) | Full command reference, architecture deep-dive, all CLI flags |
 
 ---
 
-## Design Principles
+## Notes
 
-### 1. **Keep libErator's Strengths**
-
-✅ **USE**: libErator's NDA-generated API sequences
-✅ **USE**: libErator's SVF-based static analysis
-✅ **USE**: libErator's driver generation
-
-❌ **DON'T**: Replace with arbitrary protobuf API sequences
-❌ **DON'T**: Re-implement static analysis with LLMs
-
-### 2. **Protobuf for Parameters, Not Sequences**
-
-✅ **USE**: Protobuf to model function parameters
-✅ **USE**: Protobuf for mutation-friendly input representation
-
-❌ **DON'T**: Model full API dependency graphs in protobuf
-❌ **DON'T**: Generate fake heap object graphs
-
-### 3. **Contract Violations for Semantic Bugs**
-
-✅ **ADD**: Explicit knobs for UAF, double-free, null derefs
-✅ **ADD**: Adaptive rejection rates for exploration
-
-❌ **DON'T**: Validate everything strictly (blocks bug discovery)
-
----
-
-## Performance Targets
-
-| Metric | Target | Baseline (libErator) |
-|--------|--------|----------------------|
-| Valid Input Rate | 95-99% | 60-80% |
-| Fuzzing Throughput | +50% | 100% baseline |
-| Coverage (cJSON) | >90% | ~87% |
-| Time to First Crash | -50% | 180s (baseline) |
-| Compilation Time | <5s | <5s |
-
----
-
-## Roadmap
-
-### Phase 1: Core Implementation (Week 1-2)
-- [x] Project structure
-- [ ] Proto generator (rule-based)
-- [ ] Type mapper (LLVM → Protobuf)
-- [ ] Wrapper generator (template-based)
-- [ ] cJSON example
-
-### Phase 2: EMI Guards & Refinement (Week 3)
-- [ ] EMI guard rule engine
-- [ ] Adaptive refinement loop
-- [ ] Metrics collection and logging
-
-### Phase 3: Testing & Validation (Week 4)
-- [ ] Unit tests for all components
-- [ ] Integration tests (cJSON, libTIFF)
-- [ ] Benchmark comparison vs vanilla libErator
-
-### Phase 4: Documentation & Release (Week 5)
-- [ ] API documentation
-- [ ] Tutorial videos
-- [ ] Paper draft
-
----
-
-## Comparison: PIN 2.0 vs Proto-libErator
-
-| Aspect | PIN 2.0 | Proto-libErator |
-|--------|---------|-----------------|
-| LLM Required? | Yes (Anthropic/OpenAI) | **No** |
-| Static Analysis | Minimal (source parsing) | **Full SVF analysis** |
-| Proto Generation | LLM-based | **Rule-based** |
-| Wrapper Generation | LLM-based | **Template-based** |
-| Cost per Target | $0.50-$2.00 | **$0.00** |
-| Speed | 30-60s (API latency) | **<1s** |
-| Offline Capable? | No | **Yes** |
-| Reproducible? | No (LLM variance) | **Yes (deterministic)** |
-
----
-
-## Citation
-
-```bibtex
-@inproceedings{proto-liberator2025,
-  title={Proto-libErator: LLM-Free Structure-Aware Fuzzing via Protobuf Integration},
-  author={},
-  booktitle={},
-  year={2025}
-}
-
-@inproceedings{liberator2025,
-  title={Constraint-Based Fuzzing Driver Synthesis},
-  author={},
-  booktitle={FSE},
-  year={2025}
-}
-```
-
----
-
-## Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for development guidelines.
-
----
-
-## License
-
-MIT License - see [LICENSE](LICENSE) for details.
-
----
-
-## Contact
-
-- **Issues**: https://github.com/priyatam/proto-liberator/issues
-- **Discussions**: https://github.com/priyatam/proto-liberator/discussions
-
----
-
-**Built on top of**:
-- [libErator](https://github.com/HexHive/liberator) - Automated fuzzing driver synthesis
-- [libprotobuf-mutator](https://github.com/google/libprotobuf-mutator) - Structure-aware fuzzing
-- [SVF](https://github.com/SVF-tools/SVF) - Static value-flow analysis
+- Proto-libErator does **not** run libErator static analysis. It consumes the `apipass` outputs.
+- Entry-point discovery comes from libErator's SVF/NDA analysis. Proto-libErator's gains are in mutation quality, sequence exploration, online feedback, and crash-learning loops.
+- Research artifacts (paper drafts, thesis files, campaign data) are kept local and are not published to this repository.

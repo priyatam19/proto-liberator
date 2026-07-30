@@ -49,6 +49,16 @@ external/nanopb/**
 !external/libprotobuf-mutator/.gitkeep
 !external/nanopb/.gitkeep
 
+# Research/paper artifacts (kept local, not shared on GitHub)
+ccs_paper/
+thesis_draft/
+paper/
+figures/
+artifacts/
+ground_truths/
+analysis/
+docs/archive/
+
 # Editors/OS
 .DS_Store
 .idea/
