@@ -413,6 +413,64 @@ def is_destructor_name(func_name: str) -> bool:
     return any(x in lowered for x in ("delete", "destroy", "free"))
 
 
+def _looks_function_type(t: str) -> bool:
+    s = str(t or "").strip()
+    if "(" not in s or ")" not in s:
+        return False
+    return ("(*" in s) or ("," in s)
+
+
+def has_only_arg_function_pointers(sig: Optional[Dict[str, Any]]) -> bool:
+    """True if the API has fn-ptr args but NOT a fn-ptr return type."""
+    if not isinstance(sig, dict):
+        return False
+    ret = sig.get("return_info") or {}
+    ret_t = str(ret.get("type_clang") or "")
+    if _looks_function_type(ret_t):
+        return False
+    args = sig.get("arguments_info")
+    if not isinstance(args, list):
+        return False
+    return any(_looks_function_type(str((a or {}).get("type_clang") or "")) for a in args)
+
+
+def parse_callback_signature(type_str: str) -> Optional[Dict[str, Any]]:
+    """Parse C function pointer type into ret type and param types.
+
+    Handles: ``void (*)(void *, size_t)``, ``int (*)(int, void *)``
+    """
+    s = type_str.strip()
+    paren_star = s.find("(*")
+    if paren_star < 0:
+        return None
+    ret_type = s[:paren_star].strip()
+    if not ret_type:
+        ret_type = "void"
+
+    close_paren = s.find(")", paren_star + 2)
+    if close_paren < 0:
+        return None
+    param_start = s.find("(", close_paren)
+    if param_start < 0:
+        return None
+    param_end = s.rfind(")")
+    if param_end <= param_start:
+        return None
+
+    params_str = s[param_start + 1 : param_end].strip()
+    if not params_str or params_str == "void":
+        params = []
+    else:
+        params = [p.strip() for p in params_str.split(",") if p.strip()]
+
+    # Filter out __va_list_tag params -- can't generate a safe trampoline.
+    for p in params:
+        if "__va_list_tag" in p or "va_list" in p:
+            return None
+
+    return {"ret": ret_type, "params": params, "raw": type_str}
+
+
 _TRAILING_DOT_NUM = re.compile(r"\.\d+$")
 
 
