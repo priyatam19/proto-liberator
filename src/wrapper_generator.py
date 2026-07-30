@@ -413,6 +413,21 @@ def is_destructor_name(func_name: str) -> bool:
     return any(x in lowered for x in ("delete", "destroy", "free"))
 
 
+_TRAILING_DOT_NUM = re.compile(r"\.\d+$")
+
+
+def normalize_handle_key(key: str) -> str:
+    """Collapse handle type keys that differ only by LLVM numeric suffix.
+
+    ``struct:tiff.17`` -> ``struct:tiff``
+    """
+    if key.startswith("struct:"):
+        base = key[len("struct:"):]
+        base = _TRAILING_DOT_NUM.sub("", base)
+        return f"struct:{base}"
+    return key
+
+
 def classify_param(
     entry: Dict[str, Any],
     param_index: int,
