@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import subprocess
 import tempfile
@@ -294,10 +295,20 @@ def _iter_crash_inputs(crash_dir: Path) -> List[Path]:
     return out
 
 
-def _replay_path(fuzzer_bin: Path, input_path: Path, timeout_sec: int) -> Tuple[int, str]:
+def _replay_path(fuzzer_bin: Path, input_path: Path, timeout_sec: int, replay_scratch: Path) -> Tuple[int, str]:
+    env = dict(os.environ)
+    env["PROTO_LIBERATOR_API_STATS"] = str(replay_scratch / "api_stats.json")
     try:
         proc = subprocess.run(
-            [str(fuzzer_bin), "-runs=1", "-detect_leaks=0", str(input_path)],
+            [
+                str(fuzzer_bin),
+                "-runs=1",
+                "-detect_leaks=0",
+                f"-artifact_prefix={replay_scratch}/",
+                str(input_path),
+            ],
+            cwd=str(replay_scratch),
+            env=env,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             text=True,
@@ -417,23 +428,25 @@ def _analyze_crash(
     max_byte_flips: int,
 ) -> Dict[str, object]:
     data = crash_path.read_bytes()
-    baseline_rc, baseline_out = _replay_path(fuzzer_bin, crash_path, timeout_sec)
-    if baseline_rc == 0:
-        return {
-            "artifact": crash_path.name,
-            "reproducible": False,
-            "baseline_exit_code": baseline_rc,
-            "events": [],
-            "tested_offsets": 0,
-            "baseline_log_excerpt": baseline_out[:400],
-        }
-
-    offsets = _select_offsets(len(data), max_byte_flips)
-    events: List[Dict[str, object]] = []
-    tested_offsets = 0
 
     with tempfile.TemporaryDirectory() as td:
-        candidate = Path(td) / "shadow_input"
+        replay_scratch = Path(td)
+        baseline_rc, baseline_out = _replay_path(fuzzer_bin, crash_path, timeout_sec, replay_scratch)
+        if baseline_rc == 0:
+            return {
+                "artifact": crash_path.name,
+                "reproducible": False,
+                "baseline_exit_code": baseline_rc,
+                "events": [],
+                "tested_offsets": 0,
+                "baseline_log_excerpt": baseline_out[:400],
+            }
+
+        offsets = _select_offsets(len(data), max_byte_flips)
+        events: List[Dict[str, object]] = []
+        tested_offsets = 0
+
+        candidate = replay_scratch / "shadow_input"
         for offset in offsets:
             tested_offsets += 1
             orig = data[offset]
@@ -442,7 +455,7 @@ def _analyze_crash(
                 mutated = bytearray(data)
                 mutated[offset] = new_val
                 candidate.write_bytes(bytes(mutated))
-                rc, _ = _replay_path(fuzzer_bin, candidate, timeout_sec)
+                rc, _ = _replay_path(fuzzer_bin, candidate, timeout_sec, replay_scratch)
                 if rc != 0:
                     continue
 

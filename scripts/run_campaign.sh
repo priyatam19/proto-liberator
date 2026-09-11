@@ -567,7 +567,8 @@ run_fuzz_variant() {
         merge_timeout="${PROTO_LIBERATOR_LIVE_COVERAGE_MERGE_TIMEOUT_SEC:-120}"
         PROTO_LIBERATOR_API_STATS="${api_stats_dir}/api_stats_live.json" \
           "${env_kv[@]}" \
-          timeout "${merge_timeout}s" "${fuzzer_bin}" -merge=1 "${out_dir}/corpus_min" "${corpus_dir}" -detect_leaks=0 >/dev/null 2>&1 || true
+          timeout "${merge_timeout}s" "${fuzzer_bin}" -merge=1 "${out_dir}/corpus_min" "${corpus_dir}" \
+          -detect_leaks=0 "-artifact_prefix=${out_dir}/artifacts/" >/dev/null 2>&1 || true
 
         cov_corpus="${out_dir}/corpus_min"
         if [ ! -d "${cov_corpus}" ] || [ -z "$(ls -A "${cov_corpus}" 2>/dev/null || true)" ]; then
@@ -685,14 +686,17 @@ postprocess_variant() {
   local api_stats_dir="${out_dir}/api_stats"
   local casr_dir="${out_dir}/casr"
   local crashes_dir="${out_dir}/crashes"
+  local artifacts_dir="${out_dir}/artifacts"
 
-  mkdir -p "${profraw_dir}" "${coverage_dir}" "${casr_dir}" "${api_stats_dir}" "${crashes_dir}"
+  mkdir -p "${profraw_dir}" "${coverage_dir}" "${casr_dir}" "${api_stats_dir}" "${crashes_dir}" "${artifacts_dir}"
 
   if [ -f "${fuzzer_bin}" ] && [ -d "${corpus_dir}" ]; then
     echo "[Campaign] Minimizing corpus for '${variant}'..."
     rm -rf "${corpus_min}"
     mkdir -p "${corpus_min}"
-    timeout 30m "${fuzzer_bin}" -merge=1 "${corpus_min}" "${corpus_dir}" >/dev/null 2>&1 || true
+    PROTO_LIBERATOR_API_STATS="${api_stats_dir}/api_stats_minimize.json" \
+      timeout 30m "${fuzzer_bin}" -merge=1 "${corpus_min}" "${corpus_dir}" \
+      -detect_leaks=0 "-artifact_prefix=${artifacts_dir}/" >/dev/null 2>&1 || true
   fi
 
   # Replay each input separately for the authoritative final report. A single

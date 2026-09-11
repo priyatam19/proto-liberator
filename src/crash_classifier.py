@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import shutil
 import subprocess
 import time
@@ -76,11 +77,22 @@ def _replay_once(
     fuzzer_bin: Path,
     crash_path: Path,
     timeout_sec: int,
+    replay_scratch: Path,
 ) -> Tuple[int, str, bool]:
-    argv = [str(fuzzer_bin), "-runs=1", "-detect_leaks=0", str(crash_path)]
+    argv = [
+        str(fuzzer_bin),
+        "-runs=1",
+        "-detect_leaks=0",
+        f"-artifact_prefix={replay_scratch}/",
+        str(crash_path),
+    ]
+    env = dict(os.environ)
+    env["PROTO_LIBERATOR_API_STATS"] = str(replay_scratch / "api_stats.json")
     try:
         proc = subprocess.run(
             argv,
+            cwd=str(replay_scratch),
+            env=env,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             text=True,
@@ -138,9 +150,11 @@ def classify_crashes(
     genuine_dir = out_dir / "genuine"
     misuse_dir = out_dir / "constraint_misuse"
     logs_dir = out_dir / "logs"
+    replay_scratch = out_dir / "replay_scratch"
     genuine_dir.mkdir(parents=True, exist_ok=True)
     misuse_dir.mkdir(parents=True, exist_ok=True)
     logs_dir.mkdir(parents=True, exist_ok=True)
+    replay_scratch.mkdir(parents=True, exist_ok=True)
 
     genuine = 0
     misuse = 0
@@ -149,6 +163,7 @@ def classify_crashes(
             fuzzer_bin=fuzzer_bin,
             crash_path=crash_path,
             timeout_sec=timeout_sec,
+            replay_scratch=replay_scratch,
         )
         bucket = _classify_output(output)
         dst_root = misuse_dir if bucket == "constraint_misuse" else genuine_dir

@@ -213,6 +213,10 @@ PROFDATA_FINAL="${COVERAGE_DIR}/merged.profdata"
 # Without an explicit prefix, libFuzzer writes them into the caller's cwd.
 mkdir -p "${REPLAY_ARTIFACTS_DIR}"
 
+# Likewise, the harness writes api_stats/api_stats.<pid>.json relative to cwd
+# unless this is set -- keep that inside the campaign too.
+export PROTO_LIBERATOR_API_STATS="${REPLAY_ARTIFACTS_DIR}/api_stats.json"
+
 mkdir -p "${COVERAGE_DIR}"
 
 if [ -n "${CORPUS_DIR_OVERRIDE}" ]; then

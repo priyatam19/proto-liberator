@@ -68,14 +68,17 @@ def _run_input_ft(
             str(fuzzer_bin),
             "-runs=1",
             "-print_final_stats=1",
+            f"-artifact_prefix={td}/",
             str(corpus),
         ]
         env = os.environ.copy()
         opts = env.get("ASAN_OPTIONS", "")
         if "detect_leaks=" not in opts:
             env["ASAN_OPTIONS"] = (opts + ":" if opts else "") + "detect_leaks=0"
+        env["PROTO_LIBERATOR_API_STATS"] = str(Path(td) / "api_stats.json")
         proc = subprocess.run(
             cmd,
+            cwd=td,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             text=True,
