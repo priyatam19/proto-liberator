@@ -183,7 +183,7 @@ if [[ ! -f "${LIBRARIES_FILE}" ]]; then
 fi
 LIBRARIES_FILE="$(readlink -f "${LIBRARIES_FILE}")"
 
-ARTIFACTS_DIR="${ROOT_DIR}/artifacts"
+ARTIFACTS_DIR="$(readlink -f "${ROOT_DIR}/artifacts")"
 declare -a LIBRARIES=()
 declare -A LIBRARY_SEEN=()
 mapfile -t KNOWN_ANALYSIS_LIBRARIES < <(
