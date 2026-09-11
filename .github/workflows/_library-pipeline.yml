@@ -94,7 +94,12 @@ jobs:
     name: Coverage & Crash Triage
     needs: fuzz
     runs-on: [self-hosted, linux, proto-liberator]
-    timeout-minutes: 90
+    # Scales with crash COUNT, not fuzz duration: a 60s cjson smoke test
+    # already produced ~300 crashing inputs and blew past a 90m cap during
+    # comprehensive coverage replay + per-crash byte-flip ablation. Sized
+    # generously; a genuinely crash-heavy 24h campaign could still exceed
+    # this and warrants revisiting once real timings are known.
+    timeout-minutes: 360
     steps:
       - uses: actions/checkout@v4
         with:
