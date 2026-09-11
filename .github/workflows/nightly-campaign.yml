@@ -79,6 +79,21 @@ jobs:
           # let this flip back to true.
           clean: false
 
+      - name: Link untracked local data directories
+        run: |
+          set -euo pipefail
+          # ground_truths/ (library sources+build artifacts) and artifacts/
+          # (all campaign outputs, including artifacts/highcoverage_runs.txt)
+          # are gitignored -- they only exist in the long-lived checkout at
+          # CANONICAL_REPO_DIR, never in a fresh actions/checkout workspace.
+          # Symlink them in instead of duplicating hundreds of GB per run.
+          CANONICAL_REPO_DIR="/home/fuzzserver/Research/proto-liberator"
+          for d in ground_truths artifacts; do
+            if [[ ! -e "${d}" ]]; then
+              ln -s "${CANONICAL_REPO_DIR}/${d}" "${d}"
+            fi
+          done
+
       - name: Preflight (dry run)
         run: |
           set -euo pipefail

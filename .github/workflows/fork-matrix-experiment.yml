@@ -68,6 +68,18 @@ jobs:
           # checkout behaviour, it would delete ground_truths/ and artifacts/.
           clean: false
 
+      - name: Link untracked local data directories
+        run: |
+          set -euo pipefail
+          # See nightly-campaign.yml: ground_truths/ and artifacts/ are
+          # gitignored and only exist in the long-lived canonical checkout.
+          CANONICAL_REPO_DIR="/home/fuzzserver/Research/proto-liberator"
+          for d in ground_truths artifacts; do
+            if [[ ! -e "${d}" ]]; then
+              ln -s "${CANONICAL_REPO_DIR}/${d}" "${d}"
+            fi
+          done
+
       - name: Run fork=${{ matrix.fork }} experiment (all 11 libraries)
         id: campaign
         run: |
