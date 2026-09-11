@@ -82,16 +82,23 @@ jobs:
       - name: Link untracked local data directories
         run: |
           set -euo pipefail
-          # ground_truths/ (library sources+build artifacts) and artifacts/
+          # ground_truths/ (library sources+build artifacts), artifacts/
           # (all campaign outputs, including artifacts/highcoverage_runs.txt)
-          # are gitignored -- they only exist in the long-lived checkout at
-          # CANONICAL_REPO_DIR, never in a fresh actions/checkout workspace.
+          # and the built external/libprotobuf-mutator + external/nanopb
+          # deps are gitignored -- they only exist in the long-lived
+          # checkout at CANONICAL_REPO_DIR, never in a fresh actions/checkout
+          # workspace (nanopb's dir does check out, but only its .gitkeep).
           # Symlink them in instead of duplicating hundreds of GB per run.
           CANONICAL_REPO_DIR="/home/fuzzserver/Research/proto-liberator"
-          for d in ground_truths artifacts; do
-            if [[ ! -e "${d}" ]]; then
-              ln -s "${CANONICAL_REPO_DIR}/${d}" "${d}"
+          for d in ground_truths artifacts external/libprotobuf-mutator external/nanopb; do
+            if [[ -L "${d}" ]]; then
+              continue
             fi
+            if [[ -e "${d}" ]]; then
+              rm -rf "${d}"
+            fi
+            mkdir -p "$(dirname "${d}")"
+            ln -s "${CANONICAL_REPO_DIR}/${d}" "${d}"
           done
 
       - name: Preflight (dry run)
