@@ -1,0 +1,185 @@
+name: Nightly 24h Fuzzing Campaign
+
+# Runs the full generation -> build -> fuzz -> coverage/crash-triage pipeline
+# for all 11 libraries in artifacts/highcoverage_runs.txt, once per day, for
+# 24h of fuzzing time. This wraps scripts/run_highcoverage_campaigns.sh
+# as-is: that script already parallelizes the 11 libraries on this single
+# 20-core/62GB box with CPU-aware scheduling (pthreadpool CPU pinning etc),
+# so this workflow does NOT introduce a GitHub Actions `strategy.matrix` for
+# libraries/fork counts -- a real matrix would need one self-hosted runner
+# agent per concurrent cell, which this machine does not have registered.
+# See .github/workflows/fork-matrix-experiment.yml for an on-demand,
+# GH-matrix-based fork-count comparison tool instead.
+#
+# REQUIRES a self-hosted runner registered on this machine (the pipeline
+# depends on multi-hundred-GB local data: ground_truths/ and artifacts/,
+# which are gitignored and will never exist on a GitHub-hosted runner).
+
+on:
+  schedule:
+    # 03:00 UTC daily. GitHub evaluates cron on its own servers and simply
+    # waits for a self-hosted runner to pick the job up if this box is busy
+    # or offline; adjust the concurrency group below if runs regularly
+    # overrun 24h and start stacking up.
+    - cron: "0 3 * * *"
+  workflow_dispatch:
+    inputs:
+      duration_sec:
+        description: "Fuzzing budget per library, in seconds"
+        default: "86400"
+        required: false
+      coverage_interval_sec:
+        description: "Live coverage refresh interval, in seconds"
+        default: "900"
+        required: false
+      fork_override:
+        description: "Global libFuzzer -fork override (blank = use each library's saved campaign.json profile)"
+        default: ""
+        required: false
+      pthreadpool_cpus:
+        description: "taskset CPU list reserved for pthreadpool"
+        default: "0-1"
+        required: false
+      regenerate_harnesses:
+        description: "Regenerate proto/harness sources instead of reusing saved ones"
+        type: boolean
+        default: false
+      fresh_seeds:
+        description: "Reuse saved proto/harness but regenerate a simple seed corpus"
+        type: boolean
+        default: false
+
+concurrency:
+  # Never run two 24h campaigns on top of each other; queue instead of
+  # canceling so an in-flight campaign is never killed by the next cron tick.
+  group: proto-liberator-nightly-campaign
+  cancel-in-progress: false
+
+jobs:
+  campaign:
+    # Adjust this label to whatever label(s) this box's runner is actually
+    # registered under.
+    runs-on: [self-hosted, linux, proto-liberator]
+    timeout-minutes: 1560 # 26h: 24h fuzzing budget + coverage/crash-triage overhead
+    env:
+      DURATION_SEC: ${{ inputs.duration_sec || '86400' }}
+      COVERAGE_INTERVAL_SEC: ${{ inputs.coverage_interval_sec || '900' }}
+      FORK_OVERRIDE: ${{ inputs.fork_override || '' }}
+      PTHREADPOOL_CPUS: ${{ inputs.pthreadpool_cpus || '0-1' }}
+      REGENERATE_HARNESSES: ${{ inputs.regenerate_harnesses && 'true' || 'false' }}
+      FRESH_SEEDS: ${{ inputs.fresh_seeds && 'true' || 'false' }}
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          # CRITICAL: checkout defaults to `git clean -ffdx`, which would
+          # delete the untracked/gitignored ground_truths/ (146G) and
+          # artifacts/ (134G) directories this pipeline depends on. Never
+          # let this flip back to true.
+          clean: false
+
+      - name: Preflight (dry run)
+        run: |
+          set -euo pipefail
+          ARGS=(
+            --duration-sec "${DURATION_SEC}"
+            --coverage-interval-sec "${COVERAGE_INTERVAL_SEC}"
+            --pthreadpool-cpus "${PTHREADPOOL_CPUS}"
+            --dry-run
+          )
+          if [[ -n "${FORK_OVERRIDE}" ]]; then
+            ARGS+=(--fork "${FORK_OVERRIDE}")
+          fi
+          if [[ "${REGENERATE_HARNESSES}" == "true" ]]; then
+            ARGS+=(--regenerate-harnesses)
+          fi
+          if [[ "${FRESH_SEEDS}" == "true" ]]; then
+            ARGS+=(--fresh-seeds)
+          fi
+          scripts/run_highcoverage_campaigns.sh "${ARGS[@]}"
+
+      - name: Run 24h campaign (all 11 libraries)
+        id: campaign
+        run: |
+          set -euo pipefail
+          STAMP="$(date -u +%Y%m%d_%H%M%S)"
+          OUT_ROOT="artifacts/highcoverage_campaigns/${STAMP}"
+          echo "out_root=${OUT_ROOT}" >> "${GITHUB_OUTPUT}"
+
+          ARGS=(
+            --out-root "${OUT_ROOT}"
+            --duration-sec "${DURATION_SEC}"
+            --coverage-interval-sec "${COVERAGE_INTERVAL_SEC}"
+            --pthreadpool-cpus "${PTHREADPOOL_CPUS}"
+          )
+          if [[ -n "${FORK_OVERRIDE}" ]]; then
+            ARGS+=(--fork "${FORK_OVERRIDE}")
+          fi
+          if [[ "${REGENERATE_HARNESSES}" == "true" ]]; then
+            ARGS+=(--regenerate-harnesses)
+          fi
+          if [[ "${FRESH_SEEDS}" == "true" ]]; then
+            ARGS+=(--fresh-seeds)
+          fi
+
+          scripts/run_highcoverage_campaigns.sh "${ARGS[@]}"
+
+      - name: Collect lightweight report bundle
+        if: always() && steps.campaign.outputs.out_root != ''
+        run: |
+          set -euo pipefail
+          OUT_ROOT="${{ steps.campaign.outputs.out_root }}"
+          REPORT_DIR="${OUT_ROOT}/gha-report-bundle"
+          mkdir -p "${REPORT_DIR}"
+
+          cp -f "${OUT_ROOT}/results.tsv" "${REPORT_DIR}/" 2>/dev/null || true
+          cp -f "${OUT_ROOT}/events.tsv" "${REPORT_DIR}/" 2>/dev/null || true
+          if [[ -d "${OUT_ROOT}/logs" ]]; then
+            mkdir -p "${REPORT_DIR}/logs"
+            cp -f "${OUT_ROOT}"/logs/*.log "${REPORT_DIR}/logs/" 2>/dev/null || true
+          fi
+
+          # Coverage summaries + crash triage summaries only -- never raw
+          # corpora/binaries/crash-* inputs, which stay on local disk under
+          # artifacts/ (this is a 130G+ directory; GH artifact storage is
+          # not the place for it).
+          while IFS= read -r -d '' f; do
+            rel="${f#"${OUT_ROOT}"/campaigns/}"
+            dest="${REPORT_DIR}/campaigns/${rel}"
+            mkdir -p "$(dirname "${dest}")"
+            cp -f "${f}" "${dest}"
+          done < <(find "${OUT_ROOT}/campaigns" -type f \( \
+              -path "*/coverage/coverage_summary.txt" \
+              -o -path "*/coverage/final/*.txt" \
+              -o -path "*/coverage/live/*.txt" \
+              -o -path "*/coverage/*.csv" \
+              -o -path "*/casr/summary.txt" \
+            \) -print0 2>/dev/null)
+
+          echo "report_dir=${REPORT_DIR}" >> "${GITHUB_ENV}"
+
+      - name: Write job summary
+        if: always() && steps.campaign.outputs.out_root != ''
+        run: |
+          OUT_ROOT="${{ steps.campaign.outputs.out_root }}"
+          {
+            echo "## Nightly campaign: ${OUT_ROOT}"
+            echo
+            if [[ -f "${OUT_ROOT}/results.tsv" ]]; then
+              echo "| library | status | exit_code |"
+              echo "|---|---|---|"
+              tail -n +2 "${OUT_ROOT}/results.tsv" | awk -F'\t' '{printf "| %s | %s | %s |\n", $1, $2, $3}'
+            else
+              echo "_No results.tsv found -- campaign may have failed before completion._"
+            fi
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Upload report bundle
+        if: always() && steps.campaign.outputs.out_root != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: campaign-report-${{ steps.campaign.outputs.out_root && github.run_id }}
+          path: ${{ steps.campaign.outputs.out_root }}/gha-report-bundle
+          retention-days: 30
+          if-no-files-found: warn

@@ -1,0 +1,112 @@
+name: Fork-Count Matrix Experiment
+
+# On-demand comparison of libFuzzer -fork values, using a real GitHub Actions
+# strategy.matrix. Each matrix cell still runs all 11 libraries (the daily
+# campaign script only supports the full 11-library set -- see
+# scripts/run_highcoverage_campaigns.sh), just with a different global
+# --fork override and (typically) a much shorter duration than the 24h
+# production run.
+#
+# max-parallel is pinned to 1: this box has one self-hosted runner agent, so
+# concurrent matrix cells would just oversubscribe the same 20 cores/62GB
+# rather than actually running in parallel. Cells run one after another;
+# the value of the matrix here is per-cell GH Actions status/logs/artifacts,
+# not wall-clock parallelism. Register additional runner agents on this
+# machine first if you want cells to truly run side by side, and only then
+# raise max-parallel (sized to what the box can actually hold concurrently).
+
+on:
+  workflow_dispatch:
+    inputs:
+      fork_values:
+        description: "Comma-separated -fork values to compare"
+        default: "1,2,4"
+        required: false
+      duration_sec:
+        description: "Fuzzing budget per library, per fork value (seconds)"
+        default: "3600"
+        required: false
+      coverage_interval_sec:
+        default: "300"
+        required: false
+
+jobs:
+  build-matrix:
+    runs-on: [self-hosted, linux, proto-liberator]
+    outputs:
+      forks: ${{ steps.parse.outputs.forks }}
+    steps:
+      - id: parse
+        run: |
+          set -euo pipefail
+          IFS=',' read -ra VALUES <<< "${{ inputs.fork_values }}"
+          json="["
+          for i in "${!VALUES[@]}"; do
+            v="$(echo "${VALUES[$i]}" | xargs)"
+            [[ "$v" =~ ^[1-9][0-9]*$ ]] || { echo "::error::invalid fork value: $v"; exit 1; }
+            [[ $i -gt 0 ]] && json+=","
+            json+="${v}"
+          done
+          json+="]"
+          echo "forks=${json}" >> "${GITHUB_OUTPUT}"
+
+  experiment:
+    needs: build-matrix
+    strategy:
+      max-parallel: 1
+      fail-fast: false
+      matrix:
+        fork: ${{ fromJSON(needs.build-matrix.outputs.forks) }}
+    runs-on: [self-hosted, linux, proto-liberator]
+    timeout-minutes: 300
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          # See nightly-campaign.yml: NEVER let this default back to clean
+          # checkout behaviour, it would delete ground_truths/ and artifacts/.
+          clean: false
+
+      - name: Run fork=${{ matrix.fork }} experiment (all 11 libraries)
+        id: campaign
+        run: |
+          set -euo pipefail
+          STAMP="$(date -u +%Y%m%d_%H%M%S)"
+          OUT_ROOT="artifacts/highcoverage_campaigns/fork${{ matrix.fork }}_${STAMP}"
+          echo "out_root=${OUT_ROOT}" >> "${GITHUB_OUTPUT}"
+
+          scripts/run_highcoverage_campaigns.sh \
+            --out-root "${OUT_ROOT}" \
+            --duration-sec "${{ inputs.duration_sec || '3600' }}" \
+            --coverage-interval-sec "${{ inputs.coverage_interval_sec || '300' }}" \
+            --fork "${{ matrix.fork }}"
+
+      - name: Write job summary
+        if: always() && steps.campaign.outputs.out_root != ''
+        run: |
+          OUT_ROOT="${{ steps.campaign.outputs.out_root }}"
+          {
+            echo "## fork=${{ matrix.fork }}: ${OUT_ROOT}"
+            echo
+            if [[ -f "${OUT_ROOT}/results.tsv" ]]; then
+              echo "| library | status | exit_code |"
+              echo "|---|---|---|"
+              tail -n +2 "${OUT_ROOT}/results.tsv" | awk -F'\t' '{printf "| %s | %s | %s |\n", $1, $2, $3}'
+            fi
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Upload coverage/crash summaries
+        if: always() && steps.campaign.outputs.out_root != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: fork-${{ matrix.fork }}-report-${{ github.run_id }}
+          path: |
+            ${{ steps.campaign.outputs.out_root }}/results.tsv
+            ${{ steps.campaign.outputs.out_root }}/events.tsv
+            ${{ steps.campaign.outputs.out_root }}/logs/*.log
+            ${{ steps.campaign.outputs.out_root }}/campaigns/**/coverage/coverage_summary.txt
+            ${{ steps.campaign.outputs.out_root }}/campaigns/**/coverage/final/*.txt
+            ${{ steps.campaign.outputs.out_root }}/campaigns/**/casr/summary.txt
+          retention-days: 14
+          if-no-files-found: warn

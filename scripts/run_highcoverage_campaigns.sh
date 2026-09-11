@@ -9,7 +9,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
 LIBRARIES_FILE="${ROOT_DIR}/artifacts/highcoverage_runs.txt"
-EXPECTED_BRANCH="api-sequencing"
+EXPECTED_BRANCH="main"
 DURATION_SEC="86400"
 COVERAGE_INTERVAL_SEC="900"
 MAX_PARALLEL="11"
