@@ -1,27 +1,22 @@
 name: Nightly 24h Fuzzing Campaign
 
 # Runs the full generation -> build -> fuzz -> coverage/crash-triage pipeline
-# for all 11 libraries in artifacts/highcoverage_runs.txt, once per day, for
-# 24h of fuzzing time. This wraps scripts/run_highcoverage_campaigns.sh
-# as-is: that script already parallelizes the 11 libraries on this single
-# 20-core/62GB box with CPU-aware scheduling (pthreadpool CPU pinning etc),
-# so this workflow does NOT introduce a GitHub Actions `strategy.matrix` for
-# libraries/fork counts -- a real matrix would need one self-hosted runner
-# agent per concurrent cell, which this machine does not have registered.
-# See .github/workflows/fork-matrix-experiment.yml for an on-demand,
-# GH-matrix-based fork-count comparison tool instead.
+# for all 11 libraries in artifacts/highcoverage_runs.txt in a single job,
+# via scripts/run_highcoverage_campaigns.sh as-is (11 libraries in parallel
+# subprocesses with CPU-aware scheduling).
+#
+# NOT scheduled: the per-library workflows (.github/workflows/lib-*.yml,
+# each wrapping .github/workflows/_library-pipeline.yml) are the daily
+# scheduled path now, one workflow + build/fuzz/postprocess/report jobs per
+# library. Running both on a cron would double-fuzz the same 11 libraries
+# on the same box. Kept as workflow_dispatch only, for full-batch ad hoc
+# runs or as a fallback if the per-library workflows are ever disabled.
 #
 # REQUIRES a self-hosted runner registered on this machine (the pipeline
 # depends on multi-hundred-GB local data: ground_truths/ and artifacts/,
 # which are gitignored and will never exist on a GitHub-hosted runner).
 
 on:
-  schedule:
-    # 03:00 UTC daily. GitHub evaluates cron on its own servers and simply
-    # waits for a self-hosted runner to pick the job up if this box is busy
-    # or offline; adjust the concurrency group below if runs regularly
-    # overrun 24h and start stacking up.
-    - cron: "0 3 * * *"
   workflow_dispatch:
     inputs:
       duration_sec:
@@ -80,26 +75,7 @@ jobs:
           clean: false
 
       - name: Link untracked local data directories
-        run: |
-          set -euo pipefail
-          # ground_truths/ (library sources+build artifacts), artifacts/
-          # (all campaign outputs, including artifacts/highcoverage_runs.txt)
-          # and the built external/libprotobuf-mutator + external/nanopb
-          # deps are gitignored -- they only exist in the long-lived
-          # checkout at CANONICAL_REPO_DIR, never in a fresh actions/checkout
-          # workspace (nanopb's dir does check out, but only its .gitkeep).
-          # Symlink them in instead of duplicating hundreds of GB per run.
-          CANONICAL_REPO_DIR="/home/fuzzserver/Research/proto-liberator"
-          for d in ground_truths artifacts external/libprotobuf-mutator external/nanopb; do
-            if [[ -L "${d}" ]]; then
-              continue
-            fi
-            if [[ -e "${d}" ]]; then
-              rm -rf "${d}"
-            fi
-            mkdir -p "$(dirname "${d}")"
-            ln -s "${CANONICAL_REPO_DIR}/${d}" "${d}"
-          done
+        uses: ./.github/actions/link-local-data
 
       - name: Preflight (dry run)
         run: |

@@ -1,0 +1,24 @@
+name: Link local data directories
+description: >
+  Symlinks the gitignored ground_truths/, artifacts/, and built
+  external/libprotobuf-mutator + external/nanopb dependencies into a fresh
+  checkout from the canonical long-lived repo checkout on this self-hosted
+  runner. A plain actions/checkout workspace never contains these (146G,
+  134G, and ~370M of build output respectively).
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      run: |
+        set -euo pipefail
+        CANONICAL_REPO_DIR="/home/fuzzserver/Research/proto-liberator"
+        for d in ground_truths artifacts external/libprotobuf-mutator external/nanopb; do
+          if [[ -L "${d}" ]]; then
+            continue
+          fi
+          if [[ -e "${d}" ]]; then
+            rm -rf "${d}"
+          fi
+          mkdir -p "$(dirname "${d}")"
+          ln -s "${CANONICAL_REPO_DIR}/${d}" "${d}"
+        done

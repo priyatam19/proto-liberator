@@ -69,22 +69,7 @@ jobs:
           clean: false
 
       - name: Link untracked local data directories
-        run: |
-          set -euo pipefail
-          # See nightly-campaign.yml: ground_truths/, artifacts/ and the
-          # built external/libprotobuf-mutator + external/nanopb deps are
-          # gitignored and only exist in the long-lived canonical checkout.
-          CANONICAL_REPO_DIR="/home/fuzzserver/Research/proto-liberator"
-          for d in ground_truths artifacts external/libprotobuf-mutator external/nanopb; do
-            if [[ -L "${d}" ]]; then
-              continue
-            fi
-            if [[ -e "${d}" ]]; then
-              rm -rf "${d}"
-            fi
-            mkdir -p "$(dirname "${d}")"
-            ln -s "${CANONICAL_REPO_DIR}/${d}" "${d}"
-          done
+        uses: ./.github/actions/link-local-data
 
       - name: Run fork=${{ matrix.fork }} experiment (all 11 libraries)
         id: campaign

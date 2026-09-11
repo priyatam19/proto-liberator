@@ -1,0 +1,43 @@
+name: "Library: cjson"
+
+# Thin per-library wrapper around the reusable pipeline
+# (.github/workflows/_library-pipeline.yml): build -> fuzz -> coverage &
+# crash triage -> report, as separate jobs. See that file for how
+# CAMPAIGN_DIR and runner routing work across multiple runner agents.
+
+on:
+  schedule:
+    - cron: "0 3 * * *"
+  workflow_dispatch:
+    inputs:
+      duration_sec:
+        description: "Fuzzing budget, in seconds"
+        default: "86400"
+        required: false
+      coverage_interval_sec:
+        description: "Live coverage refresh interval, in seconds"
+        default: "900"
+        required: false
+      fork_override:
+        description: "libFuzzer -fork override (blank = use saved campaign.json profile)"
+        default: ""
+        required: false
+      regenerate_harnesses:
+        description: "Regenerate proto/harness sources instead of reusing saved ones"
+        type: boolean
+        default: false
+      fresh_seeds:
+        description: "Reuse saved proto/harness but regenerate a simple seed corpus"
+        type: boolean
+        default: false
+
+jobs:
+  campaign:
+    uses: ./.github/workflows/_library-pipeline.yml
+    with:
+      library: cjson
+      duration_sec: ${{ inputs.duration_sec || '86400' }}
+      coverage_interval_sec: ${{ inputs.coverage_interval_sec || '900' }}
+      fork_override: ${{ inputs.fork_override || '' }}
+      regenerate_harnesses: ${{ inputs.regenerate_harnesses == true }}
+      fresh_seeds: ${{ inputs.fresh_seeds == true }}

@@ -1,0 +1,147 @@
+name: Library Pipeline (reusable)
+
+# Reusable workflow: one library's campaign split into the tool's own
+# pipeline stages as separate jobs (build -> fuzz -> coverage & crash
+# triage -> report), via scripts/ci_run_stage.sh (run_campaign.sh --stage
+# build|fuzz|postprocess sharing one --campaign-dir).
+#
+# Called by the per-library workflows (.github/workflows/lib-*.yml), each
+# of which supplies `library` and is triggered on its own schedule/dispatch.
+#
+# CAMPAIGN_DIR is a fixed CANONICAL absolute path (not derived from
+# $GITHUB_WORKSPACE), keyed by run_id + library. This is deliberate: with
+# multiple self-hosted runner agents sharing one label, GitHub Actions may
+# route this workflow's build/fuzz/postprocess jobs to different runner
+# agents (different _work directories) even though they're all the same
+# physical machine. A workspace-relative path would break across agents;
+# the canonical path does not, since every agent's workspace symlinks
+# ground_truths/ and artifacts/ back to the same place anyway (see
+# .github/actions/link-local-data).
+
+on:
+  workflow_call:
+    inputs:
+      library:
+        required: true
+        type: string
+      duration_sec:
+        required: false
+        type: string
+        default: "86400"
+      coverage_interval_sec:
+        required: false
+        type: string
+        default: "900"
+      fork_override:
+        required: false
+        type: string
+        default: ""
+      regenerate_harnesses:
+        required: false
+        type: boolean
+        default: false
+      fresh_seeds:
+        required: false
+        type: boolean
+        default: false
+
+concurrency:
+  group: proto-liberator-lib-${{ inputs.library }}
+  cancel-in-progress: false
+
+env:
+  CAMPAIGN_DIR: /home/fuzzserver/Research/proto-liberator/artifacts/highcoverage_campaigns/gha-${{ github.run_id }}/${{ inputs.library }}
+
+jobs:
+  build:
+    name: Build (schema + harness + compile)
+    runs-on: [self-hosted, linux, proto-liberator]
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          clean: false
+      - uses: ./.github/actions/link-local-data
+      - name: Generate schema/harness, compile fuzzer + profile binary
+        run: |
+          scripts/ci_run_stage.sh "${{ inputs.library }}" build "${CAMPAIGN_DIR}" \
+            "${{ inputs.duration_sec }}" "${{ inputs.coverage_interval_sec }}" \
+            "${{ inputs.fork_override }}" \
+            "${{ inputs.regenerate_harnesses && '1' || '0' }}" \
+            "${{ inputs.fresh_seeds && '1' || '0' }}"
+
+  fuzz:
+    name: Fuzz
+    needs: build
+    runs-on: [self-hosted, linux, proto-liberator]
+    timeout-minutes: 1500 # up to 25h to cover a 24h duration_sec run
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          clean: false
+      - uses: ./.github/actions/link-local-data
+      - name: Run libFuzzer for duration_sec
+        run: |
+          scripts/ci_run_stage.sh "${{ inputs.library }}" fuzz "${CAMPAIGN_DIR}" \
+            "${{ inputs.duration_sec }}" "${{ inputs.coverage_interval_sec }}" \
+            "${{ inputs.fork_override }}" \
+            "${{ inputs.regenerate_harnesses && '1' || '0' }}" \
+            "${{ inputs.fresh_seeds && '1' || '0' }}"
+
+  postprocess:
+    name: Coverage & Crash Triage
+    needs: fuzz
+    runs-on: [self-hosted, linux, proto-liberator]
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          clean: false
+      - uses: ./.github/actions/link-local-data
+      - name: Minimize corpus, replay coverage, classify + cluster crashes
+        run: |
+          scripts/ci_run_stage.sh "${{ inputs.library }}" postprocess "${CAMPAIGN_DIR}" \
+            "${{ inputs.duration_sec }}" "${{ inputs.coverage_interval_sec }}" \
+            "${{ inputs.fork_override }}" \
+            "${{ inputs.regenerate_harnesses && '1' || '0' }}" \
+            "${{ inputs.fresh_seeds && '1' || '0' }}"
+
+  report:
+    name: Report
+    needs: postprocess
+    if: always()
+    runs-on: [self-hosted, linux, proto-liberator]
+    timeout-minutes: 15
+    steps:
+      - name: Write job summary
+        run: |
+          set -euo pipefail
+          {
+            echo "## ${{ inputs.library }}: ${CAMPAIGN_DIR}"
+            echo
+            for f in coverage/coverage_summary.txt casr/summary.txt crashes/summary.txt; do
+              path="${CAMPAIGN_DIR}/default/${f}"
+              if [[ -f "${path}" ]]; then
+                echo "### ${f}"
+                echo '```'
+                tail -n 40 "${path}"
+                echo '```'
+              fi
+            done
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Upload coverage/crash summaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.library }}-report-${{ github.run_id }}
+          path: |
+            ${{ env.CAMPAIGN_DIR }}/default/coverage/coverage_summary.txt
+            ${{ env.CAMPAIGN_DIR }}/default/coverage/final/*.txt
+            ${{ env.CAMPAIGN_DIR }}/default/coverage/live/*.txt
+            ${{ env.CAMPAIGN_DIR }}/default/casr/summary.txt
+            ${{ env.CAMPAIGN_DIR }}/default/crashes/summary.txt
+          retention-days: 30
+          if-no-files-found: warn
