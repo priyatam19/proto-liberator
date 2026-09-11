@@ -8,6 +8,7 @@ set -euo pipefail
 #   ./collect_coverage.sh <workdir>
 #   ./collect_coverage.sh <workdir> --final
 #   ./collect_coverage.sh <workdir> --live
+#   ./collect_coverage.sh <workdir> --rerun
 #   ./collect_coverage.sh <workdir> --live --reset --corpus-dir <dir>
 #
 # Library-only reporting (like Liberator):
@@ -23,7 +24,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 if [ "${1:-}" = "-h" ] || [ "${1:-}" = "--help" ] || [ $# -lt 1 ]; then
-    echo "Usage: $0 <workdir> [--final|--live] [--binary BIN] [--corpus-dir DIR] [--reset] [--sources-file FILE] [--ignore-regex REGEX] [--ignore-file FILE]"
+    echo "Usage: $0 <workdir> [--final|--live|--rerun] [--binary BIN] [--corpus-dir DIR] [--reset] [--sources-file FILE] [--ignore-regex REGEX] [--ignore-file FILE]"
     exit 0
 fi
 
@@ -40,7 +41,7 @@ SOURCES_FILE=""
 
 while [ $# -gt 0 ]; do
     case "$1" in
-        --final|--live)
+        --final|--live|--rerun)
             MODE="$1"
             shift
             ;;
@@ -69,12 +70,12 @@ while [ $# -gt 0 ]; do
             shift 2
             ;;
         -h|--help)
-            echo "Usage: $0 <workdir> [--final|--live] [--binary BIN] [--corpus-dir DIR] [--reset] [--sources-file FILE] [--ignore-regex REGEX] [--ignore-file FILE]"
+            echo "Usage: $0 <workdir> [--final|--live|--rerun] [--binary BIN] [--corpus-dir DIR] [--reset] [--sources-file FILE] [--ignore-regex REGEX] [--ignore-file FILE]"
             exit 0
             ;;
         *)
             echo "[ERROR] Unknown argument: $1"
-            echo "Usage: $0 <workdir> [--final|--live] [--binary BIN] [--corpus-dir DIR] [--reset] [--sources-file FILE] [--ignore-regex REGEX] [--ignore-file FILE]"
+            echo "Usage: $0 <workdir> [--final|--live|--rerun] [--binary BIN] [--corpus-dir DIR] [--reset] [--sources-file FILE] [--ignore-regex REGEX] [--ignore-file FILE]"
             exit 2
             ;;
     esac
@@ -98,8 +99,20 @@ fi
 
 # Find LLVM tools
 #
-# Prefer binaries from the same toolchain as `clang` to avoid profile-format
-# mismatches (e.g. clang-18 generating profraw consumed by llvm-profdata-14).
+# Resolution order:
+#   1. Caller-supplied env var (LLVM_PROFDATA / LLVM_COV / CLANG_BIN)
+#   2. System-installed versioned binaries (llvm-profdata-18, llvm-cov-18, etc.)
+#      Preferred over clang --print-prog-name because custom LLVM builds (e.g.
+#      bjjwwang/LLVM-compile used by SVF) label themselves 18.1.0rc but generate
+#      profraw format version 9, which the same build's llvm-profdata cannot merge.
+#      The Ubuntu system llvm-profdata-18 handles version 9 correctly.
+#   3. clang --print-prog-name (same-toolchain lookup, fallback only)
+#   4. Unversioned system binaries
+#
+# Campaign default:
+#   Pin to LLVM 18 unless caller overrides PROTO_LIBERATOR_LLVM_VERSION.
+LLVM_VERSION_PIN="${PROTO_LIBERATOR_LLVM_VERSION:-18}"
+
 resolve_llvm_tool_from_clang() {
     local tool_name="$1"
     local clang_bin
@@ -116,17 +129,48 @@ resolve_llvm_tool_from_clang() {
     return 1
 }
 
+# Probe versioned system binaries (18, 17, 16, 15, 14) before falling back to clang lookup.
+resolve_versioned_system_tool() {
+    local tool_name="$1"
+    if [ -n "${LLVM_VERSION_PIN}" ]; then
+        local pinned
+        pinned="$(which "${tool_name}-${LLVM_VERSION_PIN}" 2>/dev/null || true)"
+        if [ -n "${pinned}" ] && [ -x "${pinned}" ]; then
+            printf "%s" "${pinned}"
+            return 0
+        fi
+    fi
+    for ver in 18 17 16 15 14; do
+        if [ -n "${LLVM_VERSION_PIN}" ] && [ "${ver}" = "${LLVM_VERSION_PIN}" ]; then
+            continue
+        fi
+        local bin
+        bin="$(which "${tool_name}-${ver}" 2>/dev/null || true)"
+        if [ -n "${bin}" ] && [ -x "${bin}" ]; then
+            printf "%s" "${bin}"
+            return 0
+        fi
+    done
+    return 1
+}
+
 if [ -z "${LLVM_PROFDATA:-}" ]; then
-    LLVM_PROFDATA="$(resolve_llvm_tool_from_clang llvm-profdata 2>/dev/null || true)"
+    LLVM_PROFDATA="$(resolve_versioned_system_tool llvm-profdata 2>/dev/null || true)"
     if [ -z "${LLVM_PROFDATA}" ]; then
-        LLVM_PROFDATA="$(which llvm-profdata 2>/dev/null || which llvm-profdata-14 2>/dev/null || true)"
+        LLVM_PROFDATA="$(resolve_llvm_tool_from_clang llvm-profdata 2>/dev/null || true)"
+    fi
+    if [ -z "${LLVM_PROFDATA}" ]; then
+        LLVM_PROFDATA="$(which llvm-profdata 2>/dev/null || true)"
     fi
 fi
 
 if [ -z "${LLVM_COV:-}" ]; then
-    LLVM_COV="$(resolve_llvm_tool_from_clang llvm-cov 2>/dev/null || true)"
+    LLVM_COV="$(resolve_versioned_system_tool llvm-cov 2>/dev/null || true)"
     if [ -z "${LLVM_COV}" ]; then
-        LLVM_COV="$(which llvm-cov 2>/dev/null || which llvm-cov-14 2>/dev/null || true)"
+        LLVM_COV="$(resolve_llvm_tool_from_clang llvm-cov 2>/dev/null || true)"
+    fi
+    if [ -z "${LLVM_COV}" ]; then
+        LLVM_COV="$(which llvm-cov 2>/dev/null || true)"
     fi
 fi
 
@@ -134,6 +178,9 @@ if [ -z "$LLVM_PROFDATA" ] || [ -z "$LLVM_COV" ]; then
     echo "[ERROR] llvm-profdata and llvm-cov required"
     exit 1
 fi
+echo "[Coverage] LLVM tool pin: ${LLVM_VERSION_PIN}"
+echo "[Coverage] LLVM_PROFDATA: ${LLVM_PROFDATA}"
+echo "[Coverage] LLVM_COV: ${LLVM_COV}"
 
 # Paths
 FUZZ_BIN="${WORKDIR}/*_fuzzer.bin"
@@ -158,8 +205,13 @@ fi
 PROFRAW_DIR="${WORKDIR}/profraw"
 CORPUS_DIR="${WORKDIR}/corpus"
 COVERAGE_DIR="${WORKDIR}/coverage"
+REPLAY_ARTIFACTS_DIR="${COVERAGE_DIR}/replay_artifacts"
 PROFDATA_LIVE="${WORKDIR}/coverage_live.profdata"
 PROFDATA_FINAL="${COVERAGE_DIR}/merged.profdata"
+
+# Keep crashes/timeouts discovered during coverage replay inside the campaign.
+# Without an explicit prefix, libFuzzer writes them into the caller's cwd.
+mkdir -p "${REPLAY_ARTIFACTS_DIR}"
 
 mkdir -p "${COVERAGE_DIR}"
 
@@ -374,7 +426,8 @@ run_corpus_coverage() {
         if [ -f "$input" ]; then
             local basename=$(basename "$input")
             export LLVM_PROFILE_FILE="${profraw_output_dir}/corpus_${basename}.profraw"
-            timeout 10s "${FUZZ_BIN}" "$input" -runs=0 2>/dev/null || true
+            timeout 10s "${FUZZ_BIN}" "$input" -runs=0 \
+                -artifact_prefix="${REPLAY_ARTIFACTS_DIR}/" 2>/dev/null || true
             i=$((i + 1))
             if [ $((i % 100)) -eq 0 ]; then
                 echo "[Coverage] Processed ${i}/${corpus_count} corpus files..."
@@ -399,7 +452,8 @@ run_corpus_dir_once() {
 
     mkdir -p "${profraw_output_dir}"
     export LLVM_PROFILE_FILE="${profraw_output_dir}/%m_%p.profraw"
-    timeout 120s "${FUZZ_BIN}" "${corpus_dir}" -runs=0 2>/dev/null || true
+    timeout 120s "${FUZZ_BIN}" "${corpus_dir}" -runs=0 \
+        -artifact_prefix="${REPLAY_ARTIFACTS_DIR}/" 2>/dev/null || true
 
     local count_after
     count_after=$(find "${profraw_output_dir}" -name "*.profraw" 2>/dev/null | wc -l)
@@ -430,6 +484,7 @@ run_corpus_dir_once_limited() {
     timeout 120s "${FUZZ_BIN}" "${corpus_dir}" -runs=0 \
         -max_total_time="${live_max_total_time}" \
         -timeout="${live_timeout}" \
+        -artifact_prefix="${REPLAY_ARTIFACTS_DIR}/" \
         -fork=1 \
         -ignore_crashes=1 -ignore_timeouts=1 -ignore_ooms=1 \
         -error_exitcode=0 \
@@ -441,6 +496,43 @@ run_corpus_dir_once_limited() {
         echo "[Coverage] Generated ${count_after} profraw files (limited corpus replay: max_total_time=${live_max_total_time}s)"
         return 0
     fi
+    return 1
+}
+
+# Live-mode fallback for corpora whose first entry crashes before the profiling
+# runtime can flush a .profraw file. Try a bounded number of individual inputs
+# and stop as soon as one clean replay produces profile data.
+run_corpus_inputs_until_profraw() {
+    local corpus_dir="$1"
+    local profraw_output_dir="$2"
+    local max_inputs="${PROTO_LIBERATOR_LIVE_COVERAGE_FALLBACK_INPUTS:-32}"
+    local input_timeout="${PROTO_LIBERATOR_LIVE_COVERAGE_FALLBACK_TIMEOUT_SEC:-3}"
+    local input
+    local attempted=0
+    local profraw_count_before
+    local profraw_count_after
+
+    profraw_count_before=$(find "${profraw_output_dir}" -maxdepth 1 -type f -name "*.profraw" 2>/dev/null | wc -l)
+
+    while IFS= read -r -d '' input; do
+        attempted=$((attempted + 1))
+        export LLVM_PROFILE_FILE="${profraw_output_dir}/fallback_%m_%p.profraw"
+        timeout "${input_timeout}s" "${FUZZ_BIN}" "${input}" -runs=0 \
+            -artifact_prefix="${REPLAY_ARTIFACTS_DIR}/" \
+            -detect_leaks=0 \
+            >/dev/null 2>&1 || true
+
+        profraw_count_after=$(find "${profraw_output_dir}" -maxdepth 1 -type f -name "*.profraw" 2>/dev/null | wc -l)
+        if [ "${profraw_count_after}" -gt "${profraw_count_before}" ]; then
+            echo "[Coverage] Generated profile data after ${attempted} bounded per-input replay(s)"
+            return 0
+        fi
+        if [ "${attempted}" -ge "${max_inputs}" ]; then
+            break
+        fi
+    done < <(find "${corpus_dir}" -maxdepth 1 -type f -print0 2>/dev/null | sort -z)
+
+    echo "[Coverage] No profraw after ${attempted} bounded per-input replay(s)"
     return 1
 }
 
@@ -457,6 +549,10 @@ case "${MODE}" in
         fi
 
         run_corpus_dir_once_limited "${CORPUS_DIR}" "${PROFRAW_DIR}" || true
+        # Always add one known-clean per-input profile. Fork-mode corpus replay
+        # can leave a parent-only .profraw with zero target coverage when all
+        # selected child inputs crash.
+        run_corpus_inputs_until_profraw "${CORPUS_DIR}" "${PROFRAW_DIR}" || true
 
         if merge_profraw "${PROFDATA_LIVE}" 0; then
             generate_report "${PROFDATA_LIVE}" "${COVERAGE_DIR}/live"
@@ -516,6 +612,25 @@ EOF
         if merge_profraw "${PROFDATA_FINAL}" 0; then
             generate_report "${PROFDATA_FINAL}" "${COVERAGE_DIR}/final"
             extract_metrics "${COVERAGE_DIR}/final/report_full.txt" "${COVERAGE_DIR}/coverage_final.csv"
+
+            # Publish the same stable top-level outputs as --final so callers do
+            # not need to know which replay strategy produced the report.
+            cp "${COVERAGE_DIR}/coverage_final.csv" "${WORKDIR}/coverage_metrics.csv"
+            cat > "${WORKDIR}/coverage_summary.txt" << EOF
+Proto-libErator Coverage Summary
+================================
+Generated: $(date -Is)
+Workdir: ${WORKDIR}
+Replay mode: comprehensive per-input
+
+$(cat "${COVERAGE_DIR}/final/report_summary.txt")
+
+Full report: ${COVERAGE_DIR}/final/report_full.txt
+Function coverage: ${COVERAGE_DIR}/final/functions.txt
+Source coverage: ${COVERAGE_DIR}/final/show.txt
+LCOV export: ${COVERAGE_DIR}/final/coverage.lcov
+EOF
+            echo "[Coverage] Summary written to: ${WORKDIR}/coverage_summary.txt"
         fi
         ;;
         

@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "reference_report": "artifacts/libsndfile/default/results_deepstate_20260407_153911/report_full_after.txt",
+  "reference_corpus": "artifacts/libsndfile/default/corpus",
+  "initial_corpus": {"archive": "initial_corpus.tar.gz", "sha256": "a58028b94932a37e9fedd36043e003e18dd00493c93a630d9e25fd2b241ad467", "files": 4261},
+  "runtime": {"fork": 2, "jobs": 1, "workers": 1, "seed": 1337, "max_len": 4096, "timeout_sec": 25, "max_actions": 64},
+  "reference_duration_sec": 900,
+  "recommended_duration_sec": 86400,
+  "use_minimum_apis": false
+}

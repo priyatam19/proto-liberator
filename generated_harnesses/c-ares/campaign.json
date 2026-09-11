@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "reference_report": "artifacts/c-ares/c-ares/c-ares_20260324_165513/default/coverage/final/report_full_rerun15m_llvm18_postedit_patch_20260325_132246_recalc_from_profraw_tag.txt",
+  "reference_corpus": "artifacts/c-ares/c-ares/c-ares_20260324_165513/default/corpus_min_postedit_patch_20260325_132246",
+  "initial_corpus": {"archive": "initial_corpus.tar.gz", "sha256": "181b8d2e8e5961c7c00164135190258aa236f6bd595d03a3a83a96e84e87c630", "files": 3550},
+  "runtime": {"fork": 2, "jobs": 1, "workers": 1, "seed": 1337, "max_len": 4096, "timeout_sec": 25, "max_actions": 64},
+  "reference_duration_sec": 900,
+  "recommended_duration_sec": 86400,
+  "use_minimum_apis": false
+}

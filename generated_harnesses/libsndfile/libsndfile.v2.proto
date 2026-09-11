@@ -1,0 +1,859 @@
+syntax = "proto2";
+
+package libsndfile_fuzzer;
+
+
+// Parameters for sf_close
+// param_0: %struct.sf_private_tag*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message sf_close_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for sf_command
+// param_0: %struct.sf_private_tag*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32
+// param_2: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+//   ↳ malloc size override for overflow testing
+// param_3: i32
+//   ↳ malloc size override for overflow testing
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message sf_command_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional bytes param_2 = 4;
+  optional uint32 param_2_length = 5;
+  optional uint32 param_2_length_override = 6;
+  optional bool param_2_is_null = 7;
+  optional uint32 param_2_malloc_override = 8;
+  optional int32 param_3 = 9;
+  optional uint32 param_3_malloc_override = 10;
+  optional bool skip_dependency_check = 11;
+  optional bool allow_double_delete = 12;
+}
+
+// Parameters for sf_current_byterate
+// param_0: %struct.sf_private_tag*
+//   ↳ Handle to %struct.sf_private_tag* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message sf_current_byterate_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for sf_error
+// param_0: %struct.sf_private_tag*
+//   ↳ Handle to %struct.sf_private_tag* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message sf_error_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for sf_error_number
+// param_0: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message sf_error_number_Params {
+  optional int32 param_0 = 1;
+  optional bool allow_double_delete = 2;
+}
+
+// Parameters for sf_error_str
+// param_0: %struct.sf_private_tag*
+//   ↳ Handle to %struct.sf_private_tag* object
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Nullable exploration knob
+// param_2: i64
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message sf_error_str_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional bool param_1_is_null = 4;
+  optional int64 param_2 = 5;
+  optional bool allow_double_delete = 6;
+}
+
+// Parameters for sf_format_check
+// param_0: %struct.SF_INFO*
+//   ↳ Struct blob init (size=256)
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message sf_format_check_Params {
+  optional bytes param_0_blob = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for sf_get_chunk_data
+// param_0: %struct.SF_CHUNK_ITERATOR*
+//   ↳ Handle to %struct.SF_CHUNK_ITERATOR* object
+//   ↳ Nullable exploration knob
+// param_1: %struct.SF_CHUNK_INFO*
+//   ↳ Struct blob init (size=640)
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message sf_get_chunk_data_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1_blob = 3;
+  optional bool param_1_is_null = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for sf_get_chunk_iterator
+// param_0: %struct.sf_private_tag*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: %struct.SF_CHUNK_INFO*
+//   ↳ Struct blob init (size=640)
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message sf_get_chunk_iterator_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1_blob = 3;
+  optional bool param_1_is_null = 4;
+  optional bool skip_dependency_check = 5;
+  optional bool allow_double_delete = 6;
+}
+
+// Parameters for sf_get_chunk_size
+// param_0: %struct.SF_CHUNK_ITERATOR*
+//   ↳ Handle to %struct.SF_CHUNK_ITERATOR* object
+//   ↳ Nullable exploration knob
+// param_1: %struct.SF_CHUNK_INFO*
+//   ↳ Struct blob init (size=640)
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message sf_get_chunk_size_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1_blob = 3;
+  optional bool param_1_is_null = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for sf_get_string
+// param_0: %struct.sf_private_tag*
+//   ↳ Handle to %struct.sf_private_tag* object
+//   ↳ Nullable exploration knob
+// param_1: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message sf_get_string_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional bool allow_double_delete = 4;
+}
+
+// Parameters for sf_next_chunk_iterator
+// param_0: %struct.SF_CHUNK_ITERATOR*
+//   ↳ Handle to %struct.SF_CHUNK_ITERATOR* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message sf_next_chunk_iterator_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for sf_open
+// param_0: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_1: i32
+// param_2: %struct.SF_INFO*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message sf_open_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional int32 param_1 = 5;
+  optional uint32 param_2_handle = 6;
+  optional bool param_2_is_null = 7;
+  optional bool allow_double_delete = 8;
+}
+
+// Parameters for sf_open_fd
+// param_0: i32
+// param_1: i32
+// param_2: %struct.SF_INFO*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_3: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message sf_open_fd_Params {
+  optional int32 param_0 = 1;
+  optional int32 param_1 = 2;
+  optional uint32 param_2_handle = 3;
+  optional bool param_2_is_null = 4;
+  optional int32 param_3 = 5;
+  optional bool allow_double_delete = 6;
+}
+
+// Parameters for sf_open_virtual
+// param_0: %struct.SF_VIRTUAL_IO*
+//   ↳ Struct blob init (size=320)
+//   ↳ Nullable exploration knob
+// param_1: i32
+// param_2: %struct.SF_INFO*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_3: i8*
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message sf_open_virtual_Params {
+  optional bytes param_0_blob = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional uint32 param_2_handle = 4;
+  optional bool param_2_is_null = 5;
+  optional bytes param_3 = 6;
+  optional bool param_3_is_null = 7;
+  optional bool allow_double_delete = 8;
+}
+
+// Parameters for sf_perror
+// param_0: %struct.sf_private_tag*
+//   ↳ Handle to %struct.sf_private_tag* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message sf_perror_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for sf_read_double
+// param_0: %struct.sf_private_tag*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: double*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_2: i64
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message sf_read_double_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bytes param_2 = 7;
+  optional uint32 param_2_length = 8;
+  optional uint32 param_2_length_override = 9;
+  optional bool param_2_is_null = 10;
+  optional bool skip_dependency_check = 11;
+  optional bool allow_double_delete = 12;
+}
+
+// Parameters for sf_read_float
+// param_0: %struct.sf_private_tag*
+//   ↳ Handle to %struct.sf_private_tag* object
+//   ↳ Nullable exploration knob
+// param_1: float*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_2: i64
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message sf_read_float_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bytes param_2 = 7;
+  optional uint32 param_2_length = 8;
+  optional uint32 param_2_length_override = 9;
+  optional bool param_2_is_null = 10;
+  optional bool allow_double_delete = 11;
+}
+
+// Parameters for sf_read_int
+// param_0: %struct.sf_private_tag*
+//   ↳ Handle to %struct.sf_private_tag* object
+//   ↳ Nullable exploration knob
+// param_1: i32*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_2: i64
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message sf_read_int_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bytes param_2 = 7;
+  optional uint32 param_2_length = 8;
+  optional uint32 param_2_length_override = 9;
+  optional bool param_2_is_null = 10;
+  optional bool allow_double_delete = 11;
+}
+
+// Parameters for sf_read_raw
+// param_0: %struct.sf_private_tag*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_2: i64
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message sf_read_raw_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bytes param_2 = 7;
+  optional uint32 param_2_length = 8;
+  optional uint32 param_2_length_override = 9;
+  optional bool param_2_is_null = 10;
+  optional bool skip_dependency_check = 11;
+  optional bool allow_double_delete = 12;
+}
+
+// Parameters for sf_read_short
+// param_0: %struct.sf_private_tag*
+//   ↳ Handle to %struct.sf_private_tag* object
+//   ↳ Nullable exploration knob
+// param_1: i16*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_2: i64
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message sf_read_short_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bytes param_2 = 7;
+  optional uint32 param_2_length = 8;
+  optional uint32 param_2_length_override = 9;
+  optional bool param_2_is_null = 10;
+  optional bool allow_double_delete = 11;
+}
+
+// Parameters for sf_readf_double
+// param_0: %struct.sf_private_tag*
+//   ↳ Handle to %struct.sf_private_tag* object
+//   ↳ Nullable exploration knob
+// param_1: double*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_2: i64
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message sf_readf_double_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bytes param_2 = 7;
+  optional uint32 param_2_length = 8;
+  optional uint32 param_2_length_override = 9;
+  optional bool param_2_is_null = 10;
+  optional bool allow_double_delete = 11;
+}
+
+// Parameters for sf_readf_float
+// param_0: %struct.sf_private_tag*
+//   ↳ Handle to %struct.sf_private_tag* object
+//   ↳ Nullable exploration knob
+// param_1: float*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_2: i64
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message sf_readf_float_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bytes param_2 = 7;
+  optional uint32 param_2_length = 8;
+  optional uint32 param_2_length_override = 9;
+  optional bool param_2_is_null = 10;
+  optional bool allow_double_delete = 11;
+}
+
+// Parameters for sf_readf_int
+// param_0: %struct.sf_private_tag*
+//   ↳ Handle to %struct.sf_private_tag* object
+//   ↳ Nullable exploration knob
+// param_1: i32*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_2: i64
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message sf_readf_int_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bytes param_2 = 7;
+  optional uint32 param_2_length = 8;
+  optional uint32 param_2_length_override = 9;
+  optional bool param_2_is_null = 10;
+  optional bool allow_double_delete = 11;
+}
+
+// Parameters for sf_readf_short
+// param_0: %struct.sf_private_tag*
+//   ↳ Handle to %struct.sf_private_tag* object
+//   ↳ Nullable exploration knob
+// param_1: i16*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_2: i64
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message sf_readf_short_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bytes param_2 = 7;
+  optional uint32 param_2_length = 8;
+  optional uint32 param_2_length_override = 9;
+  optional bool param_2_is_null = 10;
+  optional bool allow_double_delete = 11;
+}
+
+// Parameters for sf_seek
+// param_0: %struct.sf_private_tag*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i64
+// param_2: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message sf_seek_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int64 param_1 = 3;
+  optional int32 param_2 = 4;
+  optional bool skip_dependency_check = 5;
+  optional bool allow_double_delete = 6;
+}
+
+// Parameters for sf_set_chunk
+// param_0: %struct.sf_private_tag*
+//   ↳ Handle to %struct.sf_private_tag* object
+//   ↳ Nullable exploration knob
+// param_1: %struct.SF_CHUNK_INFO*
+//   ↳ Struct blob init (size=640)
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message sf_set_chunk_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1_blob = 3;
+  optional bool param_1_is_null = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for sf_set_string
+// param_0: %struct.sf_private_tag*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32
+// param_2: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message sf_set_string_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional bytes param_2 = 4;
+  optional uint32 param_2_length = 5;
+  optional uint32 param_2_length_override = 6;
+  optional bool param_2_is_null = 7;
+  optional bool skip_dependency_check = 8;
+  optional bool allow_double_delete = 9;
+}
+
+// Parameters for sf_strerror
+// param_0: %struct.sf_private_tag*
+//   ↳ Handle to %struct.sf_private_tag* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message sf_strerror_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for sf_version_string
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message sf_version_string_Params {
+  optional bool allow_double_delete = 1;
+}
+
+// Parameters for sf_write_double
+// param_0: %struct.sf_private_tag*
+//   ↳ Handle to %struct.sf_private_tag* object
+//   ↳ Nullable exploration knob
+// param_1: double*
+//   ↳ Nullable exploration knob
+// param_2: i64
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message sf_write_double_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional bool param_1_is_null = 4;
+  optional int64 param_2 = 5;
+  optional bool allow_double_delete = 6;
+}
+
+// Parameters for sf_write_float
+// param_0: %struct.sf_private_tag*
+//   ↳ Handle to %struct.sf_private_tag* object
+//   ↳ Nullable exploration knob
+// param_1: float*
+//   ↳ Nullable exploration knob
+// param_2: i64
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message sf_write_float_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional bool param_1_is_null = 4;
+  optional int64 param_2 = 5;
+  optional bool allow_double_delete = 6;
+}
+
+// Parameters for sf_write_int
+// param_0: %struct.sf_private_tag*
+//   ↳ Handle to %struct.sf_private_tag* object
+//   ↳ Nullable exploration knob
+// param_1: i32*
+//   ↳ Nullable exploration knob
+// param_2: i64
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message sf_write_int_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional bool param_1_is_null = 4;
+  optional int64 param_2 = 5;
+  optional bool allow_double_delete = 6;
+}
+
+// Parameters for sf_write_raw
+// param_0: %struct.sf_private_tag*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_2: i64
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message sf_write_raw_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional int64 param_2 = 7;
+  optional bool skip_dependency_check = 8;
+  optional bool allow_double_delete = 9;
+}
+
+// Parameters for sf_write_short
+// param_0: %struct.sf_private_tag*
+//   ↳ Handle to %struct.sf_private_tag* object
+//   ↳ Nullable exploration knob
+// param_1: i16*
+//   ↳ Nullable exploration knob
+// param_2: i64
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message sf_write_short_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional bool param_1_is_null = 4;
+  optional int64 param_2 = 5;
+  optional bool allow_double_delete = 6;
+}
+
+// Parameters for sf_write_sync
+// param_0: %struct.sf_private_tag*
+//   ↳ Handle to %struct.sf_private_tag* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message sf_write_sync_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for sf_writef_double
+// param_0: %struct.sf_private_tag*
+//   ↳ Handle to %struct.sf_private_tag* object
+//   ↳ Nullable exploration knob
+// param_1: double*
+//   ↳ Nullable exploration knob
+// param_2: i64
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message sf_writef_double_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional bool param_1_is_null = 4;
+  optional int64 param_2 = 5;
+  optional bool allow_double_delete = 6;
+}
+
+// Parameters for sf_writef_float
+// param_0: %struct.sf_private_tag*
+//   ↳ Handle to %struct.sf_private_tag* object
+//   ↳ Nullable exploration knob
+// param_1: float*
+//   ↳ Nullable exploration knob
+// param_2: i64
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message sf_writef_float_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional bool param_1_is_null = 4;
+  optional int64 param_2 = 5;
+  optional bool allow_double_delete = 6;
+}
+
+// Parameters for sf_writef_int
+// param_0: %struct.sf_private_tag*
+//   ↳ Handle to %struct.sf_private_tag* object
+//   ↳ Nullable exploration knob
+// param_1: i32*
+//   ↳ Nullable exploration knob
+// param_2: i64
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message sf_writef_int_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional bool param_1_is_null = 4;
+  optional int64 param_2 = 5;
+  optional bool allow_double_delete = 6;
+}
+
+// Parameters for sf_writef_short
+// param_0: %struct.sf_private_tag*
+//   ↳ Handle to %struct.sf_private_tag* object
+//   ↳ Nullable exploration knob
+// param_1: i16*
+//   ↳ Nullable exploration knob
+// param_2: i64
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message sf_writef_short_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional bool param_1_is_null = 4;
+  optional int64 param_2 = 5;
+  optional bool allow_double_delete = 6;
+}
+
+// Dynamic dispatch: exactly one API call variant per Action.
+message Action {
+  oneof action {
+    sf_close_Params sf_close = 1;
+    sf_command_Params sf_command = 2;
+    sf_current_byterate_Params sf_current_byterate = 3;
+    sf_error_Params sf_error = 4;
+    sf_error_number_Params sf_error_number = 5;
+    sf_error_str_Params sf_error_str = 6;
+    sf_format_check_Params sf_format_check = 7;
+    sf_get_chunk_data_Params sf_get_chunk_data = 8;
+    sf_get_chunk_iterator_Params sf_get_chunk_iterator = 9;
+    sf_get_chunk_size_Params sf_get_chunk_size = 10;
+    sf_get_string_Params sf_get_string = 11;
+    sf_next_chunk_iterator_Params sf_next_chunk_iterator = 12;
+    sf_open_Params sf_open = 13;
+    sf_open_fd_Params sf_open_fd = 14;
+    sf_open_virtual_Params sf_open_virtual = 15;
+    sf_perror_Params sf_perror = 16;
+    sf_read_double_Params sf_read_double = 17;
+    sf_read_float_Params sf_read_float = 18;
+    sf_read_int_Params sf_read_int = 19;
+    sf_read_raw_Params sf_read_raw = 20;
+    sf_read_short_Params sf_read_short = 21;
+    sf_readf_double_Params sf_readf_double = 22;
+    sf_readf_float_Params sf_readf_float = 23;
+    sf_readf_int_Params sf_readf_int = 24;
+    sf_readf_short_Params sf_readf_short = 25;
+    sf_seek_Params sf_seek = 26;
+    sf_set_chunk_Params sf_set_chunk = 27;
+    sf_set_string_Params sf_set_string = 28;
+    sf_strerror_Params sf_strerror = 29;
+    sf_version_string_Params sf_version_string = 30;
+    sf_write_double_Params sf_write_double = 31;
+    sf_write_float_Params sf_write_float = 32;
+    sf_write_int_Params sf_write_int = 33;
+    sf_write_raw_Params sf_write_raw = 34;
+    sf_write_short_Params sf_write_short = 35;
+    sf_write_sync_Params sf_write_sync = 36;
+    sf_writef_double_Params sf_writef_double = 37;
+    sf_writef_float_Params sf_writef_float = 38;
+    sf_writef_int_Params sf_writef_int = 39;
+    sf_writef_short_Params sf_writef_short = 40;
+  }
+}
+
+// Top-level fuzz input (v2). Dynamic sequence of Actions.
+message FuzzInput {
+  optional uint32 global_seed = 1;
+  repeated Action actions = 2;
+  optional uint32 max_actions_hint = 3;
+  optional bool favor_valid_state = 4;
+  // Prefer harness-side valid object seeding/path fallback for deeper stateful API sequences.
+  optional bool prefer_valid_stateful_io = 5;
+  // Optional deterministic seed for SF_INFO template seeding in the harness.
+  optional uint32 sf_info_seed = 6;
+  // Force a bootstrap of one-or-more live SNDFILE handles before/throughout action execution.
+  optional bool bootstrap_live_handles = 7;
+  // Desired number of live SNDFILE handles to maintain in valid-state mode.
+  optional uint32 bootstrap_handle_budget = 8;
+  // Normalize fuzzed open mode values into SFM_READ/SFM_WRITE/SFM_RDWR for valid flows.
+  optional bool normalize_open_modes = 9;
+}

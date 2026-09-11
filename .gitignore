@@ -44,9 +44,8 @@ tests/output_seeds/
 tests/output_orch/
 
 # External deps (cloned/build artifacts)
-external/libprotobuf-mutator/**
+/external/libprotobuf-mutator/
 external/nanopb/**
-!external/libprotobuf-mutator/.gitkeep
 !external/nanopb/.gitkeep
 
 # Research/paper artifacts (kept local, not shared on GitHub)

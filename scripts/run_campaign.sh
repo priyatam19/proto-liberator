@@ -61,13 +61,16 @@ Common options:
   --num-seeds N                 Default: 64
   --seed-max-len N              Default: 16
   --minimum-apis PATH           Optional apis_minimized.txt to restrict APIs
-  --minimum-apis PATH           Optional apis_minimized.txt to restrict APIs
   --seed-rng N                  Default: 0
+  --initial-corpus-archive PATH Seed corpus tar.gz extracted after the build
+  --initial-corpus-sha256 HASH  Required SHA-256 for the seed corpus archive
   --target-include DIR          Repeatable
   --target-lib PATH             Repeatable
   --extra-src PATH              Repeatable
   --profile-extra-src PATH      Build *_profile.bin with extra sources (repeatable)
   --profile-keep-target-lib     Also link --target-lib into *_profile.bin
+  --regenerate-harnesses        Keep the newly generated proto/harness
+  --clang PATH                  Clang executable base (default: clang; PATH also supplies PATH++)
   --cc-arg ARG                  Extra compile arg for ALL variants (repeatable)
   --with-lenient                Add a second "lenient" variant (if no variants specified)
   --lenient-env KEY=VAL         Env override for lenient variant (repeatable)
@@ -116,6 +119,7 @@ NUM_SEEDS="64"
 SEED_MAX_LEN="16"
 SEED_RNG="0"
 HARNESS_STYLE="simple"
+CLANG="clang"
 
 DURATION_SEC="86400"
 MAX_LEN="4096"
@@ -136,8 +140,10 @@ TARGET_LIBS=()
 EXTRA_SRCS=()
 PROFILE_EXTRA_SRCS=()
 PROFILE_KEEP_TARGET_LIB="0"
+REGENERATE_HARNESSES="0"
 MINIMUM_APIS=""
-MINIMUM_APIS=""
+INITIAL_CORPUS_ARCHIVE=""
+INITIAL_CORPUS_SHA256=""
 
 declare -a VARIANTS=()
 declare -A VARIANT_CC_ARGS=()
@@ -166,6 +172,7 @@ while [ $# -gt 0 ]; do
     --seed-max-len) SEED_MAX_LEN="${2:-}"; shift 2;;
     --seed-rng) SEED_RNG="${2:-}"; shift 2;;
     --harness-style) HARNESS_STYLE="${2:-}"; shift 2;;
+    --clang) CLANG="${2:-}"; shift 2;;
 
     --duration-sec) DURATION_SEC="${2:-}"; shift 2;;
     --max-len) MAX_LEN="${2:-}"; shift 2;;
@@ -185,9 +192,12 @@ while [ $# -gt 0 ]; do
     --target-include) TARGET_INCLUDES+=("${2:-}"); shift 2;;
     --target-lib) TARGET_LIBS+=("${2:-}"); shift 2;;
     --minimum-apis) MINIMUM_APIS="${2:-}"; shift 2;;
+    --initial-corpus-archive) INITIAL_CORPUS_ARCHIVE="${2:-}"; shift 2;;
+    --initial-corpus-sha256) INITIAL_CORPUS_SHA256="${2:-}"; shift 2;;
     --extra-src) EXTRA_SRCS+=("${2:-}"); shift 2;;
     --profile-extra-src) PROFILE_EXTRA_SRCS+=("${2:-}"); shift 2;;
     --profile-keep-target-lib) PROFILE_KEEP_TARGET_LIB="1"; shift;;
+    --regenerate-harnesses) REGENERATE_HARNESSES="1"; shift;;
 
     --variant)
       CURRENT_VARIANT="${2:-}"
@@ -256,6 +266,33 @@ if [ -n "${MINIMUM_APIS}" ]; then
 fi
 if [ -n "${DRIVER}" ]; then
   DRIVER="$(cd "$(dirname "${DRIVER}")" && pwd)/$(basename "${DRIVER}")"
+fi
+if [ -n "${INITIAL_CORPUS_ARCHIVE}" ]; then
+  INITIAL_CORPUS_ARCHIVE="$(cd "$(dirname "${INITIAL_CORPUS_ARCHIVE}")" && pwd)/$(basename "${INITIAL_CORPUS_ARCHIVE}")"
+  if [ ! -f "${INITIAL_CORPUS_ARCHIVE}" ]; then
+    echo "[ERROR] Initial corpus archive not found: ${INITIAL_CORPUS_ARCHIVE}" >&2
+    exit 2
+  fi
+  if [[ ! "${INITIAL_CORPUS_SHA256}" =~ ^[0-9a-fA-F]{64}$ ]]; then
+    echo "[ERROR] --initial-corpus-sha256 is required with a valid SHA-256 hash." >&2
+    exit 2
+  fi
+  actual_corpus_sha256="$(sha256sum "${INITIAL_CORPUS_ARCHIVE}" | awk '{print $1}')"
+  if [ "${actual_corpus_sha256}" != "${INITIAL_CORPUS_SHA256,,}" ]; then
+    echo "[ERROR] Initial corpus archive checksum mismatch." >&2
+    exit 2
+  fi
+  if tar -tzf "${INITIAL_CORPUS_ARCHIVE}" | awk '
+      /^\// || /(^|\/)\.\.($|\/)/ { unsafe=1 }
+      END { exit unsafe ? 0 : 1 }
+    '; then
+    echo "[ERROR] Initial corpus archive contains an unsafe path." >&2
+    exit 2
+  fi
+  GENERATE_SEEDS="0"
+elif [ -n "${INITIAL_CORPUS_SHA256}" ]; then
+  echo "[ERROR] --initial-corpus-sha256 requires --initial-corpus-archive." >&2
+  exit 2
 fi
 
 LENIENT_DEFAULTS=$'PROTO_LIBERATOR_NULL_BUDGET=4\nPROTO_LIBERATOR_NULL_PROB_NUM=1\nPROTO_LIBERATOR_NULL_PROB_DEN=8\nPROTO_LIBERATOR_STALE_BUDGET=1\nPROTO_LIBERATOR_STALE_PROB_NUM=1\nPROTO_LIBERATOR_STALE_PROB_DEN=32\nPROTO_LIBERATOR_CHARPP_FALLBACK=1'
@@ -331,6 +368,12 @@ META_JSON="${CAMPAIGN_DIR}/campaign.meta.txt"
   echo "duration_sec=${DURATION_SEC}"
   echo "jobs=${JOBS}"
   echo "workers=${WORKERS}"
+  echo "fork=${FORK}"
+  echo "seed_rng=${SEED_RNG}"
+  if [ -n "${INITIAL_CORPUS_ARCHIVE}" ]; then
+    echo "initial_corpus_sha256=${INITIAL_CORPUS_SHA256,,}"
+  fi
+  echo "clang=${CLANG}"
   echo "timestamp=${STAMP}"
 } > "${META_JSON}"
 
@@ -361,6 +404,7 @@ build_variant() {
     --seed-max-len "${SEED_MAX_LEN}"
     --seed-rng "${SEED_RNG}"
     --harness-style "${HARNESS_STYLE}"
+    --clang "${CLANG}"
     --build
     --build-profile
   )
@@ -407,7 +451,27 @@ build_variant() {
   done <<< "${VARIANT_CC_ARGS[${variant}]}"
 
   echo "[Campaign] Building variant '${variant}' -> ${out_dir}"
-  python3 "${ROOT_DIR}/src/run_all.py" "${run_all_args[@]}"
+  local saved_sources_dir=""
+  local candidate_saved_sources="${ROOT_DIR}/generated_harnesses/${LIBRARY}"
+  if [ "${REGENERATE_HARNESSES}" != "1" ] \
+    && [ "${SCHEMA_MODE}" = "v2" ] \
+    && [ "${MUTATION_MODE}" = "lpm" ] \
+    && [ -f "${candidate_saved_sources}/${LIBRARY}.v2.proto" ] \
+    && [ -f "${candidate_saved_sources}/harness.cc" ]; then
+    saved_sources_dir="${candidate_saved_sources}"
+  fi
+
+  PROTO_LIBERATOR_GENERATED_HARNESS_DIR="${saved_sources_dir}" \
+    python3 "${ROOT_DIR}/src/run_all.py" "${run_all_args[@]}"
+
+  if [ -n "${INITIAL_CORPUS_ARCHIVE}" ]; then
+    mkdir -p "${out_dir}/corpus"
+    tar -xzf "${INITIAL_CORPUS_ARCHIVE}" -C "${out_dir}/corpus"
+    if ! find "${out_dir}/corpus" -maxdepth 1 -type f -print -quit | grep -q .; then
+      echo "[ERROR] Initial corpus archive did not contain any top-level files." >&2
+      return 1
+    fi
+  fi
 
   # Save a best-effort list of library sources for llvm-cov -show-functions.
   # (llvm-cov requires explicit source paths for -show-functions.)
@@ -577,7 +641,6 @@ postprocess_variant() {
   local variant="$1"
   local out_dir="${CAMPAIGN_DIR}/${variant}"
   local fuzzer_bin="${out_dir}/${LIBRARY}_fuzzer.bin"
-  local profile_bin="${out_dir}/${LIBRARY}_profile.bin"
   local corpus_dir="${out_dir}/corpus"
   local corpus_min="${out_dir}/corpus_min"
   local profraw_dir="${out_dir}/profraw"
@@ -588,12 +651,6 @@ postprocess_variant() {
 
   mkdir -p "${profraw_dir}" "${coverage_dir}" "${casr_dir}" "${api_stats_dir}" "${crashes_dir}"
 
-  local -a env_kv=()
-  while IFS= read -r kv; do
-    [ -z "${kv}" ] && continue
-    env_kv+=("${kv}")
-  done <<< "${VARIANT_ENVS[${variant}]:-}"
-
   if [ -f "${fuzzer_bin}" ] && [ -d "${corpus_dir}" ]; then
     echo "[Campaign] Minimizing corpus for '${variant}'..."
     rm -rf "${corpus_min}"
@@ -601,28 +658,12 @@ postprocess_variant() {
     timeout 30m "${fuzzer_bin}" -merge=1 "${corpus_min}" "${corpus_dir}" >/dev/null 2>&1 || true
   fi
 
-  if [ -f "${profile_bin}" ] && [ -d "${corpus_min}" ]; then
-    echo "[Campaign] Profiling coverage for '${variant}'..."
-    export LLVM_PROFILE_FILE="${profraw_dir}/final_%m_%p.profraw"
-
-    # Final replay budget controls (wall timeout + per-input timeout inside libFuzzer).
-    # Keep these conservative so final coverage completes reliably even on large corpora.
-    local final_wall_timeout_sec="${PROTO_LIBERATOR_FINAL_COVERAGE_WALL_TIMEOUT_SEC:-1800}"  # 30m
-    local final_input_timeout_sec="${PROTO_LIBERATOR_FINAL_COVERAGE_INPUT_TIMEOUT_SEC:-${TIMEOUT_SEC}}"
-
-    PROTO_LIBERATOR_API_STATS="${api_stats_dir}/api_stats_profile.json" \
-      "${env_kv[@]}" \
-      timeout "${final_wall_timeout_sec}s" "${profile_bin}" "${corpus_min}" -runs=0 \
-      -detect_leaks=0 \
-      -timeout="${final_input_timeout_sec}" \
-      -fork=1 \
-      -ignore_crashes=1 -ignore_timeouts=1 -ignore_ooms=1 \
-      -error_exitcode=0 \
-      >/dev/null 2>&1 || true
-  fi
-
-  echo "[Campaign] Coverage report for '${variant}'..."
-  "${ROOT_DIR}/scripts/collect_coverage.sh" "${out_dir}" --final \
+  # Replay each input separately for the authoritative final report. A single
+  # libFuzzer corpus replay can stop early on a timeout or malformed input and
+  # silently produce partial coverage, especially for the larger saved corpora.
+  echo "[Campaign] Comprehensive coverage replay for '${variant}'..."
+  "${ROOT_DIR}/scripts/collect_coverage.sh" "${out_dir}" --rerun \
+    --corpus-dir "${corpus_dir}" \
     --sources-file "${out_dir}/coverage.sources.txt" \
     --ignore-file "${ROOT_DIR}/scripts/coverage_ignore_default.txt" \
     > "${coverage_dir}/coverage_summary.txt" 2>&1 || true

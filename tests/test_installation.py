@@ -5,6 +5,7 @@ Verifies all dependencies and components are properly installed
 """
 
 import sys
+import os
 import subprocess
 from pathlib import Path
 import importlib.util
@@ -21,6 +22,23 @@ def check_command(command):
         return True
     except (FileNotFoundError, subprocess.TimeoutExpired):
         return False
+
+def resolve_liberator_root(project_root: Path):
+    """Resolve libErator location from env var or common local paths."""
+    candidates = []
+    env_root = os.environ.get("LIBERATOR_ROOT")
+    if env_root:
+        candidates.append(Path(env_root).expanduser())
+    candidates.extend([
+        project_root.parent / "liberator",
+        Path("/home/fuzzserver/Research/liberator"),
+        Path("/home/priyatam/pin_compete/tools/liberator"),
+    ])
+
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate
+    return candidates[0] if candidates else None
 
 def main():
     print("=" * 70)
@@ -130,8 +148,8 @@ def main():
 
     # Check libErator integration
     print("\n[8/8] Checking libErator integration...")
-    liberator_root = Path('/home/priyatam/pin_compete/tools/liberator')
-    if liberator_root.exists():
+    liberator_root = resolve_liberator_root(project_root)
+    if liberator_root and liberator_root.exists():
         print(f"  ✓ libErator found: {liberator_root}")
 
         # Check for cJSON analysis
@@ -142,7 +160,7 @@ def main():
             print(f"  ⚠ cJSON analysis not found - run libErator first")
             warnings.append("libErator cJSON analysis not available")
     else:
-        print(f"  ✗ libErator not found at {liberator_root}")
+        print(f"  ✗ libErator not found. Set LIBERATOR_ROOT or place it at ../liberator")
         warnings.append("libErator not found")
 
     # Summary

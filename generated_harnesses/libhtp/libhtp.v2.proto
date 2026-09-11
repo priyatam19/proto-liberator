@@ -1,0 +1,5096 @@
+syntax = "proto2";
+
+package libhtp_fuzzer;
+
+
+// Parameters for LzmaDec_Allocate
+// param_0: %struct.CLzmaDec*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_2: i32
+// param_3: %struct.ISzAlloc.344*
+//   ↳ Struct blob init (size=128)
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message LzmaDec_Allocate_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional int32 param_2 = 7;
+  optional bytes param_3_blob = 8;
+  optional bool param_3_is_null = 9;
+  optional bool skip_dependency_check = 10;
+  optional bool allow_double_delete = 11;
+}
+
+// Parameters for LzmaDec_AllocateProbs
+// param_0: %struct.CLzmaDec*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_2: i32
+// param_3: %struct.ISzAlloc.344*
+//   ↳ Struct blob init (size=128)
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message LzmaDec_AllocateProbs_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional int32 param_2 = 7;
+  optional bytes param_3_blob = 8;
+  optional bool param_3_is_null = 9;
+  optional bool skip_dependency_check = 10;
+  optional bool allow_double_delete = 11;
+}
+
+// Parameters for LzmaDec_DecodeToBuf
+// param_0: %struct.CLzmaDec*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_2: i64*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_3: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_4: i64*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_5: i32
+// param_6: i32*
+//   ↳ Nullable exploration knob
+// param_7: i64
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message LzmaDec_DecodeToBuf_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bytes param_2 = 7;
+  optional uint32 param_2_length = 8;
+  optional uint32 param_2_length_override = 9;
+  optional bool param_2_is_null = 10;
+  optional bytes param_3 = 11;
+  optional uint32 param_3_length = 12;
+  optional uint32 param_3_length_override = 13;
+  optional bool param_3_is_null = 14;
+  optional uint32 param_4_handle = 15;
+  optional bool param_4_is_null = 16;
+  optional int32 param_5 = 17;
+  optional bytes param_6 = 18;
+  optional bool param_6_is_null = 19;
+  optional int64 param_7 = 20;
+  optional bool skip_dependency_check = 21;
+  optional bool allow_double_delete = 22;
+}
+
+// Parameters for LzmaDec_DecodeToDic
+// param_0: %struct.CLzmaDec*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i64
+//   ↳ Scalar (deps ignored for schema shape)
+// param_2: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_3: i64*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_4: i32
+// param_5: i32*
+//   ↳ Nullable exploration knob
+// param_6: i64
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message LzmaDec_DecodeToDic_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int64 param_1 = 3;
+  optional bytes param_2 = 4;
+  optional uint32 param_2_length = 5;
+  optional uint32 param_2_length_override = 6;
+  optional bool param_2_is_null = 7;
+  optional bytes param_3 = 8;
+  optional uint32 param_3_length = 9;
+  optional uint32 param_3_length_override = 10;
+  optional bool param_3_is_null = 11;
+  optional int32 param_4 = 12;
+  optional bytes param_5 = 13;
+  optional bool param_5_is_null = 14;
+  optional int64 param_6 = 15;
+  optional bool skip_dependency_check = 16;
+  optional bool allow_double_delete = 17;
+}
+
+// Parameters for LzmaDec_Free
+// param_0: %struct.CLzmaDec*
+//   ↳ Struct blob init (size=1024)
+//   ↳ Nullable exploration knob
+// param_1: %struct.ISzAlloc.344*
+//   ↳ Struct blob init (size=128)
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message LzmaDec_Free_Params {
+  optional bytes param_0_blob = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1_blob = 3;
+  optional bool param_1_is_null = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for LzmaDec_FreeProbs
+// param_0: %struct.CLzmaDec*
+//   ↳ Struct blob init (size=1024)
+//   ↳ Nullable exploration knob
+// param_1: %struct.ISzAlloc.344*
+//   ↳ Struct blob init (size=128)
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message LzmaDec_FreeProbs_Params {
+  optional bytes param_0_blob = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1_blob = 3;
+  optional bool param_1_is_null = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for LzmaDec_Init
+// param_0: %struct.CLzmaDec*
+//   ↳ Struct blob init (size=1024)
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message LzmaDec_Init_Params {
+  optional bytes param_0_blob = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for LzmaDecode
+// param_0: i8*
+//   ↳ Nullable exploration knob
+// param_1: i64*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_2: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_3: i64*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_4: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_5: i32
+// param_6: i32
+// param_7: i32*
+//   ↳ Nullable exploration knob
+// param_8: %struct.ISzAlloc.344*
+//   ↳ Struct blob init (size=128)
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message LzmaDecode_Params {
+  optional bytes param_0 = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bytes param_2 = 7;
+  optional uint32 param_2_length = 8;
+  optional uint32 param_2_length_override = 9;
+  optional bool param_2_is_null = 10;
+  optional bytes param_3 = 11;
+  optional uint32 param_3_length = 12;
+  optional uint32 param_3_length_override = 13;
+  optional bool param_3_is_null = 14;
+  optional bytes param_4 = 15;
+  optional uint32 param_4_length = 16;
+  optional uint32 param_4_length_override = 17;
+  optional bool param_4_is_null = 18;
+  optional int32 param_5 = 19;
+  optional int32 param_6 = 20;
+  optional bytes param_7 = 21;
+  optional bool param_7_is_null = 22;
+  optional bytes param_8_blob = 23;
+  optional bool param_8_is_null = 24;
+  optional bool skip_dependency_check = 25;
+  optional bool allow_double_delete = 26;
+}
+
+// Parameters for LzmaProps_Decode
+// param_0: %struct._CLzmaProps*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_2: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message LzmaProps_Decode_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional int32 param_2 = 7;
+  optional bool skip_dependency_check = 8;
+  optional bool allow_double_delete = 9;
+}
+
+// Parameters for bstr_add
+// param_0: %struct.bstr_t*
+//   ↳ Handle to %struct.bstr_t* object
+//   ↳ Nullable exploration knob
+// param_1: %struct.bstr_t*
+//   ↳ Handle to %struct.bstr_t* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message bstr_add_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional uint32 param_1_handle = 3;
+  optional bool param_1_is_null = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for bstr_add_c
+// param_0: %struct.bstr_t*
+//   ↳ Handle to %struct.bstr_t* object
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message bstr_add_c_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for bstr_add_c_noex
+// param_0: %struct.bstr_t*
+//   ↳ Handle to %struct.bstr_t* object
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message bstr_add_c_noex_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for bstr_add_mem
+// param_0: %struct.bstr_t*
+//   ↳ Handle to %struct.bstr_t* object
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_2: i64
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message bstr_add_mem_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional int64 param_2 = 7;
+  optional bool allow_double_delete = 8;
+}
+
+// Parameters for bstr_add_mem_noex
+// param_0: %struct.bstr_t*
+//   ↳ Handle to %struct.bstr_t* object
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_2: i64
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message bstr_add_mem_noex_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional int64 param_2 = 7;
+  optional bool allow_double_delete = 8;
+}
+
+// Parameters for bstr_add_noex
+// param_0: %struct.bstr_t*
+//   ↳ Handle to %struct.bstr_t* object
+//   ↳ Nullable exploration knob
+// param_1: %struct.bstr_t*
+//   ↳ Handle to %struct.bstr_t* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message bstr_add_noex_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional uint32 param_1_handle = 3;
+  optional bool param_1_is_null = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for bstr_adjust_len
+// param_0: %struct.bstr_t*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i64
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message bstr_adjust_len_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int64 param_1 = 3;
+  optional bool skip_dependency_check = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for bstr_adjust_realptr
+// param_0: %struct.bstr_t*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message bstr_adjust_realptr_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional bool param_1_is_null = 4;
+  optional bool skip_dependency_check = 5;
+  optional bool allow_double_delete = 6;
+}
+
+// Parameters for bstr_adjust_size
+// param_0: %struct.bstr_t*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i64
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message bstr_adjust_size_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int64 param_1 = 3;
+  optional bool skip_dependency_check = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for bstr_alloc
+// param_0: i64
+//   ↳ malloc size override for overflow testing
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message bstr_alloc_Params {
+  optional int64 param_0 = 1;
+  optional uint32 param_0_malloc_override = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for bstr_begins_with
+// param_0: %struct.bstr_t*
+//   ↳ Handle to %struct.bstr_t* object
+//   ↳ Nullable exploration knob
+// param_1: %struct.bstr_t*
+//   ↳ Handle to %struct.bstr_t* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message bstr_begins_with_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional uint32 param_1_handle = 3;
+  optional bool param_1_is_null = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for bstr_begins_with_c
+// param_0: %struct.bstr_t*
+//   ↳ Handle to %struct.bstr_t* object
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message bstr_begins_with_c_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for bstr_begins_with_c_nocase
+// param_0: %struct.bstr_t*
+//   ↳ Handle to %struct.bstr_t* object
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message bstr_begins_with_c_nocase_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for bstr_begins_with_mem
+// param_0: %struct.bstr_t*
+//   ↳ Handle to %struct.bstr_t* object
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_2: i64
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message bstr_begins_with_mem_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional int64 param_2 = 7;
+  optional bool allow_double_delete = 8;
+}
+
+// Parameters for bstr_begins_with_mem_nocase
+// param_0: %struct.bstr_t*
+//   ↳ Handle to %struct.bstr_t* object
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_2: i64
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message bstr_begins_with_mem_nocase_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional int64 param_2 = 7;
+  optional bool allow_double_delete = 8;
+}
+
+// Parameters for bstr_begins_with_nocase
+// param_0: %struct.bstr_t*
+//   ↳ Handle to %struct.bstr_t* object
+//   ↳ Nullable exploration knob
+// param_1: %struct.bstr_t*
+//   ↳ Handle to %struct.bstr_t* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message bstr_begins_with_nocase_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional uint32 param_1_handle = 3;
+  optional bool param_1_is_null = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for bstr_builder_append_c
+// param_0: %struct.bstr_builder_t*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message bstr_builder_append_c_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bool skip_dependency_check = 7;
+  optional bool allow_double_delete = 8;
+}
+
+// Parameters for bstr_builder_append_mem
+// param_0: %struct.bstr_builder_t*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_2: i64
+//   ↳ malloc size override for overflow testing
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message bstr_builder_append_mem_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional int64 param_2 = 7;
+  optional uint32 param_2_malloc_override = 8;
+  optional bool skip_dependency_check = 9;
+  optional bool allow_double_delete = 10;
+}
+
+// Parameters for bstr_builder_appendn
+// param_0: %struct.bstr_builder_t*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: %struct.bstr_t*
+//   ↳ Handle to %struct.bstr_t* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message bstr_builder_appendn_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional uint32 param_1_handle = 3;
+  optional bool param_1_is_null = 4;
+  optional bool skip_dependency_check = 5;
+  optional bool allow_double_delete = 6;
+}
+
+// Parameters for bstr_builder_clear
+// param_0: %struct.bstr_builder_t*
+//   ↳ Handle to %struct.bstr_builder_t* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message bstr_builder_clear_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for bstr_builder_create
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message bstr_builder_create_Params {
+  optional bool allow_double_delete = 1;
+}
+
+// Parameters for bstr_builder_destroy
+// param_0: %struct.bstr_builder_t*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message bstr_builder_destroy_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for bstr_builder_size
+// param_0: %struct.bstr_builder_t*
+//   ↳ Handle to %struct.bstr_builder_t* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message bstr_builder_size_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for bstr_builder_to_str
+// param_0: %struct.bstr_builder_t*
+//   ↳ Handle to %struct.bstr_builder_t* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message bstr_builder_to_str_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for bstr_char_at
+// param_0: %struct.bstr_t*
+//   ↳ Handle to %struct.bstr_t* object
+//   ↳ Nullable exploration knob
+// param_1: i64
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message bstr_char_at_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int64 param_1 = 3;
+  optional bool allow_double_delete = 4;
+}
+
+// Parameters for bstr_char_at_end
+// param_0: %struct.bstr_t*
+//   ↳ Handle to %struct.bstr_t* object
+//   ↳ Nullable exploration knob
+// param_1: i64
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message bstr_char_at_end_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int64 param_1 = 3;
+  optional bool allow_double_delete = 4;
+}
+
+// Parameters for bstr_chop
+// param_0: %struct.bstr_t*
+//   ↳ Handle to %struct.bstr_t* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message bstr_chop_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for bstr_chr
+// param_0: %struct.bstr_t*
+//   ↳ Handle to %struct.bstr_t* object
+//   ↳ Nullable exploration knob
+// param_1: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message bstr_chr_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional bool allow_double_delete = 4;
+}
+
+// Parameters for bstr_cmp
+// param_0: %struct.bstr_t*
+//   ↳ Handle to %struct.bstr_t* object
+//   ↳ Nullable exploration knob
+// param_1: %struct.bstr_t*
+//   ↳ Handle to %struct.bstr_t* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message bstr_cmp_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional uint32 param_1_handle = 3;
+  optional bool param_1_is_null = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for bstr_cmp_c
+// param_0: %struct.bstr_t*
+//   ↳ Handle to %struct.bstr_t* object
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message bstr_cmp_c_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for bstr_cmp_c_nocase
+// param_0: %struct.bstr_t*
+//   ↳ Handle to %struct.bstr_t* object
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message bstr_cmp_c_nocase_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for bstr_cmp_c_nocasenorzero
+// param_0: %struct.bstr_t*
+//   ↳ Handle to %struct.bstr_t* object
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message bstr_cmp_c_nocasenorzero_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for bstr_cmp_mem
+// param_0: %struct.bstr_t*
+//   ↳ Handle to %struct.bstr_t* object
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_2: i64
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message bstr_cmp_mem_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional int64 param_2 = 7;
+  optional bool allow_double_delete = 8;
+}
+
+// Parameters for bstr_cmp_mem_nocase
+// param_0: %struct.bstr_t*
+//   ↳ Handle to %struct.bstr_t* object
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_2: i64
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message bstr_cmp_mem_nocase_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional int64 param_2 = 7;
+  optional bool allow_double_delete = 8;
+}
+
+// Parameters for bstr_cmp_nocase
+// param_0: %struct.bstr_t*
+//   ↳ Handle to %struct.bstr_t* object
+//   ↳ Nullable exploration knob
+// param_1: %struct.bstr_t*
+//   ↳ Handle to %struct.bstr_t* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message bstr_cmp_nocase_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional uint32 param_1_handle = 3;
+  optional bool param_1_is_null = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for bstr_dup
+// param_0: %struct.bstr_t*
+//   ↳ Handle to %struct.bstr_t* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message bstr_dup_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for bstr_dup_c
+// param_0: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message bstr_dup_c_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for bstr_dup_ex
+// param_0: %struct.bstr_t*
+//   ↳ Handle to %struct.bstr_t* object
+//   ↳ Nullable exploration knob
+// param_1: i64
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_2: i64
+//   ↳ malloc size override for overflow testing
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message bstr_dup_ex_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional int64 param_2 = 7;
+  optional uint32 param_2_malloc_override = 8;
+  optional bool allow_double_delete = 9;
+}
+
+// Parameters for bstr_dup_lower
+// param_0: %struct.bstr_t*
+//   ↳ Handle to %struct.bstr_t* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message bstr_dup_lower_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for bstr_dup_mem
+// param_0: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_1: i64
+//   ↳ malloc size override for overflow testing
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message bstr_dup_mem_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional int64 param_1 = 5;
+  optional uint32 param_1_malloc_override = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for bstr_expand
+// param_0: %struct.bstr_t*
+//   ↳ Handle to %struct.bstr_t* object
+//   ↳ Nullable exploration knob
+// param_1: i64
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message bstr_expand_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int64 param_1 = 3;
+  optional bool allow_double_delete = 4;
+}
+
+// Parameters for bstr_free
+// param_0: %struct.bstr_t*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message bstr_free_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for bstr_index_of
+// param_0: %struct.bstr_t*
+//   ↳ Handle to %struct.bstr_t* object
+//   ↳ Nullable exploration knob
+// param_1: %struct.bstr_t*
+//   ↳ Handle to %struct.bstr_t* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message bstr_index_of_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional uint32 param_1_handle = 3;
+  optional bool param_1_is_null = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for bstr_index_of_c
+// param_0: %struct.bstr_t*
+//   ↳ Handle to %struct.bstr_t* object
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message bstr_index_of_c_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for bstr_index_of_c_nocase
+// param_0: %struct.bstr_t*
+//   ↳ Handle to %struct.bstr_t* object
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message bstr_index_of_c_nocase_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for bstr_index_of_c_nocasenorzero
+// param_0: %struct.bstr_t*
+//   ↳ Handle to %struct.bstr_t* object
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message bstr_index_of_c_nocasenorzero_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for bstr_index_of_mem
+// param_0: %struct.bstr_t*
+//   ↳ Handle to %struct.bstr_t* object
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_2: i64
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message bstr_index_of_mem_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional int64 param_2 = 7;
+  optional bool allow_double_delete = 8;
+}
+
+// Parameters for bstr_index_of_mem_nocase
+// param_0: %struct.bstr_t*
+//   ↳ Handle to %struct.bstr_t* object
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_2: i64
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message bstr_index_of_mem_nocase_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional int64 param_2 = 7;
+  optional bool allow_double_delete = 8;
+}
+
+// Parameters for bstr_index_of_nocase
+// param_0: %struct.bstr_t*
+//   ↳ Handle to %struct.bstr_t* object
+//   ↳ Nullable exploration knob
+// param_1: %struct.bstr_t*
+//   ↳ Handle to %struct.bstr_t* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message bstr_index_of_nocase_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional uint32 param_1_handle = 3;
+  optional bool param_1_is_null = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for bstr_rchr
+// param_0: %struct.bstr_t*
+//   ↳ Handle to %struct.bstr_t* object
+//   ↳ Nullable exploration knob
+// param_1: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message bstr_rchr_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional bool allow_double_delete = 4;
+}
+
+// Parameters for bstr_to_lowercase
+// param_0: %struct.bstr_t*
+//   ↳ Handle to %struct.bstr_t* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message bstr_to_lowercase_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for bstr_util_cmp_mem
+// param_0: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_1: i64
+// param_2: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_3: i64
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message bstr_util_cmp_mem_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional int64 param_1 = 5;
+  optional bytes param_2 = 6;
+  optional uint32 param_2_length = 7;
+  optional uint32 param_2_length_override = 8;
+  optional bool param_2_is_null = 9;
+  optional int64 param_3 = 10;
+  optional bool allow_double_delete = 11;
+}
+
+// Parameters for bstr_util_cmp_mem_nocase
+// param_0: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_1: i64
+// param_2: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_3: i64
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message bstr_util_cmp_mem_nocase_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional int64 param_1 = 5;
+  optional bytes param_2 = 6;
+  optional uint32 param_2_length = 7;
+  optional uint32 param_2_length_override = 8;
+  optional bool param_2_is_null = 9;
+  optional int64 param_3 = 10;
+  optional bool allow_double_delete = 11;
+}
+
+// Parameters for bstr_util_cmp_mem_nocasenorzero
+// param_0: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_1: i64
+// param_2: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_3: i64
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message bstr_util_cmp_mem_nocasenorzero_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional int64 param_1 = 5;
+  optional bytes param_2 = 6;
+  optional uint32 param_2_length = 7;
+  optional uint32 param_2_length_override = 8;
+  optional bool param_2_is_null = 9;
+  optional int64 param_3 = 10;
+  optional bool allow_double_delete = 11;
+}
+
+// Parameters for bstr_util_mem_index_of_c
+// param_0: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_1: i64
+// param_2: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message bstr_util_mem_index_of_c_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional int64 param_1 = 5;
+  optional bytes param_2 = 6;
+  optional uint32 param_2_length = 7;
+  optional uint32 param_2_length_override = 8;
+  optional bool param_2_is_null = 9;
+  optional bool allow_double_delete = 10;
+}
+
+// Parameters for bstr_util_mem_index_of_c_nocase
+// param_0: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_1: i64
+// param_2: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message bstr_util_mem_index_of_c_nocase_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional int64 param_1 = 5;
+  optional bytes param_2 = 6;
+  optional uint32 param_2_length = 7;
+  optional uint32 param_2_length_override = 8;
+  optional bool param_2_is_null = 9;
+  optional bool allow_double_delete = 10;
+}
+
+// Parameters for bstr_util_mem_index_of_mem
+// param_0: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_1: i64
+// param_2: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_3: i64
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message bstr_util_mem_index_of_mem_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional int64 param_1 = 5;
+  optional bytes param_2 = 6;
+  optional uint32 param_2_length = 7;
+  optional uint32 param_2_length_override = 8;
+  optional bool param_2_is_null = 9;
+  optional int64 param_3 = 10;
+  optional bool allow_double_delete = 11;
+}
+
+// Parameters for bstr_util_mem_index_of_mem_nocase
+// param_0: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_1: i64
+// param_2: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_3: i64
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message bstr_util_mem_index_of_mem_nocase_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional int64 param_1 = 5;
+  optional bytes param_2 = 6;
+  optional uint32 param_2_length = 7;
+  optional uint32 param_2_length_override = 8;
+  optional bool param_2_is_null = 9;
+  optional int64 param_3 = 10;
+  optional bool allow_double_delete = 11;
+}
+
+// Parameters for bstr_util_mem_index_of_mem_nocasenorzero
+// param_0: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_1: i64
+// param_2: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_3: i64
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message bstr_util_mem_index_of_mem_nocasenorzero_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional int64 param_1 = 5;
+  optional bytes param_2 = 6;
+  optional uint32 param_2_length = 7;
+  optional uint32 param_2_length_override = 8;
+  optional bool param_2_is_null = 9;
+  optional int64 param_3 = 10;
+  optional bool allow_double_delete = 11;
+}
+
+// Parameters for bstr_util_mem_to_pint
+// param_0: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_1: i64
+// param_2: i32
+// param_3: i64*
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message bstr_util_mem_to_pint_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional int64 param_1 = 5;
+  optional int32 param_2 = 6;
+  optional bytes param_3 = 7;
+  optional bool param_3_is_null = 8;
+  optional bool allow_double_delete = 9;
+}
+
+// Parameters for bstr_util_mem_trim
+// param_0: i8**
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i64*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message bstr_util_mem_trim_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bool skip_dependency_check = 7;
+  optional bool allow_double_delete = 8;
+}
+
+// Parameters for bstr_util_memdup_to_c
+// param_0: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_1: i64
+//   ↳ malloc size override for overflow testing
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message bstr_util_memdup_to_c_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional int64 param_1 = 5;
+  optional uint32 param_1_malloc_override = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for bstr_util_strdup_to_c
+// param_0: %struct.bstr_t*
+//   ↳ Handle to %struct.bstr_t* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message bstr_util_strdup_to_c_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for bstr_wrap_c
+// param_0: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message bstr_wrap_c_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for bstr_wrap_mem
+// param_0: i8*
+//   ↳ Nullable exploration knob
+// param_1: i64
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message bstr_wrap_mem_Params {
+  optional bytes param_0 = 1;
+  optional bool param_0_is_null = 2;
+  optional int64 param_1 = 3;
+  optional bool allow_double_delete = 4;
+}
+
+// Parameters for htp_base64_decode
+// param_0: %struct.htp_base64_decoder*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_2: i32
+// param_3: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_4: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message htp_base64_decode_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional int32 param_2 = 7;
+  optional bytes param_3 = 8;
+  optional uint32 param_3_length = 9;
+  optional uint32 param_3_length_override = 10;
+  optional bool param_3_is_null = 11;
+  optional int32 param_4 = 12;
+  optional bool skip_dependency_check = 13;
+  optional bool allow_double_delete = 14;
+}
+
+// Parameters for htp_base64_decode_bstr
+// param_0: %struct.bstr_t*
+//   ↳ Handle to %struct.bstr_t* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message htp_base64_decode_bstr_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for htp_base64_decode_mem
+// param_0: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_1: i64
+//   ↳ malloc size override for overflow testing
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message htp_base64_decode_mem_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional int64 param_1 = 5;
+  optional uint32 param_1_malloc_override = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for htp_base64_decode_single
+// param_0: i8
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message htp_base64_decode_single_Params {
+  optional int32 param_0 = 1;
+  optional bool allow_double_delete = 2;
+}
+
+// Parameters for htp_base64_decoder_init
+// param_0: %struct.htp_base64_decoder*
+//   ↳ Struct blob init (size=64)
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message htp_base64_decoder_init_Params {
+  optional bytes param_0_blob = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for htp_config_copy
+// param_0: %struct.htp_cfg_t*
+//   ↳ Handle to %struct.htp_cfg_t* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message htp_config_copy_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for htp_config_create
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message htp_config_create_Params {
+  optional bool allow_double_delete = 1;
+}
+
+// Parameters for htp_config_destroy
+// param_0: %struct.htp_cfg_t*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message htp_config_destroy_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for htp_config_get_user_data
+// param_0: %struct.htp_cfg_t*
+//   ↳ Handle to %struct.htp_cfg_t* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message htp_config_get_user_data_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for htp_config_register_log
+// param_0: %struct.htp_cfg_t*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32 (%struct.htp_log_t*)*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+//   ↳ malloc size override for overflow testing
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message htp_config_register_log_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional uint32 param_1_malloc_override = 7;
+  optional bool skip_dependency_check = 8;
+  optional bool allow_double_delete = 9;
+}
+
+// Parameters for htp_config_register_multipart_parser
+// param_0: %struct.htp_cfg_t*
+//   ↳ Handle to %struct.htp_cfg_t* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message htp_config_register_multipart_parser_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for htp_config_register_request_body_data
+// param_0: %struct.htp_cfg_t*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32 (%struct.htp_tx_data_t*)*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+//   ↳ malloc size override for overflow testing
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message htp_config_register_request_body_data_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional uint32 param_1_malloc_override = 7;
+  optional bool skip_dependency_check = 8;
+  optional bool allow_double_delete = 9;
+}
+
+// Parameters for htp_config_register_request_complete
+// param_0: %struct.htp_cfg_t*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32 (%struct.htp_tx_t*)*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+//   ↳ malloc size override for overflow testing
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message htp_config_register_request_complete_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional uint32 param_1_malloc_override = 7;
+  optional bool skip_dependency_check = 8;
+  optional bool allow_double_delete = 9;
+}
+
+// Parameters for htp_config_register_request_file_data
+// param_0: %struct.htp_cfg_t*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32 (%struct.htp_file_data_t*)*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+//   ↳ malloc size override for overflow testing
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message htp_config_register_request_file_data_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional uint32 param_1_malloc_override = 7;
+  optional bool skip_dependency_check = 8;
+  optional bool allow_double_delete = 9;
+}
+
+// Parameters for htp_config_register_request_header_data
+// param_0: %struct.htp_cfg_t*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32 (%struct.htp_tx_data_t*)*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+//   ↳ malloc size override for overflow testing
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message htp_config_register_request_header_data_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional uint32 param_1_malloc_override = 7;
+  optional bool skip_dependency_check = 8;
+  optional bool allow_double_delete = 9;
+}
+
+// Parameters for htp_config_register_request_headers
+// param_0: %struct.htp_cfg_t*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32 (%struct.htp_tx_t*)*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+//   ↳ malloc size override for overflow testing
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message htp_config_register_request_headers_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional uint32 param_1_malloc_override = 7;
+  optional bool skip_dependency_check = 8;
+  optional bool allow_double_delete = 9;
+}
+
+// Parameters for htp_config_register_request_line
+// param_0: %struct.htp_cfg_t*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32 (%struct.htp_tx_t*)*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+//   ↳ malloc size override for overflow testing
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message htp_config_register_request_line_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional uint32 param_1_malloc_override = 7;
+  optional bool skip_dependency_check = 8;
+  optional bool allow_double_delete = 9;
+}
+
+// Parameters for htp_config_register_request_start
+// param_0: %struct.htp_cfg_t*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32 (%struct.htp_tx_t*)*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+//   ↳ malloc size override for overflow testing
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message htp_config_register_request_start_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional uint32 param_1_malloc_override = 7;
+  optional bool skip_dependency_check = 8;
+  optional bool allow_double_delete = 9;
+}
+
+// Parameters for htp_config_register_request_trailer
+// param_0: %struct.htp_cfg_t*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32 (%struct.htp_tx_t*)*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+//   ↳ malloc size override for overflow testing
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message htp_config_register_request_trailer_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional uint32 param_1_malloc_override = 7;
+  optional bool skip_dependency_check = 8;
+  optional bool allow_double_delete = 9;
+}
+
+// Parameters for htp_config_register_request_trailer_data
+// param_0: %struct.htp_cfg_t*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32 (%struct.htp_tx_data_t*)*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+//   ↳ malloc size override for overflow testing
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message htp_config_register_request_trailer_data_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional uint32 param_1_malloc_override = 7;
+  optional bool skip_dependency_check = 8;
+  optional bool allow_double_delete = 9;
+}
+
+// Parameters for htp_config_register_request_uri_normalize
+// param_0: %struct.htp_cfg_t*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32 (%struct.htp_tx_t*)*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+//   ↳ malloc size override for overflow testing
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message htp_config_register_request_uri_normalize_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional uint32 param_1_malloc_override = 7;
+  optional bool skip_dependency_check = 8;
+  optional bool allow_double_delete = 9;
+}
+
+// Parameters for htp_config_register_response_body_data
+// param_0: %struct.htp_cfg_t*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32 (%struct.htp_tx_data_t*)*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+//   ↳ malloc size override for overflow testing
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message htp_config_register_response_body_data_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional uint32 param_1_malloc_override = 7;
+  optional bool skip_dependency_check = 8;
+  optional bool allow_double_delete = 9;
+}
+
+// Parameters for htp_config_register_response_complete
+// param_0: %struct.htp_cfg_t*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32 (%struct.htp_tx_t*)*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+//   ↳ malloc size override for overflow testing
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message htp_config_register_response_complete_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional uint32 param_1_malloc_override = 7;
+  optional bool skip_dependency_check = 8;
+  optional bool allow_double_delete = 9;
+}
+
+// Parameters for htp_config_register_response_header_data
+// param_0: %struct.htp_cfg_t*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32 (%struct.htp_tx_data_t*)*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+//   ↳ malloc size override for overflow testing
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message htp_config_register_response_header_data_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional uint32 param_1_malloc_override = 7;
+  optional bool skip_dependency_check = 8;
+  optional bool allow_double_delete = 9;
+}
+
+// Parameters for htp_config_register_response_headers
+// param_0: %struct.htp_cfg_t*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32 (%struct.htp_tx_t*)*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+//   ↳ malloc size override for overflow testing
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message htp_config_register_response_headers_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional uint32 param_1_malloc_override = 7;
+  optional bool skip_dependency_check = 8;
+  optional bool allow_double_delete = 9;
+}
+
+// Parameters for htp_config_register_response_line
+// param_0: %struct.htp_cfg_t*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32 (%struct.htp_tx_t*)*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+//   ↳ malloc size override for overflow testing
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message htp_config_register_response_line_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional uint32 param_1_malloc_override = 7;
+  optional bool skip_dependency_check = 8;
+  optional bool allow_double_delete = 9;
+}
+
+// Parameters for htp_config_register_response_start
+// param_0: %struct.htp_cfg_t*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32 (%struct.htp_tx_t*)*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+//   ↳ malloc size override for overflow testing
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message htp_config_register_response_start_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional uint32 param_1_malloc_override = 7;
+  optional bool skip_dependency_check = 8;
+  optional bool allow_double_delete = 9;
+}
+
+// Parameters for htp_config_register_response_trailer
+// param_0: %struct.htp_cfg_t*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32 (%struct.htp_tx_t*)*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+//   ↳ malloc size override for overflow testing
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message htp_config_register_response_trailer_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional uint32 param_1_malloc_override = 7;
+  optional bool skip_dependency_check = 8;
+  optional bool allow_double_delete = 9;
+}
+
+// Parameters for htp_config_register_response_trailer_data
+// param_0: %struct.htp_cfg_t*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32 (%struct.htp_tx_data_t*)*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+//   ↳ malloc size override for overflow testing
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message htp_config_register_response_trailer_data_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional uint32 param_1_malloc_override = 7;
+  optional bool skip_dependency_check = 8;
+  optional bool allow_double_delete = 9;
+}
+
+// Parameters for htp_config_register_transaction_complete
+// param_0: %struct.htp_cfg_t*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32 (%struct.htp_tx_t*)*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+//   ↳ malloc size override for overflow testing
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message htp_config_register_transaction_complete_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional uint32 param_1_malloc_override = 7;
+  optional bool skip_dependency_check = 8;
+  optional bool allow_double_delete = 9;
+}
+
+// Parameters for htp_config_register_urlencoded_parser
+// param_0: %struct.htp_cfg_t*
+//   ↳ Handle to %struct.htp_cfg_t* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message htp_config_register_urlencoded_parser_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for htp_config_set_allow_space_uri
+// param_0: %struct.htp_cfg_t*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message htp_config_set_allow_space_uri_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional bool skip_dependency_check = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for htp_config_set_backslash_convert_slashes
+// param_0: %struct.htp_cfg_t*
+//   ↳ Handle to %struct.htp_cfg_t* object
+//   ↳ Nullable exploration knob
+// param_1: i32
+// param_2: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message htp_config_set_backslash_convert_slashes_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional int32 param_2 = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for htp_config_set_bestfit_map
+// param_0: %struct.htp_cfg_t*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32
+//   ↳ Scalar (deps ignored for schema shape)
+// param_2: i8*
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message htp_config_set_bestfit_map_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional bytes param_2 = 4;
+  optional bool param_2_is_null = 5;
+  optional bool skip_dependency_check = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for htp_config_set_bestfit_replacement_byte
+// param_0: %struct.htp_cfg_t*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32
+//   ↳ Scalar (deps ignored for schema shape)
+// param_2: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message htp_config_set_bestfit_replacement_byte_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional int32 param_2 = 4;
+  optional bool skip_dependency_check = 5;
+  optional bool allow_double_delete = 6;
+}
+
+// Parameters for htp_config_set_compression_bomb_limit
+// param_0: %struct.htp_cfg_t*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i64
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message htp_config_set_compression_bomb_limit_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int64 param_1 = 3;
+  optional bool skip_dependency_check = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for htp_config_set_compression_time_limit
+// param_0: %struct.htp_cfg_t*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i64
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message htp_config_set_compression_time_limit_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int64 param_1 = 3;
+  optional bool skip_dependency_check = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for htp_config_set_control_chars_unwanted
+// param_0: %struct.htp_cfg_t*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32
+//   ↳ Scalar (deps ignored for schema shape)
+// param_2: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message htp_config_set_control_chars_unwanted_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional int32 param_2 = 4;
+  optional bool skip_dependency_check = 5;
+  optional bool allow_double_delete = 6;
+}
+
+// Parameters for htp_config_set_convert_lowercase
+// param_0: %struct.htp_cfg_t*
+//   ↳ Handle to %struct.htp_cfg_t* object
+//   ↳ Nullable exploration knob
+// param_1: i32
+// param_2: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message htp_config_set_convert_lowercase_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional int32 param_2 = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for htp_config_set_extract_request_files
+// param_0: %struct.htp_cfg_t*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32
+// param_2: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message htp_config_set_extract_request_files_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional int32 param_2 = 4;
+  optional bool skip_dependency_check = 5;
+  optional bool allow_double_delete = 6;
+}
+
+// Parameters for htp_config_set_field_limits
+// param_0: %struct.htp_cfg_t*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i64
+// param_2: i64
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message htp_config_set_field_limits_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int64 param_1 = 3;
+  optional int64 param_2 = 4;
+  optional bool skip_dependency_check = 5;
+  optional bool allow_double_delete = 6;
+}
+
+// Parameters for htp_config_set_log_level
+// param_0: %struct.htp_cfg_t*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message htp_config_set_log_level_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional bool skip_dependency_check = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for htp_config_set_lzma_layers
+// param_0: %struct.htp_cfg_t*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message htp_config_set_lzma_layers_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional bool skip_dependency_check = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for htp_config_set_lzma_memlimit
+// param_0: %struct.htp_cfg_t*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i64
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message htp_config_set_lzma_memlimit_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int64 param_1 = 3;
+  optional bool skip_dependency_check = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for htp_config_set_max_tx
+// param_0: %struct.htp_cfg_t*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message htp_config_set_max_tx_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional bool skip_dependency_check = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for htp_config_set_nul_encoded_terminates
+// param_0: %struct.htp_cfg_t*
+//   ↳ Handle to %struct.htp_cfg_t* object
+//   ↳ Nullable exploration knob
+// param_1: i32
+// param_2: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message htp_config_set_nul_encoded_terminates_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional int32 param_2 = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for htp_config_set_nul_encoded_unwanted
+// param_0: %struct.htp_cfg_t*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32
+//   ↳ Scalar (deps ignored for schema shape)
+// param_2: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message htp_config_set_nul_encoded_unwanted_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional int32 param_2 = 4;
+  optional bool skip_dependency_check = 5;
+  optional bool allow_double_delete = 6;
+}
+
+// Parameters for htp_config_set_nul_raw_terminates
+// param_0: %struct.htp_cfg_t*
+//   ↳ Handle to %struct.htp_cfg_t* object
+//   ↳ Nullable exploration knob
+// param_1: i32
+// param_2: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message htp_config_set_nul_raw_terminates_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional int32 param_2 = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for htp_config_set_nul_raw_unwanted
+// param_0: %struct.htp_cfg_t*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32
+//   ↳ Scalar (deps ignored for schema shape)
+// param_2: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message htp_config_set_nul_raw_unwanted_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional int32 param_2 = 4;
+  optional bool skip_dependency_check = 5;
+  optional bool allow_double_delete = 6;
+}
+
+// Parameters for htp_config_set_parse_request_auth
+// param_0: %struct.htp_cfg_t*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message htp_config_set_parse_request_auth_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional bool skip_dependency_check = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for htp_config_set_parse_request_cookies
+// param_0: %struct.htp_cfg_t*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message htp_config_set_parse_request_cookies_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional bool skip_dependency_check = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for htp_config_set_path_separators_compress
+// param_0: %struct.htp_cfg_t*
+//   ↳ Handle to %struct.htp_cfg_t* object
+//   ↳ Nullable exploration knob
+// param_1: i32
+// param_2: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message htp_config_set_path_separators_compress_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional int32 param_2 = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for htp_config_set_path_separators_decode
+// param_0: %struct.htp_cfg_t*
+//   ↳ Handle to %struct.htp_cfg_t* object
+//   ↳ Nullable exploration knob
+// param_1: i32
+// param_2: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message htp_config_set_path_separators_decode_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional int32 param_2 = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for htp_config_set_path_separators_encoded_unwanted
+// param_0: %struct.htp_cfg_t*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32
+//   ↳ Scalar (deps ignored for schema shape)
+// param_2: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message htp_config_set_path_separators_encoded_unwanted_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional int32 param_2 = 4;
+  optional bool skip_dependency_check = 5;
+  optional bool allow_double_delete = 6;
+}
+
+// Parameters for htp_config_set_plusspace_decode
+// param_0: %struct.htp_cfg_t*
+//   ↳ Handle to %struct.htp_cfg_t* object
+//   ↳ Nullable exploration knob
+// param_1: i32
+// param_2: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message htp_config_set_plusspace_decode_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional int32 param_2 = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for htp_config_set_request_decompression
+// param_0: %struct.htp_cfg_t*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message htp_config_set_request_decompression_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional bool skip_dependency_check = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for htp_config_set_requestline_leading_whitespace_unwanted
+// param_0: %struct.htp_cfg_t*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32
+// param_2: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message htp_config_set_requestline_leading_whitespace_unwanted_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional int32 param_2 = 4;
+  optional bool skip_dependency_check = 5;
+  optional bool allow_double_delete = 6;
+}
+
+// Parameters for htp_config_set_response_decompression
+// param_0: %struct.htp_cfg_t*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message htp_config_set_response_decompression_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional bool skip_dependency_check = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for htp_config_set_response_decompression_layer_limit
+// param_0: %struct.htp_cfg_t*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message htp_config_set_response_decompression_layer_limit_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional bool skip_dependency_check = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for htp_config_set_server_personality
+// param_0: %struct.htp_cfg_t*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message htp_config_set_server_personality_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional bool skip_dependency_check = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for htp_config_set_tmpdir
+// param_0: %struct.htp_cfg_t*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message htp_config_set_tmpdir_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional bool param_1_is_null = 4;
+  optional bool skip_dependency_check = 5;
+  optional bool allow_double_delete = 6;
+}
+
+// Parameters for htp_config_set_tx_auto_destroy
+// param_0: %struct.htp_cfg_t*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message htp_config_set_tx_auto_destroy_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional bool skip_dependency_check = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for htp_config_set_u_encoding_decode
+// param_0: %struct.htp_cfg_t*
+//   ↳ Handle to %struct.htp_cfg_t* object
+//   ↳ Nullable exploration knob
+// param_1: i32
+// param_2: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message htp_config_set_u_encoding_decode_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional int32 param_2 = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for htp_config_set_u_encoding_unwanted
+// param_0: %struct.htp_cfg_t*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32
+//   ↳ Scalar (deps ignored for schema shape)
+// param_2: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message htp_config_set_u_encoding_unwanted_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional int32 param_2 = 4;
+  optional bool skip_dependency_check = 5;
+  optional bool allow_double_delete = 6;
+}
+
+// Parameters for htp_config_set_url_encoding_invalid_handling
+// param_0: %struct.htp_cfg_t*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32
+//   ↳ Scalar (deps ignored for schema shape)
+// param_2: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message htp_config_set_url_encoding_invalid_handling_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional int32 param_2 = 4;
+  optional bool skip_dependency_check = 5;
+  optional bool allow_double_delete = 6;
+}
+
+// Parameters for htp_config_set_url_encoding_invalid_unwanted
+// param_0: %struct.htp_cfg_t*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32
+//   ↳ Scalar (deps ignored for schema shape)
+// param_2: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message htp_config_set_url_encoding_invalid_unwanted_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional int32 param_2 = 4;
+  optional bool skip_dependency_check = 5;
+  optional bool allow_double_delete = 6;
+}
+
+// Parameters for htp_config_set_user_data
+// param_0: %struct.htp_cfg_t*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message htp_config_set_user_data_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional bool param_1_is_null = 4;
+  optional bool skip_dependency_check = 5;
+  optional bool allow_double_delete = 6;
+}
+
+// Parameters for htp_config_set_utf8_convert_bestfit
+// param_0: %struct.htp_cfg_t*
+//   ↳ Handle to %struct.htp_cfg_t* object
+//   ↳ Nullable exploration knob
+// param_1: i32
+// param_2: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message htp_config_set_utf8_convert_bestfit_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional int32 param_2 = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for htp_config_set_utf8_invalid_unwanted
+// param_0: %struct.htp_cfg_t*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32
+//   ↳ Scalar (deps ignored for schema shape)
+// param_2: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message htp_config_set_utf8_invalid_unwanted_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional int32 param_2 = 4;
+  optional bool skip_dependency_check = 5;
+  optional bool allow_double_delete = 6;
+}
+
+// Parameters for htp_connp_clear_error
+// param_0: %struct.htp_connp_t.44*
+//   ↳ Handle to %struct.htp_connp_t.44* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message htp_connp_clear_error_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for htp_connp_close
+// param_0: %struct.htp_connp_t.44*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+//   ↳ malloc size override for overflow testing
+// param_1: %struct.timeval*
+//   ↳ Struct blob init (size=128)
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message htp_connp_close_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional uint32 param_0_malloc_override = 3;
+  optional bytes param_1_blob = 4;
+  optional bool param_1_is_null = 5;
+  optional bool allow_double_delete = 6;
+}
+
+// Parameters for htp_connp_create
+// param_0: %struct.htp_cfg_t.29*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Struct blob init (legacy compatibility path)
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message htp_connp_create_Params {
+  optional uint32 param_0_handle = 1;
+  optional bytes param_0_blob = 2;
+  optional bool param_0_is_null = 3;
+  optional bool allow_double_delete = 4;
+}
+
+// Parameters for htp_connp_destroy
+// param_0: %struct.htp_connp_t.44*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message htp_connp_destroy_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for htp_connp_destroy_all
+// param_0: %struct.htp_connp_t.44*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message htp_connp_destroy_all_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for htp_connp_get_connection
+// param_0: %struct.htp_connp_t.44*
+//   ↳ Handle to %struct.htp_connp_t.44* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message htp_connp_get_connection_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for htp_connp_get_in_tx
+// param_0: %struct.htp_connp_t.44*
+//   ↳ Handle to %struct.htp_connp_t.44* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message htp_connp_get_in_tx_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for htp_connp_get_last_error
+// param_0: %struct.htp_connp_t.44*
+//   ↳ Handle to %struct.htp_connp_t.44* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message htp_connp_get_last_error_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for htp_connp_get_out_tx
+// param_0: %struct.htp_connp_t.44*
+//   ↳ Handle to %struct.htp_connp_t.44* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message htp_connp_get_out_tx_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for htp_connp_get_user_data
+// param_0: %struct.htp_connp_t.44*
+//   ↳ Handle to %struct.htp_connp_t.44* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message htp_connp_get_user_data_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for htp_connp_open
+// param_0: %struct.htp_connp_t.44*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+//   ↳ malloc size override for overflow testing
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_2: i32
+// param_3: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_4: i32
+// param_5: %struct.timeval*
+//   ↳ Struct blob init (size=128)
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message htp_connp_open_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional uint32 param_0_malloc_override = 3;
+  optional bytes param_1 = 4;
+  optional uint32 param_1_length = 5;
+  optional uint32 param_1_length_override = 6;
+  optional bool param_1_is_null = 7;
+  optional int32 param_2 = 8;
+  optional bytes param_3 = 9;
+  optional uint32 param_3_length = 10;
+  optional uint32 param_3_length_override = 11;
+  optional bool param_3_is_null = 12;
+  optional int32 param_4 = 13;
+  optional bytes param_5_blob = 14;
+  optional bool param_5_is_null = 15;
+  optional bool skip_dependency_check = 16;
+  optional bool allow_double_delete = 17;
+}
+
+// Parameters for htp_connp_req_close
+// param_0: %struct.htp_connp_t.44*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+//   ↳ malloc size override for overflow testing
+// param_1: %struct.timeval*
+//   ↳ Struct blob init (size=128)
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message htp_connp_req_close_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional uint32 param_0_malloc_override = 3;
+  optional bytes param_1_blob = 4;
+  optional bool param_1_is_null = 5;
+  optional bool allow_double_delete = 6;
+}
+
+// Parameters for htp_connp_req_data
+// param_0: %struct.htp_connp_t.172*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+//   ↳ malloc size override for overflow testing
+// param_1: %struct.timeval*
+//   ↳ Struct blob init (size=128)
+//   ↳ Nullable exploration knob
+// param_2: i8*
+//   ↳ Nullable exploration knob
+// param_3: i64
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message htp_connp_req_data_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional uint32 param_0_malloc_override = 3;
+  optional bytes param_1_blob = 4;
+  optional bool param_1_is_null = 5;
+  optional bytes param_2 = 6;
+  optional bool param_2_is_null = 7;
+  optional int64 param_3 = 8;
+  optional bool skip_dependency_check = 9;
+  optional bool allow_double_delete = 10;
+}
+
+// Parameters for htp_connp_req_data_consumed
+// param_0: %struct.htp_connp_t.172*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Struct blob init (legacy compatibility path)
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message htp_connp_req_data_consumed_Params {
+  optional uint32 param_0_handle = 1;
+  optional bytes param_0_blob = 2;
+  optional bool param_0_is_null = 3;
+  optional bool allow_double_delete = 4;
+}
+
+// Parameters for htp_connp_res_data
+// param_0: %struct.htp_connp_t.172*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+//   ↳ malloc size override for overflow testing
+// param_1: %struct.timeval*
+//   ↳ Struct blob init (size=128)
+//   ↳ Nullable exploration knob
+// param_2: i8*
+//   ↳ Nullable exploration knob
+// param_3: i64
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message htp_connp_res_data_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional uint32 param_0_malloc_override = 3;
+  optional bytes param_1_blob = 4;
+  optional bool param_1_is_null = 5;
+  optional bytes param_2 = 6;
+  optional bool param_2_is_null = 7;
+  optional int64 param_3 = 8;
+  optional bool skip_dependency_check = 9;
+  optional bool allow_double_delete = 10;
+}
+
+// Parameters for htp_connp_res_data_consumed
+// param_0: %struct.htp_connp_t.172*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Struct blob init (legacy compatibility path)
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message htp_connp_res_data_consumed_Params {
+  optional uint32 param_0_handle = 1;
+  optional bytes param_0_blob = 2;
+  optional bool param_0_is_null = 3;
+  optional bool allow_double_delete = 4;
+}
+
+// Parameters for htp_connp_set_user_data
+// param_0: %struct.htp_connp_t.44*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message htp_connp_set_user_data_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional bool param_1_is_null = 4;
+  optional bool skip_dependency_check = 5;
+  optional bool allow_double_delete = 6;
+}
+
+// Parameters for htp_connp_tx_create
+// param_0: %struct.htp_connp_t.44*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+//   ↳ malloc size override for overflow testing
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message htp_connp_tx_create_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional uint32 param_0_malloc_override = 3;
+  optional bool allow_double_delete = 4;
+}
+
+// Parameters for htp_connp_tx_freed
+// param_0: %struct.htp_connp_t.44*
+//   ↳ Handle to %struct.htp_connp_t.44* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message htp_connp_tx_freed_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for htp_get_version
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message htp_get_version_Params {
+  optional bool allow_double_delete = 1;
+}
+
+// Parameters for htp_gzip_decompressor_create
+// param_0: %struct.htp_connp_t.95*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+//   ↳ malloc size override for overflow testing
+// param_1: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message htp_gzip_decompressor_create_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional uint32 param_0_malloc_override = 3;
+  optional int32 param_1 = 4;
+  optional bool skip_dependency_check = 5;
+  optional bool allow_double_delete = 6;
+}
+
+// Parameters for htp_gzip_decompressor_decompress
+// param_0: %struct.htp_decompressor_t.105*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: %struct.htp_tx_data_t.104*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message htp_gzip_decompressor_decompress_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional uint32 param_1_handle = 3;
+  optional bool param_1_is_null = 4;
+  optional bool skip_dependency_check = 5;
+  optional bool allow_double_delete = 6;
+}
+
+// Parameters for htp_gzip_decompressor_destroy
+// param_0: %struct.htp_decompressor_t.105*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message htp_gzip_decompressor_destroy_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for htp_hook_copy
+// param_0: %struct.bstr_builder_t*
+//   ↳ Handle to %struct.bstr_builder_t* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message htp_hook_copy_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for htp_hook_create
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message htp_hook_create_Params {
+  optional bool allow_double_delete = 1;
+}
+
+// Parameters for htp_hook_destroy
+// param_0: %struct.bstr_builder_t*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message htp_hook_destroy_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for htp_hook_register
+// param_0: %struct.bstr_builder_t**
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+//   ↳ malloc size override for overflow testing
+// param_1: i32 (i8*)*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+//   ↳ malloc size override for overflow testing
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message htp_hook_register_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional uint32 param_0_malloc_override = 3;
+  optional bytes param_1 = 4;
+  optional uint32 param_1_length = 5;
+  optional uint32 param_1_length_override = 6;
+  optional bool param_1_is_null = 7;
+  optional uint32 param_1_malloc_override = 8;
+  optional bool skip_dependency_check = 9;
+  optional bool allow_double_delete = 10;
+}
+
+// Parameters for htp_hook_run_all
+// param_0: %struct.bstr_builder_t*
+//   ↳ Handle to %struct.bstr_builder_t* object
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+//   ↳ malloc size override for overflow testing
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message htp_hook_run_all_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional uint32 param_1_malloc_override = 7;
+  optional bool skip_dependency_check = 8;
+  optional bool allow_double_delete = 9;
+}
+
+// Parameters for htp_hook_run_one
+// param_0: %struct.bstr_builder_t*
+//   ↳ Handle to %struct.bstr_builder_t* object
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message htp_hook_run_one_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional bool param_1_is_null = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for htp_list_array_clear
+// param_0: %struct.htp_list_array_t*
+//   ↳ Handle to %struct.htp_list_array_t* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message htp_list_array_clear_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for htp_list_array_create
+// param_0: i64
+//   ↳ malloc size override for overflow testing
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message htp_list_array_create_Params {
+  optional int64 param_0 = 1;
+  optional uint32 param_0_malloc_override = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for htp_list_array_destroy
+// param_0: %struct.htp_list_array_t*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message htp_list_array_destroy_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for htp_list_array_get
+// param_0: %struct.htp_list_array_t*
+//   ↳ Handle to %struct.htp_list_array_t* object
+//   ↳ Nullable exploration knob
+// param_1: i64
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message htp_list_array_get_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int64 param_1 = 3;
+  optional bool allow_double_delete = 4;
+}
+
+// Parameters for htp_list_array_init
+// param_0: %struct.htp_list_array_t*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i64
+//   ↳ malloc size override for overflow testing
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message htp_list_array_init_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int64 param_1 = 3;
+  optional uint32 param_1_malloc_override = 4;
+  optional bool skip_dependency_check = 5;
+  optional bool allow_double_delete = 6;
+}
+
+// Parameters for htp_list_array_pop
+// param_0: %struct.htp_list_array_t*
+//   ↳ Handle to %struct.htp_list_array_t* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message htp_list_array_pop_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for htp_list_array_push
+// param_0: %struct.htp_list_array_t*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message htp_list_array_push_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional bool param_1_is_null = 4;
+  optional bool skip_dependency_check = 5;
+  optional bool allow_double_delete = 6;
+}
+
+// Parameters for htp_list_array_release
+// param_0: %struct.htp_list_array_t*
+//   ↳ Handle to %struct.htp_list_array_t* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message htp_list_array_release_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for htp_list_array_replace
+// param_0: %struct.htp_list_array_t*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i64
+//   ↳ Scalar (deps ignored for schema shape)
+// param_2: i8*
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message htp_list_array_replace_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int64 param_1 = 3;
+  optional bytes param_2 = 4;
+  optional bool param_2_is_null = 5;
+  optional bool skip_dependency_check = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for htp_list_array_shift
+// param_0: %struct.htp_list_array_t*
+//   ↳ Handle to %struct.htp_list_array_t* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message htp_list_array_shift_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for htp_list_array_size
+// param_0: %struct.htp_list_array_t*
+//   ↳ Handle to %struct.htp_list_array_t* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message htp_list_array_size_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for htp_log
+// param_0: %struct.htp_connp_t.44*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+//   ↳ malloc size override for overflow testing
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+//   ↳ malloc size override for overflow testing
+// param_2: i32
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+//   ↳ malloc size override for overflow testing
+// param_3: i32
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+//   ↳ malloc size override for overflow testing
+// param_4: i32
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+//   ↳ malloc size override for overflow testing
+// param_5: i8*
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message htp_log_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional uint32 param_0_malloc_override = 3;
+  optional bytes param_1 = 4;
+  optional uint32 param_1_length = 5;
+  optional uint32 param_1_length_override = 6;
+  optional bool param_1_is_null = 7;
+  optional uint32 param_1_malloc_override = 8;
+  optional bytes param_2 = 9;
+  optional uint32 param_2_length = 10;
+  optional uint32 param_2_length_override = 11;
+  optional bool param_2_is_null = 12;
+  optional uint32 param_2_malloc_override = 13;
+  optional bytes param_3 = 14;
+  optional uint32 param_3_length = 15;
+  optional uint32 param_3_length_override = 16;
+  optional bool param_3_is_null = 17;
+  optional uint32 param_3_malloc_override = 18;
+  optional bytes param_4 = 19;
+  optional uint32 param_4_length = 20;
+  optional uint32 param_4_length_override = 21;
+  optional bool param_4_is_null = 22;
+  optional uint32 param_4_malloc_override = 23;
+  optional bytes param_5 = 24;
+  optional bool param_5_is_null = 25;
+  optional bool skip_dependency_check = 26;
+  optional bool allow_double_delete = 27;
+}
+
+// Parameters for htp_mpartp_create
+// param_0: %struct.htp_cfg_t*
+//   ↳ Handle to %struct.htp_cfg_t* object
+//   ↳ Nullable exploration knob
+// param_1: %struct.bstr_t*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_2: i64
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message htp_mpartp_create_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional uint32 param_1_handle = 3;
+  optional bool param_1_is_null = 4;
+  optional int64 param_2 = 5;
+  optional bool allow_double_delete = 6;
+}
+
+// Parameters for htp_mpartp_destroy
+// param_0: %struct.htp_mpartp_t*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message htp_mpartp_destroy_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for htp_mpartp_finalize
+// param_0: %struct.htp_mpartp_t*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message htp_mpartp_finalize_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for htp_mpartp_find_boundary
+// param_0: %struct.bstr_t*
+//   ↳ Handle to %struct.bstr_t* object
+//   ↳ Nullable exploration knob
+// param_1: %struct.bstr_t**
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_2: i64*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message htp_mpartp_find_boundary_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional uint32 param_1_handle = 3;
+  optional bool param_1_is_null = 4;
+  optional uint32 param_2_handle = 5;
+  optional bool param_2_is_null = 6;
+  optional bool skip_dependency_check = 7;
+  optional bool allow_double_delete = 8;
+}
+
+// Parameters for htp_mpartp_get_multipart
+// param_0: %struct.htp_mpartp_t*
+//   ↳ Handle to %struct.htp_mpartp_t* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message htp_mpartp_get_multipart_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for htp_mpartp_parse
+// param_0: %struct.htp_mpartp_t*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+//   ↳ malloc size override for overflow testing
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_2: i64
+//   ↳ malloc size override for overflow testing
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message htp_mpartp_parse_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional uint32 param_0_malloc_override = 3;
+  optional bytes param_1 = 4;
+  optional uint32 param_1_length = 5;
+  optional uint32 param_1_length_override = 6;
+  optional bool param_1_is_null = 7;
+  optional int64 param_2 = 8;
+  optional uint32 param_2_malloc_override = 9;
+  optional bool skip_dependency_check = 10;
+  optional bool allow_double_delete = 11;
+}
+
+// Parameters for htp_table_add
+// param_0: %struct.htp_table_t*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: %struct.bstr_t*
+//   ↳ Handle to %struct.bstr_t* object
+//   ↳ Nullable exploration knob
+// param_2: i8*
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message htp_table_add_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional uint32 param_1_handle = 3;
+  optional bool param_1_is_null = 4;
+  optional bytes param_2 = 5;
+  optional bool param_2_is_null = 6;
+  optional bool skip_dependency_check = 7;
+  optional bool allow_double_delete = 8;
+}
+
+// Parameters for htp_table_addk
+// param_0: %struct.htp_table_t*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: %struct.bstr_t*
+//   ↳ Handle to %struct.bstr_t* object
+//   ↳ Nullable exploration knob
+// param_2: i8*
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message htp_table_addk_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional uint32 param_1_handle = 3;
+  optional bool param_1_is_null = 4;
+  optional bytes param_2 = 5;
+  optional bool param_2_is_null = 6;
+  optional bool skip_dependency_check = 7;
+  optional bool allow_double_delete = 8;
+}
+
+// Parameters for htp_table_addn
+// param_0: %struct.htp_table_t*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: %struct.bstr_t*
+//   ↳ Handle to %struct.bstr_t* object
+//   ↳ Nullable exploration knob
+// param_2: i8*
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message htp_table_addn_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional uint32 param_1_handle = 3;
+  optional bool param_1_is_null = 4;
+  optional bytes param_2 = 5;
+  optional bool param_2_is_null = 6;
+  optional bool skip_dependency_check = 7;
+  optional bool allow_double_delete = 8;
+}
+
+// Parameters for htp_table_clear
+// param_0: %struct.htp_table_t*
+//   ↳ Handle to %struct.htp_table_t* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message htp_table_clear_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for htp_table_clear_ex
+// param_0: %struct.htp_table_t*
+//   ↳ Handle to %struct.htp_table_t* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message htp_table_clear_ex_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for htp_table_create
+// param_0: i64
+//   ↳ malloc size override for overflow testing
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message htp_table_create_Params {
+  optional int64 param_0 = 1;
+  optional uint32 param_0_malloc_override = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for htp_table_destroy
+// param_0: %struct.htp_table_t*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message htp_table_destroy_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for htp_table_destroy_ex
+// param_0: %struct.htp_table_t*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message htp_table_destroy_ex_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for htp_table_get
+// param_0: %struct.htp_table_t*
+//   ↳ Handle to %struct.htp_table_t* object
+//   ↳ Nullable exploration knob
+// param_1: %struct.bstr_t*
+//   ↳ Handle to %struct.bstr_t* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message htp_table_get_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional uint32 param_1_handle = 3;
+  optional bool param_1_is_null = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for htp_table_get_c
+// param_0: %struct.htp_table_t*
+//   ↳ Handle to %struct.htp_table_t* object
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message htp_table_get_c_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for htp_table_get_index
+// param_0: %struct.htp_table_t*
+//   ↳ Handle to %struct.htp_table_t* object
+//   ↳ Nullable exploration knob
+// param_1: i64
+// param_2: %struct.bstr_t**
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message htp_table_get_index_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int64 param_1 = 3;
+  optional uint32 param_2_handle = 4;
+  optional bool param_2_is_null = 5;
+  optional bool skip_dependency_check = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for htp_table_get_mem
+// param_0: %struct.htp_table_t*
+//   ↳ Handle to %struct.htp_table_t* object
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_2: i64
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message htp_table_get_mem_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional int64 param_2 = 7;
+  optional bool allow_double_delete = 8;
+}
+
+// Parameters for htp_table_size
+// param_0: %struct.htp_table_t*
+//   ↳ Handle to %struct.htp_table_t* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message htp_table_size_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for htp_tx_create
+// param_0: %struct.htp_connp_t.44*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+//   ↳ malloc size override for overflow testing
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message htp_tx_create_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional uint32 param_0_malloc_override = 3;
+  optional bool allow_double_delete = 4;
+}
+
+// Parameters for htp_tx_destroy
+// param_0: %struct.htp_tx_t.40*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message htp_tx_destroy_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for htp_tx_get_is_config_shared
+// param_0: %struct.htp_tx_t.40*
+//   ↳ Handle to %struct.htp_tx_t.40* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message htp_tx_get_is_config_shared_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for htp_tx_get_user_data
+// param_0: %struct.htp_tx_t.40*
+//   ↳ Handle to %struct.htp_tx_t.40* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message htp_tx_get_user_data_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for htp_tx_register_request_body_data
+// param_0: %struct.htp_tx_t.40*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32 (%struct.htp_tx_data_t.42*)*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+//   ↳ malloc size override for overflow testing
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message htp_tx_register_request_body_data_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional uint32 param_1_malloc_override = 7;
+  optional bool skip_dependency_check = 8;
+  optional bool allow_double_delete = 9;
+}
+
+// Parameters for htp_tx_register_response_body_data
+// param_0: %struct.htp_tx_t.40*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32 (%struct.htp_tx_data_t.42*)*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+//   ↳ malloc size override for overflow testing
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message htp_tx_register_response_body_data_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional uint32 param_1_malloc_override = 7;
+  optional bool skip_dependency_check = 8;
+  optional bool allow_double_delete = 9;
+}
+
+// Parameters for htp_tx_req_add_param
+// param_0: %struct.htp_tx_t.40*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: %struct.htp_param_t*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+//   ↳ malloc size override for overflow testing
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message htp_tx_req_add_param_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional uint32 param_1_handle = 3;
+  optional bool param_1_is_null = 4;
+  optional uint32 param_1_malloc_override = 5;
+  optional bool skip_dependency_check = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for htp_tx_req_get_param
+// param_0: %struct.htp_tx_t.40*
+//   ↳ Handle to %struct.htp_tx_t.40* object
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_2: i64
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message htp_tx_req_get_param_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional int64 param_2 = 7;
+  optional bool allow_double_delete = 8;
+}
+
+// Parameters for htp_tx_req_get_param_ex
+// param_0: %struct.htp_tx_t.40*
+//   ↳ Handle to %struct.htp_tx_t.40* object
+//   ↳ Nullable exploration knob
+// param_1: i32
+// param_2: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_3: i64
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message htp_tx_req_get_param_ex_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional bytes param_2 = 4;
+  optional uint32 param_2_length = 5;
+  optional uint32 param_2_length_override = 6;
+  optional bool param_2_is_null = 7;
+  optional int64 param_3 = 8;
+  optional bool allow_double_delete = 9;
+}
+
+// Parameters for htp_tx_req_has_body
+// param_0: %struct.htp_tx_t.40*
+//   ↳ Handle to %struct.htp_tx_t.40* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message htp_tx_req_has_body_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for htp_tx_req_process_body_data
+// param_0: %struct.htp_tx_t.40*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Nullable exploration knob
+// param_2: i64
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message htp_tx_req_process_body_data_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional bool param_1_is_null = 4;
+  optional int64 param_2 = 5;
+  optional bool skip_dependency_check = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for htp_tx_req_set_header
+// param_0: %struct.htp_tx_t.40*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_2: i64
+//   ↳ malloc size override for overflow testing
+// param_3: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_4: i64
+//   ↳ malloc size override for overflow testing
+// param_5: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message htp_tx_req_set_header_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional int64 param_2 = 7;
+  optional uint32 param_2_malloc_override = 8;
+  optional bytes param_3 = 9;
+  optional uint32 param_3_length = 10;
+  optional uint32 param_3_length_override = 11;
+  optional bool param_3_is_null = 12;
+  optional int64 param_4 = 13;
+  optional uint32 param_4_malloc_override = 14;
+  optional int32 param_5 = 15;
+  optional bool skip_dependency_check = 16;
+  optional bool allow_double_delete = 17;
+}
+
+// Parameters for htp_tx_req_set_headers_clear
+// param_0: %struct.htp_tx_t.40*
+//   ↳ Handle to %struct.htp_tx_t.40* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message htp_tx_req_set_headers_clear_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for htp_tx_req_set_line
+// param_0: %struct.htp_tx_t.40*
+//   ↳ Handle to %struct.htp_tx_t.40* object
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_2: i64
+//   ↳ malloc size override for overflow testing
+// param_3: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message htp_tx_req_set_line_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional int64 param_2 = 7;
+  optional uint32 param_2_malloc_override = 8;
+  optional int32 param_3 = 9;
+  optional bool allow_double_delete = 10;
+}
+
+// Parameters for htp_tx_req_set_method
+// param_0: %struct.htp_tx_t.40*
+//   ↳ Handle to %struct.htp_tx_t.40* object
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_2: i64
+//   ↳ malloc size override for overflow testing
+// param_3: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message htp_tx_req_set_method_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional int64 param_2 = 7;
+  optional uint32 param_2_malloc_override = 8;
+  optional int32 param_3 = 9;
+  optional bool allow_double_delete = 10;
+}
+
+// Parameters for htp_tx_req_set_method_number
+// param_0: %struct.htp_tx_t.40*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message htp_tx_req_set_method_number_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional bool skip_dependency_check = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for htp_tx_req_set_parsed_uri
+// param_0: %struct.htp_tx_t.40*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: %struct.htp_uri_t*
+//   ↳ Handle to %struct.htp_uri_t* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message htp_tx_req_set_parsed_uri_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional uint32 param_1_handle = 3;
+  optional bool param_1_is_null = 4;
+  optional bool skip_dependency_check = 5;
+  optional bool allow_double_delete = 6;
+}
+
+// Parameters for htp_tx_req_set_protocol
+// param_0: %struct.htp_tx_t.40*
+//   ↳ Handle to %struct.htp_tx_t.40* object
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_2: i64
+//   ↳ malloc size override for overflow testing
+// param_3: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message htp_tx_req_set_protocol_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional int64 param_2 = 7;
+  optional uint32 param_2_malloc_override = 8;
+  optional int32 param_3 = 9;
+  optional bool allow_double_delete = 10;
+}
+
+// Parameters for htp_tx_req_set_protocol_0_9
+// param_0: %struct.htp_tx_t.40*
+//   ↳ Handle to %struct.htp_tx_t.40* object
+//   ↳ Nullable exploration knob
+// param_1: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message htp_tx_req_set_protocol_0_9_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional bool allow_double_delete = 4;
+}
+
+// Parameters for htp_tx_req_set_protocol_number
+// param_0: %struct.htp_tx_t.40*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message htp_tx_req_set_protocol_number_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional bool skip_dependency_check = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for htp_tx_req_set_uri
+// param_0: %struct.htp_tx_t.40*
+//   ↳ Handle to %struct.htp_tx_t.40* object
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_2: i64
+//   ↳ malloc size override for overflow testing
+// param_3: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message htp_tx_req_set_uri_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional int64 param_2 = 7;
+  optional uint32 param_2_malloc_override = 8;
+  optional int32 param_3 = 9;
+  optional bool allow_double_delete = 10;
+}
+
+// Parameters for htp_tx_res_process_body_data
+// param_0: %struct.htp_tx_t.40*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Nullable exploration knob
+// param_2: i64
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message htp_tx_res_process_body_data_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional bool param_1_is_null = 4;
+  optional int64 param_2 = 5;
+  optional bool skip_dependency_check = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for htp_tx_res_set_header
+// param_0: %struct.htp_tx_t.40*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_2: i64
+//   ↳ malloc size override for overflow testing
+// param_3: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_4: i64
+//   ↳ malloc size override for overflow testing
+// param_5: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message htp_tx_res_set_header_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional int64 param_2 = 7;
+  optional uint32 param_2_malloc_override = 8;
+  optional bytes param_3 = 9;
+  optional uint32 param_3_length = 10;
+  optional uint32 param_3_length_override = 11;
+  optional bool param_3_is_null = 12;
+  optional int64 param_4 = 13;
+  optional uint32 param_4_malloc_override = 14;
+  optional int32 param_5 = 15;
+  optional bool skip_dependency_check = 16;
+  optional bool allow_double_delete = 17;
+}
+
+// Parameters for htp_tx_res_set_headers_clear
+// param_0: %struct.htp_tx_t.40*
+//   ↳ Handle to %struct.htp_tx_t.40* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message htp_tx_res_set_headers_clear_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for htp_tx_res_set_protocol_number
+// param_0: %struct.htp_tx_t.40*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message htp_tx_res_set_protocol_number_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional bool skip_dependency_check = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for htp_tx_res_set_status_code
+// param_0: %struct.htp_tx_t.40*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message htp_tx_res_set_status_code_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional bool skip_dependency_check = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for htp_tx_res_set_status_line
+// param_0: %struct.htp_tx_t.40*
+//   ↳ Handle to %struct.htp_tx_t.40* object
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_2: i64
+//   ↳ malloc size override for overflow testing
+// param_3: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message htp_tx_res_set_status_line_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional int64 param_2 = 7;
+  optional uint32 param_2_malloc_override = 8;
+  optional int32 param_3 = 9;
+  optional bool allow_double_delete = 10;
+}
+
+// Parameters for htp_tx_res_set_status_message
+// param_0: %struct.htp_tx_t.40*
+//   ↳ Handle to %struct.htp_tx_t.40* object
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_2: i64
+//   ↳ malloc size override for overflow testing
+// param_3: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message htp_tx_res_set_status_message_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional int64 param_2 = 7;
+  optional uint32 param_2_malloc_override = 8;
+  optional int32 param_3 = 9;
+  optional bool allow_double_delete = 10;
+}
+
+// Parameters for htp_tx_set_config
+// param_0: %struct.htp_tx_t.40*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: %struct.htp_cfg_t.29*
+//   ↳ Struct blob init (size=4800)
+//   ↳ Nullable exploration knob
+// param_2: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message htp_tx_set_config_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1_blob = 3;
+  optional bool param_1_is_null = 4;
+  optional int32 param_2 = 5;
+  optional bool skip_dependency_check = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for htp_tx_set_user_data
+// param_0: %struct.htp_tx_t.40*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message htp_tx_set_user_data_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional bool param_1_is_null = 4;
+  optional bool skip_dependency_check = 5;
+  optional bool allow_double_delete = 6;
+}
+
+// Parameters for htp_tx_state_request_complete
+// param_0: %struct.htp_tx_t.40*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+//   ↳ malloc size override for overflow testing
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message htp_tx_state_request_complete_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional uint32 param_0_malloc_override = 3;
+  optional bool allow_double_delete = 4;
+}
+
+// Parameters for htp_tx_state_request_headers
+// param_0: %struct.htp_tx_t.40*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+//   ↳ malloc size override for overflow testing
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message htp_tx_state_request_headers_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional uint32 param_0_malloc_override = 3;
+  optional bool allow_double_delete = 4;
+}
+
+// Parameters for htp_tx_state_request_line
+// param_0: %struct.htp_tx_t.40*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+//   ↳ malloc size override for overflow testing
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message htp_tx_state_request_line_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional uint32 param_0_malloc_override = 3;
+  optional bool allow_double_delete = 4;
+}
+
+// Parameters for htp_tx_state_request_start
+// param_0: %struct.htp_tx_t.40*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+//   ↳ malloc size override for overflow testing
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message htp_tx_state_request_start_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional uint32 param_0_malloc_override = 3;
+  optional bool allow_double_delete = 4;
+}
+
+// Parameters for htp_tx_state_response_complete
+// param_0: %struct.htp_tx_t.40*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+//   ↳ malloc size override for overflow testing
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message htp_tx_state_response_complete_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional uint32 param_0_malloc_override = 3;
+  optional bool allow_double_delete = 4;
+}
+
+// Parameters for htp_tx_state_response_headers
+// param_0: %struct.htp_tx_t.40*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+//   ↳ malloc size override for overflow testing
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message htp_tx_state_response_headers_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional uint32 param_0_malloc_override = 3;
+  optional bool allow_double_delete = 4;
+}
+
+// Parameters for htp_tx_state_response_line
+// param_0: %struct.htp_tx_t.40*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+//   ↳ malloc size override for overflow testing
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message htp_tx_state_response_line_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional uint32 param_0_malloc_override = 3;
+  optional bool allow_double_delete = 4;
+}
+
+// Parameters for htp_tx_state_response_start
+// param_0: %struct.htp_tx_t.40*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+//   ↳ malloc size override for overflow testing
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message htp_tx_state_response_start_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional uint32 param_0_malloc_override = 3;
+  optional bool allow_double_delete = 4;
+}
+
+// Parameters for htp_uri_alloc
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message htp_uri_alloc_Params {
+  optional bool allow_double_delete = 1;
+}
+
+// Parameters for htp_uri_free
+// param_0: %struct.htp_uri_t*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message htp_uri_free_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for htp_urldecode_inplace
+// param_0: %struct.htp_cfg_t.29*
+//   ↳ Struct blob init (size=4800)
+//   ↳ Nullable exploration knob
+// param_1: i32
+// param_2: %struct.bstr_t*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_3: i64*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message htp_urldecode_inplace_Params {
+  optional bytes param_0_blob = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional uint32 param_2_handle = 4;
+  optional bool param_2_is_null = 5;
+  optional bytes param_3 = 6;
+  optional uint32 param_3_length = 7;
+  optional uint32 param_3_length_override = 8;
+  optional bool param_3_is_null = 9;
+  optional bool skip_dependency_check = 10;
+  optional bool allow_double_delete = 11;
+}
+
+// Parameters for htp_urldecode_inplace_ex
+// param_0: %struct.htp_cfg_t.29*
+//   ↳ Struct blob init (size=4800)
+//   ↳ Nullable exploration knob
+// param_1: i32
+// param_2: %struct.bstr_t*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_3: i64*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_4: i32*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message htp_urldecode_inplace_ex_Params {
+  optional bytes param_0_blob = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional uint32 param_2_handle = 4;
+  optional bool param_2_is_null = 5;
+  optional bytes param_3 = 6;
+  optional uint32 param_3_length = 7;
+  optional uint32 param_3_length_override = 8;
+  optional bool param_3_is_null = 9;
+  optional bytes param_4 = 10;
+  optional uint32 param_4_length = 11;
+  optional uint32 param_4_length_override = 12;
+  optional bool param_4_is_null = 13;
+  optional bool skip_dependency_check = 14;
+  optional bool allow_double_delete = 15;
+}
+
+// Parameters for htp_urlenp_create
+// param_0: %struct.htp_tx_t.318*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message htp_urlenp_create_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for htp_urlenp_destroy
+// param_0: %struct.htp_urlenp_t.319*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message htp_urlenp_destroy_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for htp_urlenp_finalize
+// param_0: %struct.htp_urlenp_t.319*
+//   ↳ Handle to %struct.htp_urlenp_t.319* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message htp_urlenp_finalize_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for htp_urlenp_parse_complete
+// param_0: %struct.htp_urlenp_t.319*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_2: i64
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message htp_urlenp_parse_complete_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional int64 param_2 = 7;
+  optional bool skip_dependency_check = 8;
+  optional bool allow_double_delete = 9;
+}
+
+// Parameters for htp_urlenp_parse_partial
+// param_0: %struct.htp_urlenp_t.319*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_2: i64
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message htp_urlenp_parse_partial_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional int64 param_2 = 7;
+  optional bool skip_dependency_check = 8;
+  optional bool allow_double_delete = 9;
+}
+
+// Parameters for htp_utf8_decode_allow_overlong
+// param_0: i32*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_2: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message htp_utf8_decode_allow_overlong_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional uint32 param_1_handle = 3;
+  optional bool param_1_is_null = 4;
+  optional int32 param_2 = 5;
+  optional bool skip_dependency_check = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Dynamic dispatch: exactly one API call variant per Action.
+message Action {
+  oneof action {
+    LzmaDec_Allocate_Params lzma_dec_allocate = 1;
+    LzmaDec_AllocateProbs_Params lzma_dec_allocate_probs = 2;
+    LzmaDec_DecodeToBuf_Params lzma_dec_decode_to_buf = 3;
+    LzmaDec_DecodeToDic_Params lzma_dec_decode_to_dic = 4;
+    LzmaDec_Free_Params lzma_dec_free = 5;
+    LzmaDec_FreeProbs_Params lzma_dec_free_probs = 6;
+    LzmaDec_Init_Params lzma_dec_init = 7;
+    LzmaDecode_Params lzma_decode = 8;
+    LzmaProps_Decode_Params lzma_props_decode = 9;
+    bstr_add_Params bstr_add = 10;
+    bstr_add_c_Params bstr_add_c = 11;
+    bstr_add_c_noex_Params bstr_add_c_noex = 12;
+    bstr_add_mem_Params bstr_add_mem = 13;
+    bstr_add_mem_noex_Params bstr_add_mem_noex = 14;
+    bstr_add_noex_Params bstr_add_noex = 15;
+    bstr_adjust_len_Params bstr_adjust_len = 16;
+    bstr_adjust_realptr_Params bstr_adjust_realptr = 17;
+    bstr_adjust_size_Params bstr_adjust_size = 18;
+    bstr_alloc_Params bstr_alloc = 19;
+    bstr_begins_with_Params bstr_begins_with = 20;
+    bstr_begins_with_c_Params bstr_begins_with_c = 21;
+    bstr_begins_with_c_nocase_Params bstr_begins_with_c_nocase = 22;
+    bstr_begins_with_mem_Params bstr_begins_with_mem = 23;
+    bstr_begins_with_mem_nocase_Params bstr_begins_with_mem_nocase = 24;
+    bstr_begins_with_nocase_Params bstr_begins_with_nocase = 25;
+    bstr_builder_append_c_Params bstr_builder_append_c = 26;
+    bstr_builder_append_mem_Params bstr_builder_append_mem = 27;
+    bstr_builder_appendn_Params bstr_builder_appendn = 28;
+    bstr_builder_clear_Params bstr_builder_clear = 29;
+    bstr_builder_create_Params bstr_builder_create = 30;
+    bstr_builder_destroy_Params bstr_builder_destroy = 31;
+    bstr_builder_size_Params bstr_builder_size = 32;
+    bstr_builder_to_str_Params bstr_builder_to_str = 33;
+    bstr_char_at_Params bstr_char_at = 34;
+    bstr_char_at_end_Params bstr_char_at_end = 35;
+    bstr_chop_Params bstr_chop = 36;
+    bstr_chr_Params bstr_chr = 37;
+    bstr_cmp_Params bstr_cmp = 38;
+    bstr_cmp_c_Params bstr_cmp_c = 39;
+    bstr_cmp_c_nocase_Params bstr_cmp_c_nocase = 40;
+    bstr_cmp_c_nocasenorzero_Params bstr_cmp_c_nocasenorzero = 41;
+    bstr_cmp_mem_Params bstr_cmp_mem = 42;
+    bstr_cmp_mem_nocase_Params bstr_cmp_mem_nocase = 43;
+    bstr_cmp_nocase_Params bstr_cmp_nocase = 44;
+    bstr_dup_Params bstr_dup = 45;
+    bstr_dup_c_Params bstr_dup_c = 46;
+    bstr_dup_ex_Params bstr_dup_ex = 47;
+    bstr_dup_lower_Params bstr_dup_lower = 48;
+    bstr_dup_mem_Params bstr_dup_mem = 49;
+    bstr_expand_Params bstr_expand = 50;
+    bstr_free_Params bstr_free = 51;
+    bstr_index_of_Params bstr_index_of = 52;
+    bstr_index_of_c_Params bstr_index_of_c = 53;
+    bstr_index_of_c_nocase_Params bstr_index_of_c_nocase = 54;
+    bstr_index_of_c_nocasenorzero_Params bstr_index_of_c_nocasenorzero = 55;
+    bstr_index_of_mem_Params bstr_index_of_mem = 56;
+    bstr_index_of_mem_nocase_Params bstr_index_of_mem_nocase = 57;
+    bstr_index_of_nocase_Params bstr_index_of_nocase = 58;
+    bstr_rchr_Params bstr_rchr = 59;
+    bstr_to_lowercase_Params bstr_to_lowercase = 60;
+    bstr_util_cmp_mem_Params bstr_util_cmp_mem = 61;
+    bstr_util_cmp_mem_nocase_Params bstr_util_cmp_mem_nocase = 62;
+    bstr_util_cmp_mem_nocasenorzero_Params bstr_util_cmp_mem_nocasenorzero = 63;
+    bstr_util_mem_index_of_c_Params bstr_util_mem_index_of_c = 64;
+    bstr_util_mem_index_of_c_nocase_Params bstr_util_mem_index_of_c_nocase = 65;
+    bstr_util_mem_index_of_mem_Params bstr_util_mem_index_of_mem = 66;
+    bstr_util_mem_index_of_mem_nocase_Params bstr_util_mem_index_of_mem_nocase = 67;
+    bstr_util_mem_index_of_mem_nocasenorzero_Params bstr_util_mem_index_of_mem_nocasenorzero = 68;
+    bstr_util_mem_to_pint_Params bstr_util_mem_to_pint = 69;
+    bstr_util_mem_trim_Params bstr_util_mem_trim = 70;
+    bstr_util_memdup_to_c_Params bstr_util_memdup_to_c = 71;
+    bstr_util_strdup_to_c_Params bstr_util_strdup_to_c = 72;
+    bstr_wrap_c_Params bstr_wrap_c = 73;
+    bstr_wrap_mem_Params bstr_wrap_mem = 74;
+    htp_base64_decode_Params htp_base64_decode = 75;
+    htp_base64_decode_bstr_Params htp_base64_decode_bstr = 76;
+    htp_base64_decode_mem_Params htp_base64_decode_mem = 77;
+    htp_base64_decode_single_Params htp_base64_decode_single = 78;
+    htp_base64_decoder_init_Params htp_base64_decoder_init = 79;
+    htp_config_copy_Params htp_config_copy = 80;
+    htp_config_create_Params htp_config_create = 81;
+    htp_config_destroy_Params htp_config_destroy = 82;
+    htp_config_get_user_data_Params htp_config_get_user_data = 83;
+    htp_config_register_log_Params htp_config_register_log = 84;
+    htp_config_register_multipart_parser_Params htp_config_register_multipart_parser = 85;
+    htp_config_register_request_body_data_Params htp_config_register_request_body_data = 86;
+    htp_config_register_request_complete_Params htp_config_register_request_complete = 87;
+    htp_config_register_request_file_data_Params htp_config_register_request_file_data = 88;
+    htp_config_register_request_header_data_Params htp_config_register_request_header_data = 89;
+    htp_config_register_request_headers_Params htp_config_register_request_headers = 90;
+    htp_config_register_request_line_Params htp_config_register_request_line = 91;
+    htp_config_register_request_start_Params htp_config_register_request_start = 92;
+    htp_config_register_request_trailer_Params htp_config_register_request_trailer = 93;
+    htp_config_register_request_trailer_data_Params htp_config_register_request_trailer_data = 94;
+    htp_config_register_request_uri_normalize_Params htp_config_register_request_uri_normalize = 95;
+    htp_config_register_response_body_data_Params htp_config_register_response_body_data = 96;
+    htp_config_register_response_complete_Params htp_config_register_response_complete = 97;
+    htp_config_register_response_header_data_Params htp_config_register_response_header_data = 98;
+    htp_config_register_response_headers_Params htp_config_register_response_headers = 99;
+    htp_config_register_response_line_Params htp_config_register_response_line = 100;
+    htp_config_register_response_start_Params htp_config_register_response_start = 101;
+    htp_config_register_response_trailer_Params htp_config_register_response_trailer = 102;
+    htp_config_register_response_trailer_data_Params htp_config_register_response_trailer_data = 103;
+    htp_config_register_transaction_complete_Params htp_config_register_transaction_complete = 104;
+    htp_config_register_urlencoded_parser_Params htp_config_register_urlencoded_parser = 105;
+    htp_config_set_allow_space_uri_Params htp_config_set_allow_space_uri = 106;
+    htp_config_set_backslash_convert_slashes_Params htp_config_set_backslash_convert_slashes = 107;
+    htp_config_set_bestfit_map_Params htp_config_set_bestfit_map = 108;
+    htp_config_set_bestfit_replacement_byte_Params htp_config_set_bestfit_replacement_byte = 109;
+    htp_config_set_compression_bomb_limit_Params htp_config_set_compression_bomb_limit = 110;
+    htp_config_set_compression_time_limit_Params htp_config_set_compression_time_limit = 111;
+    htp_config_set_control_chars_unwanted_Params htp_config_set_control_chars_unwanted = 112;
+    htp_config_set_convert_lowercase_Params htp_config_set_convert_lowercase = 113;
+    htp_config_set_extract_request_files_Params htp_config_set_extract_request_files = 114;
+    htp_config_set_field_limits_Params htp_config_set_field_limits = 115;
+    htp_config_set_log_level_Params htp_config_set_log_level = 116;
+    htp_config_set_lzma_layers_Params htp_config_set_lzma_layers = 117;
+    htp_config_set_lzma_memlimit_Params htp_config_set_lzma_memlimit = 118;
+    htp_config_set_max_tx_Params htp_config_set_max_tx = 119;
+    htp_config_set_nul_encoded_terminates_Params htp_config_set_nul_encoded_terminates = 120;
+    htp_config_set_nul_encoded_unwanted_Params htp_config_set_nul_encoded_unwanted = 121;
+    htp_config_set_nul_raw_terminates_Params htp_config_set_nul_raw_terminates = 122;
+    htp_config_set_nul_raw_unwanted_Params htp_config_set_nul_raw_unwanted = 123;
+    htp_config_set_parse_request_auth_Params htp_config_set_parse_request_auth = 124;
+    htp_config_set_parse_request_cookies_Params htp_config_set_parse_request_cookies = 125;
+    htp_config_set_path_separators_compress_Params htp_config_set_path_separators_compress = 126;
+    htp_config_set_path_separators_decode_Params htp_config_set_path_separators_decode = 127;
+    htp_config_set_path_separators_encoded_unwanted_Params htp_config_set_path_separators_encoded_unwanted = 128;
+    htp_config_set_plusspace_decode_Params htp_config_set_plusspace_decode = 129;
+    htp_config_set_request_decompression_Params htp_config_set_request_decompression = 130;
+    htp_config_set_requestline_leading_whitespace_unwanted_Params htp_config_set_requestline_leading_whitespace_unwanted = 131;
+    htp_config_set_response_decompression_Params htp_config_set_response_decompression = 132;
+    htp_config_set_response_decompression_layer_limit_Params htp_config_set_response_decompression_layer_limit = 133;
+    htp_config_set_server_personality_Params htp_config_set_server_personality = 134;
+    htp_config_set_tmpdir_Params htp_config_set_tmpdir = 135;
+    htp_config_set_tx_auto_destroy_Params htp_config_set_tx_auto_destroy = 136;
+    htp_config_set_u_encoding_decode_Params htp_config_set_u_encoding_decode = 137;
+    htp_config_set_u_encoding_unwanted_Params htp_config_set_u_encoding_unwanted = 138;
+    htp_config_set_url_encoding_invalid_handling_Params htp_config_set_url_encoding_invalid_handling = 139;
+    htp_config_set_url_encoding_invalid_unwanted_Params htp_config_set_url_encoding_invalid_unwanted = 140;
+    htp_config_set_user_data_Params htp_config_set_user_data = 141;
+    htp_config_set_utf8_convert_bestfit_Params htp_config_set_utf8_convert_bestfit = 142;
+    htp_config_set_utf8_invalid_unwanted_Params htp_config_set_utf8_invalid_unwanted = 143;
+    htp_connp_clear_error_Params htp_connp_clear_error = 144;
+    htp_connp_close_Params htp_connp_close = 145;
+    htp_connp_create_Params htp_connp_create = 146;
+    htp_connp_destroy_Params htp_connp_destroy = 147;
+    htp_connp_destroy_all_Params htp_connp_destroy_all = 148;
+    htp_connp_get_connection_Params htp_connp_get_connection = 149;
+    htp_connp_get_in_tx_Params htp_connp_get_in_tx = 150;
+    htp_connp_get_last_error_Params htp_connp_get_last_error = 151;
+    htp_connp_get_out_tx_Params htp_connp_get_out_tx = 152;
+    htp_connp_get_user_data_Params htp_connp_get_user_data = 153;
+    htp_connp_open_Params htp_connp_open = 154;
+    htp_connp_req_close_Params htp_connp_req_close = 155;
+    htp_connp_req_data_Params htp_connp_req_data = 156;
+    htp_connp_req_data_consumed_Params htp_connp_req_data_consumed = 157;
+    htp_connp_res_data_Params htp_connp_res_data = 158;
+    htp_connp_res_data_consumed_Params htp_connp_res_data_consumed = 159;
+    htp_connp_set_user_data_Params htp_connp_set_user_data = 160;
+    htp_connp_tx_create_Params htp_connp_tx_create = 161;
+    htp_connp_tx_freed_Params htp_connp_tx_freed = 162;
+    htp_get_version_Params htp_get_version = 163;
+    htp_gzip_decompressor_create_Params htp_gzip_decompressor_create = 164;
+    htp_gzip_decompressor_decompress_Params htp_gzip_decompressor_decompress = 165;
+    htp_gzip_decompressor_destroy_Params htp_gzip_decompressor_destroy = 166;
+    htp_hook_copy_Params htp_hook_copy = 167;
+    htp_hook_create_Params htp_hook_create = 168;
+    htp_hook_destroy_Params htp_hook_destroy = 169;
+    htp_hook_register_Params htp_hook_register = 170;
+    htp_hook_run_all_Params htp_hook_run_all = 171;
+    htp_hook_run_one_Params htp_hook_run_one = 172;
+    htp_list_array_clear_Params htp_list_array_clear = 173;
+    htp_list_array_create_Params htp_list_array_create = 174;
+    htp_list_array_destroy_Params htp_list_array_destroy = 175;
+    htp_list_array_get_Params htp_list_array_get = 176;
+    htp_list_array_init_Params htp_list_array_init = 177;
+    htp_list_array_pop_Params htp_list_array_pop = 178;
+    htp_list_array_push_Params htp_list_array_push = 179;
+    htp_list_array_release_Params htp_list_array_release = 180;
+    htp_list_array_replace_Params htp_list_array_replace = 181;
+    htp_list_array_shift_Params htp_list_array_shift = 182;
+    htp_list_array_size_Params htp_list_array_size = 183;
+    htp_log_Params htp_log = 184;
+    htp_mpartp_create_Params htp_mpartp_create = 185;
+    htp_mpartp_destroy_Params htp_mpartp_destroy = 186;
+    htp_mpartp_finalize_Params htp_mpartp_finalize = 187;
+    htp_mpartp_find_boundary_Params htp_mpartp_find_boundary = 188;
+    htp_mpartp_get_multipart_Params htp_mpartp_get_multipart = 189;
+    htp_mpartp_parse_Params htp_mpartp_parse = 190;
+    htp_table_add_Params htp_table_add = 191;
+    htp_table_addk_Params htp_table_addk = 192;
+    htp_table_addn_Params htp_table_addn = 193;
+    htp_table_clear_Params htp_table_clear = 194;
+    htp_table_clear_ex_Params htp_table_clear_ex = 195;
+    htp_table_create_Params htp_table_create = 196;
+    htp_table_destroy_Params htp_table_destroy = 197;
+    htp_table_destroy_ex_Params htp_table_destroy_ex = 198;
+    htp_table_get_Params htp_table_get = 199;
+    htp_table_get_c_Params htp_table_get_c = 200;
+    htp_table_get_index_Params htp_table_get_index = 201;
+    htp_table_get_mem_Params htp_table_get_mem = 202;
+    htp_table_size_Params htp_table_size = 203;
+    htp_tx_create_Params htp_tx_create = 204;
+    htp_tx_destroy_Params htp_tx_destroy = 205;
+    htp_tx_get_is_config_shared_Params htp_tx_get_is_config_shared = 206;
+    htp_tx_get_user_data_Params htp_tx_get_user_data = 207;
+    htp_tx_register_request_body_data_Params htp_tx_register_request_body_data = 208;
+    htp_tx_register_response_body_data_Params htp_tx_register_response_body_data = 209;
+    htp_tx_req_add_param_Params htp_tx_req_add_param = 210;
+    htp_tx_req_get_param_Params htp_tx_req_get_param = 211;
+    htp_tx_req_get_param_ex_Params htp_tx_req_get_param_ex = 212;
+    htp_tx_req_has_body_Params htp_tx_req_has_body = 213;
+    htp_tx_req_process_body_data_Params htp_tx_req_process_body_data = 214;
+    htp_tx_req_set_header_Params htp_tx_req_set_header = 215;
+    htp_tx_req_set_headers_clear_Params htp_tx_req_set_headers_clear = 216;
+    htp_tx_req_set_line_Params htp_tx_req_set_line = 217;
+    htp_tx_req_set_method_Params htp_tx_req_set_method = 218;
+    htp_tx_req_set_method_number_Params htp_tx_req_set_method_number = 219;
+    htp_tx_req_set_parsed_uri_Params htp_tx_req_set_parsed_uri = 220;
+    htp_tx_req_set_protocol_Params htp_tx_req_set_protocol = 221;
+    htp_tx_req_set_protocol_0_9_Params htp_tx_req_set_protocol_0_9 = 222;
+    htp_tx_req_set_protocol_number_Params htp_tx_req_set_protocol_number = 223;
+    htp_tx_req_set_uri_Params htp_tx_req_set_uri = 224;
+    htp_tx_res_process_body_data_Params htp_tx_res_process_body_data = 225;
+    htp_tx_res_set_header_Params htp_tx_res_set_header = 226;
+    htp_tx_res_set_headers_clear_Params htp_tx_res_set_headers_clear = 227;
+    htp_tx_res_set_protocol_number_Params htp_tx_res_set_protocol_number = 228;
+    htp_tx_res_set_status_code_Params htp_tx_res_set_status_code = 229;
+    htp_tx_res_set_status_line_Params htp_tx_res_set_status_line = 230;
+    htp_tx_res_set_status_message_Params htp_tx_res_set_status_message = 231;
+    htp_tx_set_config_Params htp_tx_set_config = 232;
+    htp_tx_set_user_data_Params htp_tx_set_user_data = 233;
+    htp_tx_state_request_complete_Params htp_tx_state_request_complete = 234;
+    htp_tx_state_request_headers_Params htp_tx_state_request_headers = 235;
+    htp_tx_state_request_line_Params htp_tx_state_request_line = 236;
+    htp_tx_state_request_start_Params htp_tx_state_request_start = 237;
+    htp_tx_state_response_complete_Params htp_tx_state_response_complete = 238;
+    htp_tx_state_response_headers_Params htp_tx_state_response_headers = 239;
+    htp_tx_state_response_line_Params htp_tx_state_response_line = 240;
+    htp_tx_state_response_start_Params htp_tx_state_response_start = 241;
+    htp_uri_alloc_Params htp_uri_alloc = 242;
+    htp_uri_free_Params htp_uri_free = 243;
+    htp_urldecode_inplace_Params htp_urldecode_inplace = 244;
+    htp_urldecode_inplace_ex_Params htp_urldecode_inplace_ex = 245;
+    htp_urlenp_create_Params htp_urlenp_create = 246;
+    htp_urlenp_destroy_Params htp_urlenp_destroy = 247;
+    htp_urlenp_finalize_Params htp_urlenp_finalize = 248;
+    htp_urlenp_parse_complete_Params htp_urlenp_parse_complete = 249;
+    htp_urlenp_parse_partial_Params htp_urlenp_parse_partial = 250;
+    htp_utf8_decode_allow_overlong_Params htp_utf8_decode_allow_overlong = 251;
+  }
+}
+
+// Top-level fuzz input (v2). Dynamic sequence of Actions.
+message FuzzInput {
+  optional uint32 global_seed = 1;
+  repeated Action actions = 2;
+  optional uint32 max_actions_hint = 3;
+  optional bool favor_valid_state = 4;
+}

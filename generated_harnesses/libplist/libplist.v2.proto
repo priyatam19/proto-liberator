@@ -1,0 +1,2184 @@
+syntax = "proto2";
+
+package libplist_fuzzer;
+
+
+// Parameters for libplist_version
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message libplist_version_Params {
+  optional bool allow_double_delete = 1;
+}
+
+// Parameters for plist_access_path
+// param_0: i8*
+//   ↳ Nullable exploration knob
+// param_1: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message plist_access_path_Params {
+  optional bytes param_0 = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional bool allow_double_delete = 4;
+}
+
+// Parameters for plist_access_pathv
+// param_0: i8*
+//   ↳ Nullable exploration knob
+// param_1: i32
+// param_2: %struct.__va_list_tag*
+//   ↳ Struct blob init (size=192)
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message plist_access_pathv_Params {
+  optional bytes param_0 = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional bytes param_2_blob = 4;
+  optional bool param_2_is_null = 5;
+  optional bool allow_double_delete = 6;
+}
+
+// Parameters for plist_array_append_item
+// param_0: i8*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message plist_array_append_item_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional uint32 param_1_handle = 3;
+  optional bool param_1_is_null = 4;
+  optional bool skip_dependency_check = 5;
+  optional bool allow_double_delete = 6;
+}
+
+// Parameters for plist_array_get_item
+// param_0: i8*
+//   ↳ Nullable exploration knob
+// param_1: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message plist_array_get_item_Params {
+  optional bytes param_0 = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional bool allow_double_delete = 4;
+}
+
+// Parameters for plist_array_get_item_index
+// param_0: i8*
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message plist_array_get_item_index_Params {
+  optional bytes param_0 = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for plist_array_get_size
+// param_0: i8*
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message plist_array_get_size_Params {
+  optional bytes param_0 = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for plist_array_insert_item
+// param_0: i8*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_2: i32
+//   ↳ Scalar (deps ignored for schema shape)
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message plist_array_insert_item_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional uint32 param_1_handle = 3;
+  optional bool param_1_is_null = 4;
+  optional int32 param_2 = 5;
+  optional bool skip_dependency_check = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for plist_array_item_remove
+// param_0: i8*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message plist_array_item_remove_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for plist_array_new_iter
+// param_0: i8*
+//   ↳ Nullable exploration knob
+// param_1: i8**
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message plist_array_new_iter_Params {
+  optional bytes param_0 = 1;
+  optional bool param_0_is_null = 2;
+  optional uint32 param_1_handle = 3;
+  optional bool param_1_is_null = 4;
+  optional bool skip_dependency_check = 5;
+  optional bool allow_double_delete = 6;
+}
+
+// Parameters for plist_array_next_item
+// param_0: i8*
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_2: i8**
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message plist_array_next_item_Params {
+  optional bytes param_0 = 1;
+  optional bool param_0_is_null = 2;
+  optional uint32 param_1_handle = 3;
+  optional bool param_1_is_null = 4;
+  optional uint32 param_2_handle = 5;
+  optional bool param_2_is_null = 6;
+  optional bool skip_dependency_check = 7;
+  optional bool allow_double_delete = 8;
+}
+
+// Parameters for plist_array_remove_item
+// param_0: i8*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32
+//   ↳ Scalar (deps ignored for schema shape)
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message plist_array_remove_item_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional bool skip_dependency_check = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for plist_array_set_item
+// param_0: i8*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_2: i32
+//   ↳ Scalar (deps ignored for schema shape)
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message plist_array_set_item_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional uint32 param_1_handle = 3;
+  optional bool param_1_is_null = 4;
+  optional int32 param_2 = 5;
+  optional bool skip_dependency_check = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for plist_bool_val_is_true
+// param_0: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+//   ↳ malloc size override for overflow testing
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message plist_bool_val_is_true_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional uint32 param_0_malloc_override = 5;
+  optional bool allow_double_delete = 6;
+}
+
+// Parameters for plist_compare_node_value
+// param_0: i8*
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message plist_compare_node_value_Params {
+  optional bytes param_0 = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional bool param_1_is_null = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for plist_copy
+// param_0: i8*
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message plist_copy_Params {
+  optional bytes param_0 = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for plist_data_val_compare
+// param_0: i8*
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Nullable exploration knob
+// param_2: i64
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message plist_data_val_compare_Params {
+  optional bytes param_0 = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional bool param_1_is_null = 4;
+  optional int64 param_2 = 5;
+  optional bool allow_double_delete = 6;
+}
+
+// Parameters for plist_data_val_compare_with_size
+// param_0: i8*
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Nullable exploration knob
+// param_2: i64
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message plist_data_val_compare_with_size_Params {
+  optional bytes param_0 = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional bool param_1_is_null = 4;
+  optional int64 param_2 = 5;
+  optional bool allow_double_delete = 6;
+}
+
+// Parameters for plist_data_val_contains
+// param_0: i8*
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Nullable exploration knob
+// param_2: i64
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message plist_data_val_contains_Params {
+  optional bytes param_0 = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional bool param_1_is_null = 4;
+  optional int64 param_2 = 5;
+  optional bool allow_double_delete = 6;
+}
+
+// Parameters for plist_date_val_compare
+// param_0: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+//   ↳ malloc size override for overflow testing
+// param_1: i32
+// param_2: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message plist_date_val_compare_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional uint32 param_0_malloc_override = 5;
+  optional int32 param_1 = 6;
+  optional int32 param_2 = 7;
+  optional bool allow_double_delete = 8;
+}
+
+// Parameters for plist_dict_copy_bool
+// param_0: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Nullable exploration knob
+// param_2: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_3: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message plist_dict_copy_bool_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional bytes param_1 = 5;
+  optional bool param_1_is_null = 6;
+  optional bytes param_2 = 7;
+  optional uint32 param_2_length = 8;
+  optional uint32 param_2_length_override = 9;
+  optional bool param_2_is_null = 10;
+  optional bytes param_3 = 11;
+  optional uint32 param_3_length = 12;
+  optional uint32 param_3_length_override = 13;
+  optional bool param_3_is_null = 14;
+  optional bool skip_dependency_check = 15;
+  optional bool allow_double_delete = 16;
+}
+
+// Parameters for plist_dict_copy_data
+// param_0: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Nullable exploration knob
+// param_2: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_3: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message plist_dict_copy_data_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional bytes param_1 = 5;
+  optional bool param_1_is_null = 6;
+  optional bytes param_2 = 7;
+  optional uint32 param_2_length = 8;
+  optional uint32 param_2_length_override = 9;
+  optional bool param_2_is_null = 10;
+  optional bytes param_3 = 11;
+  optional uint32 param_3_length = 12;
+  optional uint32 param_3_length_override = 13;
+  optional bool param_3_is_null = 14;
+  optional bool skip_dependency_check = 15;
+  optional bool allow_double_delete = 16;
+}
+
+// Parameters for plist_dict_copy_int
+// param_0: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Nullable exploration knob
+// param_2: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_3: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message plist_dict_copy_int_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional bytes param_1 = 5;
+  optional bool param_1_is_null = 6;
+  optional bytes param_2 = 7;
+  optional uint32 param_2_length = 8;
+  optional uint32 param_2_length_override = 9;
+  optional bool param_2_is_null = 10;
+  optional bytes param_3 = 11;
+  optional uint32 param_3_length = 12;
+  optional uint32 param_3_length_override = 13;
+  optional bool param_3_is_null = 14;
+  optional bool skip_dependency_check = 15;
+  optional bool allow_double_delete = 16;
+}
+
+// Parameters for plist_dict_copy_item
+// param_0: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Nullable exploration knob
+// param_2: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_3: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message plist_dict_copy_item_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional bytes param_1 = 5;
+  optional bool param_1_is_null = 6;
+  optional bytes param_2 = 7;
+  optional uint32 param_2_length = 8;
+  optional uint32 param_2_length_override = 9;
+  optional bool param_2_is_null = 10;
+  optional bytes param_3 = 11;
+  optional uint32 param_3_length = 12;
+  optional uint32 param_3_length_override = 13;
+  optional bool param_3_is_null = 14;
+  optional bool skip_dependency_check = 15;
+  optional bool allow_double_delete = 16;
+}
+
+// Parameters for plist_dict_copy_string
+// param_0: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Nullable exploration knob
+// param_2: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_3: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message plist_dict_copy_string_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional bytes param_1 = 5;
+  optional bool param_1_is_null = 6;
+  optional bytes param_2 = 7;
+  optional uint32 param_2_length = 8;
+  optional uint32 param_2_length_override = 9;
+  optional bool param_2_is_null = 10;
+  optional bytes param_3 = 11;
+  optional uint32 param_3_length = 12;
+  optional uint32 param_3_length_override = 13;
+  optional bool param_3_is_null = 14;
+  optional bool skip_dependency_check = 15;
+  optional bool allow_double_delete = 16;
+}
+
+// Parameters for plist_dict_copy_uint
+// param_0: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Nullable exploration knob
+// param_2: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_3: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message plist_dict_copy_uint_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional bytes param_1 = 5;
+  optional bool param_1_is_null = 6;
+  optional bytes param_2 = 7;
+  optional uint32 param_2_length = 8;
+  optional uint32 param_2_length_override = 9;
+  optional bool param_2_is_null = 10;
+  optional bytes param_3 = 11;
+  optional uint32 param_3_length = 12;
+  optional uint32 param_3_length_override = 13;
+  optional bool param_3_is_null = 14;
+  optional bool skip_dependency_check = 15;
+  optional bool allow_double_delete = 16;
+}
+
+// Parameters for plist_dict_get_bool
+// param_0: i8*
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message plist_dict_get_bool_Params {
+  optional bytes param_0 = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for plist_dict_get_int
+// param_0: i8*
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message plist_dict_get_int_Params {
+  optional bytes param_0 = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for plist_dict_get_item
+// param_0: i8*
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message plist_dict_get_item_Params {
+  optional bytes param_0 = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for plist_dict_get_item_key
+// param_0: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+//   ↳ malloc size override for overflow testing
+// param_1: i8**
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message plist_dict_get_item_key_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional uint32 param_0_malloc_override = 5;
+  optional bytes param_1 = 6;
+  optional uint32 param_1_length = 7;
+  optional uint32 param_1_length_override = 8;
+  optional bool param_1_is_null = 9;
+  optional bool skip_dependency_check = 10;
+  optional bool allow_double_delete = 11;
+}
+
+// Parameters for plist_dict_get_size
+// param_0: i8*
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message plist_dict_get_size_Params {
+  optional bytes param_0 = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for plist_dict_get_uint
+// param_0: i8*
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message plist_dict_get_uint_Params {
+  optional bytes param_0 = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for plist_dict_item_get_key
+// param_0: i8*
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message plist_dict_item_get_key_Params {
+  optional bytes param_0 = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for plist_dict_merge
+// param_0: i8**
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message plist_dict_merge_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional bool param_1_is_null = 4;
+  optional bool skip_dependency_check = 5;
+  optional bool allow_double_delete = 6;
+}
+
+// Parameters for plist_dict_new_iter
+// param_0: i8*
+//   ↳ Nullable exploration knob
+// param_1: i8**
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message plist_dict_new_iter_Params {
+  optional bytes param_0 = 1;
+  optional bool param_0_is_null = 2;
+  optional uint32 param_1_handle = 3;
+  optional bool param_1_is_null = 4;
+  optional bool skip_dependency_check = 5;
+  optional bool allow_double_delete = 6;
+}
+
+// Parameters for plist_dict_next_item
+// param_0: i8*
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+//   ↳ malloc size override for overflow testing
+// param_2: i8**
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_3: i8**
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message plist_dict_next_item_Params {
+  optional bytes param_0 = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional uint32 param_1_malloc_override = 7;
+  optional bytes param_2 = 8;
+  optional uint32 param_2_length = 9;
+  optional uint32 param_2_length_override = 10;
+  optional bool param_2_is_null = 11;
+  optional uint32 param_3_handle = 12;
+  optional bool param_3_is_null = 13;
+  optional bool skip_dependency_check = 14;
+  optional bool allow_double_delete = 15;
+}
+
+// Parameters for plist_dict_remove_item
+// param_0: i8*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message plist_dict_remove_item_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for plist_dict_set_item
+// param_0: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_2: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message plist_dict_set_item_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional bytes param_1 = 5;
+  optional uint32 param_1_length = 6;
+  optional uint32 param_1_length_override = 7;
+  optional bool param_1_is_null = 8;
+  optional bytes param_2 = 9;
+  optional uint32 param_2_length = 10;
+  optional uint32 param_2_length_override = 11;
+  optional bool param_2_is_null = 12;
+  optional bool skip_dependency_check = 13;
+  optional bool allow_double_delete = 14;
+}
+
+// Parameters for plist_free
+// param_0: i8*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message plist_free_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for plist_from_bin
+// param_0: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_1: i32
+// param_2: i8**
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message plist_from_bin_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional int32 param_1 = 5;
+  optional bytes param_2 = 6;
+  optional bool param_2_is_null = 7;
+  optional bool allow_double_delete = 8;
+}
+
+// Parameters for plist_from_json
+// param_0: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_1: i32
+// param_2: i8**
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message plist_from_json_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional int32 param_1 = 5;
+  optional bytes param_2 = 6;
+  optional bool param_2_is_null = 7;
+  optional bool allow_double_delete = 8;
+}
+
+// Parameters for plist_from_memory
+// param_0: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_1: i32
+// param_2: i8**
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_3: i32*
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message plist_from_memory_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional int32 param_1 = 5;
+  optional uint32 param_2_handle = 6;
+  optional bool param_2_is_null = 7;
+  optional bytes param_3 = 8;
+  optional bool param_3_is_null = 9;
+  optional bool skip_dependency_check = 10;
+  optional bool allow_double_delete = 11;
+}
+
+// Parameters for plist_from_openstep
+// param_0: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_1: i32
+// param_2: i8**
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message plist_from_openstep_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional int32 param_1 = 5;
+  optional uint32 param_2_handle = 6;
+  optional bool param_2_is_null = 7;
+  optional bool skip_dependency_check = 8;
+  optional bool allow_double_delete = 9;
+}
+
+// Parameters for plist_from_xml
+// param_0: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_1: i32
+// param_2: i8**
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message plist_from_xml_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional int32 param_1 = 5;
+  optional uint32 param_2_handle = 6;
+  optional bool param_2_is_null = 7;
+  optional bool skip_dependency_check = 8;
+  optional bool allow_double_delete = 9;
+}
+
+// Parameters for plist_get_bool_val
+// param_0: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+//   ↳ malloc size override for overflow testing
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message plist_get_bool_val_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional uint32 param_0_malloc_override = 5;
+  optional bytes param_1 = 6;
+  optional uint32 param_1_length = 7;
+  optional uint32 param_1_length_override = 8;
+  optional bool param_1_is_null = 9;
+  optional bool skip_dependency_check = 10;
+  optional bool allow_double_delete = 11;
+}
+
+// Parameters for plist_get_data_ptr
+// param_0: i8*
+//   ↳ Nullable exploration knob
+// param_1: i64*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message plist_get_data_ptr_Params {
+  optional bytes param_0 = 1;
+  optional bool param_0_is_null = 2;
+  optional uint32 param_1_handle = 3;
+  optional bool param_1_is_null = 4;
+  optional bool skip_dependency_check = 5;
+  optional bool allow_double_delete = 6;
+}
+
+// Parameters for plist_get_data_val
+// param_0: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+//   ↳ malloc size override for overflow testing
+// param_1: i8**
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_2: i64*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+//   ↳ malloc size override for overflow testing
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message plist_get_data_val_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional uint32 param_0_malloc_override = 5;
+  optional bytes param_1 = 6;
+  optional uint32 param_1_length = 7;
+  optional uint32 param_1_length_override = 8;
+  optional bool param_1_is_null = 9;
+  optional uint32 param_2_handle = 10;
+  optional bool param_2_is_null = 11;
+  optional uint32 param_2_malloc_override = 12;
+  optional bool skip_dependency_check = 13;
+  optional bool allow_double_delete = 14;
+}
+
+// Parameters for plist_get_date_val
+// param_0: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+//   ↳ malloc size override for overflow testing
+// param_1: i32*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_2: i32*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message plist_get_date_val_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional uint32 param_0_malloc_override = 5;
+  optional uint32 param_1_handle = 6;
+  optional bool param_1_is_null = 7;
+  optional uint32 param_2_handle = 8;
+  optional bool param_2_is_null = 9;
+  optional bool skip_dependency_check = 10;
+  optional bool allow_double_delete = 11;
+}
+
+// Parameters for plist_get_int_val
+// param_0: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+//   ↳ malloc size override for overflow testing
+// param_1: i64*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message plist_get_int_val_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional uint32 param_0_malloc_override = 5;
+  optional bytes param_1 = 6;
+  optional uint32 param_1_length = 7;
+  optional uint32 param_1_length_override = 8;
+  optional bool param_1_is_null = 9;
+  optional bool skip_dependency_check = 10;
+  optional bool allow_double_delete = 11;
+}
+
+// Parameters for plist_get_key_val
+// param_0: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+//   ↳ malloc size override for overflow testing
+// param_1: i8**
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message plist_get_key_val_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional uint32 param_0_malloc_override = 5;
+  optional bytes param_1 = 6;
+  optional uint32 param_1_length = 7;
+  optional uint32 param_1_length_override = 8;
+  optional bool param_1_is_null = 9;
+  optional bool skip_dependency_check = 10;
+  optional bool allow_double_delete = 11;
+}
+
+// Parameters for plist_get_node_type
+// param_0: i8*
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message plist_get_node_type_Params {
+  optional bytes param_0 = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for plist_get_parent
+// param_0: i8*
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message plist_get_parent_Params {
+  optional bytes param_0 = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for plist_get_real_val
+// param_0: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+//   ↳ malloc size override for overflow testing
+// param_1: double*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message plist_get_real_val_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional uint32 param_0_malloc_override = 5;
+  optional bytes param_1 = 6;
+  optional uint32 param_1_length = 7;
+  optional uint32 param_1_length_override = 8;
+  optional bool param_1_is_null = 9;
+  optional bool skip_dependency_check = 10;
+  optional bool allow_double_delete = 11;
+}
+
+// Parameters for plist_get_string_ptr
+// param_0: i8*
+//   ↳ Nullable exploration knob
+// param_1: i64*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message plist_get_string_ptr_Params {
+  optional bytes param_0 = 1;
+  optional bool param_0_is_null = 2;
+  optional uint32 param_1_handle = 3;
+  optional bool param_1_is_null = 4;
+  optional bool skip_dependency_check = 5;
+  optional bool allow_double_delete = 6;
+}
+
+// Parameters for plist_get_string_val
+// param_0: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+//   ↳ malloc size override for overflow testing
+// param_1: i8**
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message plist_get_string_val_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional uint32 param_0_malloc_override = 5;
+  optional bytes param_1 = 6;
+  optional uint32 param_1_length = 7;
+  optional uint32 param_1_length_override = 8;
+  optional bool param_1_is_null = 9;
+  optional bool skip_dependency_check = 10;
+  optional bool allow_double_delete = 11;
+}
+
+// Parameters for plist_get_uid_val
+// param_0: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+//   ↳ malloc size override for overflow testing
+// param_1: i64*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message plist_get_uid_val_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional uint32 param_0_malloc_override = 5;
+  optional bytes param_1 = 6;
+  optional uint32 param_1_length = 7;
+  optional uint32 param_1_length_override = 8;
+  optional bool param_1_is_null = 9;
+  optional bool skip_dependency_check = 10;
+  optional bool allow_double_delete = 11;
+}
+
+// Parameters for plist_get_uint_val
+// param_0: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+//   ↳ malloc size override for overflow testing
+// param_1: i64*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message plist_get_uint_val_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional uint32 param_0_malloc_override = 5;
+  optional bytes param_1 = 6;
+  optional uint32 param_1_length = 7;
+  optional uint32 param_1_length_override = 8;
+  optional bool param_1_is_null = 9;
+  optional bool skip_dependency_check = 10;
+  optional bool allow_double_delete = 11;
+}
+
+// Parameters for plist_int_val_compare
+// param_0: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+//   ↳ malloc size override for overflow testing
+// param_1: i64
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message plist_int_val_compare_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional uint32 param_0_malloc_override = 5;
+  optional int64 param_1 = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for plist_int_val_is_negative
+// param_0: i8*
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message plist_int_val_is_negative_Params {
+  optional bytes param_0 = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for plist_is_binary
+// param_0: i8*
+//   ↳ Nullable exploration knob
+// param_1: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message plist_is_binary_Params {
+  optional bytes param_0 = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional bool allow_double_delete = 4;
+}
+
+// Parameters for plist_key_val_compare
+// param_0: i8*
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message plist_key_val_compare_Params {
+  optional bytes param_0 = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional bool param_1_is_null = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for plist_key_val_compare_with_size
+// param_0: i8*
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Nullable exploration knob
+// param_2: i64
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message plist_key_val_compare_with_size_Params {
+  optional bytes param_0 = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional bool param_1_is_null = 4;
+  optional int64 param_2 = 5;
+  optional bool allow_double_delete = 6;
+}
+
+// Parameters for plist_key_val_contains
+// param_0: i8*
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message plist_key_val_contains_Params {
+  optional bytes param_0 = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional bool param_1_is_null = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for plist_mem_free
+// param_0: i8*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message plist_mem_free_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for plist_new_array
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message plist_new_array_Params {
+  optional bool allow_double_delete = 1;
+}
+
+// Parameters for plist_new_bool
+// param_0: i8
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message plist_new_bool_Params {
+  optional int32 param_0 = 1;
+  optional bool allow_double_delete = 2;
+}
+
+// Parameters for plist_new_data
+// param_0: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_1: i64
+//   ↳ malloc size override for overflow testing
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message plist_new_data_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional int64 param_1 = 5;
+  optional uint32 param_1_malloc_override = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for plist_new_date
+// param_0: i32
+// param_1: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message plist_new_date_Params {
+  optional int32 param_0 = 1;
+  optional int32 param_1 = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for plist_new_dict
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message plist_new_dict_Params {
+  optional bool allow_double_delete = 1;
+}
+
+// Parameters for plist_new_int
+// param_0: i64
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message plist_new_int_Params {
+  optional int64 param_0 = 1;
+  optional bool allow_double_delete = 2;
+}
+
+// Parameters for plist_new_null
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message plist_new_null_Params {
+  optional bool allow_double_delete = 1;
+}
+
+// Parameters for plist_new_real
+// param_0: double
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message plist_new_real_Params {
+  optional double param_0 = 1;
+  optional bool allow_double_delete = 2;
+}
+
+// Parameters for plist_new_string
+// param_0: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message plist_new_string_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for plist_new_uid
+// param_0: i64
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message plist_new_uid_Params {
+  optional int64 param_0 = 1;
+  optional bool allow_double_delete = 2;
+}
+
+// Parameters for plist_new_uint
+// param_0: i64
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message plist_new_uint_Params {
+  optional int64 param_0 = 1;
+  optional bool allow_double_delete = 2;
+}
+
+// Parameters for plist_print
+// param_0: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message plist_print_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for plist_read_from_file
+// param_0: i8*
+//   ↳ Nullable exploration knob
+// param_1: i8**
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_2: i32*
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message plist_read_from_file_Params {
+  optional bytes param_0 = 1;
+  optional bool param_0_is_null = 2;
+  optional uint32 param_1_handle = 3;
+  optional bool param_1_is_null = 4;
+  optional bytes param_2 = 5;
+  optional bool param_2_is_null = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for plist_real_val_compare
+// param_0: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+//   ↳ malloc size override for overflow testing
+// param_1: double
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message plist_real_val_compare_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional uint32 param_0_malloc_override = 5;
+  optional double param_1 = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for plist_set_bool_val
+// param_0: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_1: i8
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message plist_set_bool_val_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional int32 param_1 = 5;
+  optional bool skip_dependency_check = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for plist_set_data_val
+// param_0: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_2: i64
+//   ↳ malloc size override for overflow testing
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message plist_set_data_val_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional bytes param_1 = 5;
+  optional uint32 param_1_length = 6;
+  optional uint32 param_1_length_override = 7;
+  optional bool param_1_is_null = 8;
+  optional int64 param_2 = 9;
+  optional uint32 param_2_malloc_override = 10;
+  optional bool skip_dependency_check = 11;
+  optional bool allow_double_delete = 12;
+}
+
+// Parameters for plist_set_date_val
+// param_0: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_1: i32
+// param_2: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message plist_set_date_val_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional int32 param_1 = 5;
+  optional int32 param_2 = 6;
+  optional bool skip_dependency_check = 7;
+  optional bool allow_double_delete = 8;
+}
+
+// Parameters for plist_set_debug
+// param_0: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message plist_set_debug_Params {
+  optional int32 param_0 = 1;
+  optional bool allow_double_delete = 2;
+}
+
+// Parameters for plist_set_int_val
+// param_0: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_1: i64
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message plist_set_int_val_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional int64 param_1 = 5;
+  optional bool skip_dependency_check = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for plist_set_key_val
+// param_0: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message plist_set_key_val_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional bytes param_1 = 5;
+  optional uint32 param_1_length = 6;
+  optional uint32 param_1_length_override = 7;
+  optional bool param_1_is_null = 8;
+  optional bool skip_dependency_check = 9;
+  optional bool allow_double_delete = 10;
+}
+
+// Parameters for plist_set_real_val
+// param_0: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_1: double
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message plist_set_real_val_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional double param_1 = 5;
+  optional bool skip_dependency_check = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for plist_set_string_val
+// param_0: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message plist_set_string_val_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional bytes param_1 = 5;
+  optional uint32 param_1_length = 6;
+  optional uint32 param_1_length_override = 7;
+  optional bool param_1_is_null = 8;
+  optional bool skip_dependency_check = 9;
+  optional bool allow_double_delete = 10;
+}
+
+// Parameters for plist_set_uid_val
+// param_0: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_1: i64
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message plist_set_uid_val_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional int64 param_1 = 5;
+  optional bool skip_dependency_check = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for plist_set_uint_val
+// param_0: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_1: i64
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message plist_set_uint_val_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional int64 param_1 = 5;
+  optional bool skip_dependency_check = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for plist_sort
+// param_0: i8*
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message plist_sort_Params {
+  optional bytes param_0 = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for plist_string_val_compare
+// param_0: i8*
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message plist_string_val_compare_Params {
+  optional bytes param_0 = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional bool param_1_is_null = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for plist_string_val_compare_with_size
+// param_0: i8*
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Nullable exploration knob
+// param_2: i64
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message plist_string_val_compare_with_size_Params {
+  optional bytes param_0 = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional bool param_1_is_null = 4;
+  optional int64 param_2 = 5;
+  optional bool allow_double_delete = 6;
+}
+
+// Parameters for plist_string_val_contains
+// param_0: i8*
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message plist_string_val_contains_Params {
+  optional bytes param_0 = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional bool param_1_is_null = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for plist_to_bin
+// param_0: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_1: i8**
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_2: i32*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message plist_to_bin_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional uint32 param_1_handle = 5;
+  optional bool param_1_is_null = 6;
+  optional uint32 param_2_handle = 7;
+  optional bool param_2_is_null = 8;
+  optional bool skip_dependency_check = 9;
+  optional bool allow_double_delete = 10;
+}
+
+// Parameters for plist_to_json
+// param_0: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_1: i8**
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_2: i32*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_3: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message plist_to_json_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional uint32 param_1_handle = 5;
+  optional bool param_1_is_null = 6;
+  optional uint32 param_2_handle = 7;
+  optional bool param_2_is_null = 8;
+  optional int32 param_3 = 9;
+  optional bool skip_dependency_check = 10;
+  optional bool allow_double_delete = 11;
+}
+
+// Parameters for plist_to_openstep
+// param_0: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_1: i8**
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_2: i32*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_3: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message plist_to_openstep_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional uint32 param_1_handle = 5;
+  optional bool param_1_is_null = 6;
+  optional uint32 param_2_handle = 7;
+  optional bool param_2_is_null = 8;
+  optional int32 param_3 = 9;
+  optional bool skip_dependency_check = 10;
+  optional bool allow_double_delete = 11;
+}
+
+// Parameters for plist_to_xml
+// param_0: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_1: i8**
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_2: i32*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message plist_to_xml_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional uint32 param_1_handle = 5;
+  optional bool param_1_is_null = 6;
+  optional uint32 param_2_handle = 7;
+  optional bool param_2_is_null = 8;
+  optional bool skip_dependency_check = 9;
+  optional bool allow_double_delete = 10;
+}
+
+// Parameters for plist_uid_val_compare
+// param_0: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+//   ↳ malloc size override for overflow testing
+// param_1: i64
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message plist_uid_val_compare_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional uint32 param_0_malloc_override = 5;
+  optional int64 param_1 = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for plist_uint_val_compare
+// param_0: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+//   ↳ malloc size override for overflow testing
+// param_1: i64
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message plist_uint_val_compare_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional uint32 param_0_malloc_override = 5;
+  optional int64 param_1 = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for plist_write_to_file
+// param_0: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Nullable exploration knob
+// param_2: i32
+// param_3: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message plist_write_to_file_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional bytes param_1 = 5;
+  optional bool param_1_is_null = 6;
+  optional int32 param_2 = 7;
+  optional int32 param_3 = 8;
+  optional bool allow_double_delete = 9;
+}
+
+// Parameters for plist_write_to_stream
+// param_0: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_1: %struct._IO_FILE*
+//   ↳ Struct blob init (size=1728)
+//   ↳ Nullable exploration knob
+// param_2: i32
+// param_3: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message plist_write_to_stream_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional bytes param_1_blob = 5;
+  optional bool param_1_is_null = 6;
+  optional int32 param_2 = 7;
+  optional int32 param_3 = 8;
+  optional bool allow_double_delete = 9;
+}
+
+// Parameters for plist_write_to_string
+// param_0: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_1: i8**
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_2: i32*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_3: i32
+// param_4: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message plist_write_to_string_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional uint32 param_1_handle = 5;
+  optional bool param_1_is_null = 6;
+  optional uint32 param_2_handle = 7;
+  optional bool param_2_is_null = 8;
+  optional int32 param_3 = 9;
+  optional int32 param_4 = 10;
+  optional bool skip_dependency_check = 11;
+  optional bool allow_double_delete = 12;
+}
+
+// Stateful chain block: encourage dict_new_iter -> dict_next_item sequences.
+// repeat is clamped in harness to keep execution bounded.
+message dict_iter_chain_Params {
+  optional uint32 repeat = 1;
+  optional bool include_merge = 2;
+}
+
+// Serializer target for parse->serialize chain blocks.
+enum ParseSerializeTarget {
+  PARSE_SERIALIZE_TO_XML = 0;
+  PARSE_SERIALIZE_TO_BIN = 1;
+}
+
+// Stateful chain block: encourage from_xml -> (to_xml|to_bin) sequences.
+// repeat is clamped in harness to keep execution bounded.
+message parse_serialize_chain_Params {
+  optional uint32 repeat = 1;
+  optional ParseSerializeTarget target = 2;
+}
+
+// Stateful chain block: encourage dict_set_item -> dict_remove_item sequences.
+// repeat is clamped in harness to keep execution bounded.
+message dict_remove_chain_Params {
+  optional uint32 repeat = 1;
+}
+
+// Stateful chain block: encourage array_new -> set/append -> item_remove sequences.
+// repeat is clamped in harness to keep execution bounded.
+message array_lifecycle_chain_Params {
+  optional uint32 repeat = 1;
+  optional bool prefer_set_item = 2;
+}
+
+// Stateful chain block: drive plist_set_* families with optional compare follow-ups.
+// repeat is clamped in harness to keep execution bounded.
+message setter_compare_chain_Params {
+  optional uint32 repeat = 1;
+  optional bool include_compare = 2;
+}
+
+// Stateful chain block: dict/array mutation followed by readback and cleanup.
+// repeat is clamped in harness to keep execution bounded.
+message mutation_readback_chain_Params {
+  optional uint32 repeat = 1;
+  optional bool include_iter = 2;
+  optional bool prefer_set_item = 3;
+}
+
+// Dynamic dispatch: exactly one API call variant per Action.
+message Action {
+  oneof action {
+    libplist_version_Params libplist_version = 1;
+    plist_access_path_Params plist_access_path = 2;
+    plist_access_pathv_Params plist_access_pathv = 3;
+    plist_array_append_item_Params plist_array_append_item = 4;
+    plist_array_get_item_Params plist_array_get_item = 5;
+    plist_array_get_item_index_Params plist_array_get_item_index = 6;
+    plist_array_get_size_Params plist_array_get_size = 7;
+    plist_array_insert_item_Params plist_array_insert_item = 8;
+    plist_array_item_remove_Params plist_array_item_remove = 9;
+    plist_array_new_iter_Params plist_array_new_iter = 10;
+    plist_array_next_item_Params plist_array_next_item = 11;
+    plist_array_remove_item_Params plist_array_remove_item = 12;
+    plist_array_set_item_Params plist_array_set_item = 13;
+    plist_bool_val_is_true_Params plist_bool_val_is_true = 14;
+    plist_compare_node_value_Params plist_compare_node_value = 15;
+    plist_copy_Params plist_copy = 16;
+    plist_data_val_compare_Params plist_data_val_compare = 17;
+    plist_data_val_compare_with_size_Params plist_data_val_compare_with_size = 18;
+    plist_data_val_contains_Params plist_data_val_contains = 19;
+    plist_date_val_compare_Params plist_date_val_compare = 20;
+    plist_dict_copy_bool_Params plist_dict_copy_bool = 21;
+    plist_dict_copy_data_Params plist_dict_copy_data = 22;
+    plist_dict_copy_int_Params plist_dict_copy_int = 23;
+    plist_dict_copy_item_Params plist_dict_copy_item = 24;
+    plist_dict_copy_string_Params plist_dict_copy_string = 25;
+    plist_dict_copy_uint_Params plist_dict_copy_uint = 26;
+    plist_dict_get_bool_Params plist_dict_get_bool = 27;
+    plist_dict_get_int_Params plist_dict_get_int = 28;
+    plist_dict_get_item_Params plist_dict_get_item = 29;
+    plist_dict_get_item_key_Params plist_dict_get_item_key = 30;
+    plist_dict_get_size_Params plist_dict_get_size = 31;
+    plist_dict_get_uint_Params plist_dict_get_uint = 32;
+    plist_dict_item_get_key_Params plist_dict_item_get_key = 33;
+    plist_dict_merge_Params plist_dict_merge = 34;
+    plist_dict_new_iter_Params plist_dict_new_iter = 35;
+    plist_dict_next_item_Params plist_dict_next_item = 36;
+    plist_dict_remove_item_Params plist_dict_remove_item = 37;
+    plist_dict_set_item_Params plist_dict_set_item = 38;
+    plist_free_Params plist_free = 39;
+    plist_from_bin_Params plist_from_bin = 40;
+    plist_from_json_Params plist_from_json = 41;
+    plist_from_memory_Params plist_from_memory = 42;
+    plist_from_openstep_Params plist_from_openstep = 43;
+    plist_from_xml_Params plist_from_xml = 44;
+    plist_get_bool_val_Params plist_get_bool_val = 45;
+    plist_get_data_ptr_Params plist_get_data_ptr = 46;
+    plist_get_data_val_Params plist_get_data_val = 47;
+    plist_get_date_val_Params plist_get_date_val = 48;
+    plist_get_int_val_Params plist_get_int_val = 49;
+    plist_get_key_val_Params plist_get_key_val = 50;
+    plist_get_node_type_Params plist_get_node_type = 51;
+    plist_get_parent_Params plist_get_parent = 52;
+    plist_get_real_val_Params plist_get_real_val = 53;
+    plist_get_string_ptr_Params plist_get_string_ptr = 54;
+    plist_get_string_val_Params plist_get_string_val = 55;
+    plist_get_uid_val_Params plist_get_uid_val = 56;
+    plist_get_uint_val_Params plist_get_uint_val = 57;
+    plist_int_val_compare_Params plist_int_val_compare = 58;
+    plist_int_val_is_negative_Params plist_int_val_is_negative = 59;
+    plist_is_binary_Params plist_is_binary = 60;
+    plist_key_val_compare_Params plist_key_val_compare = 61;
+    plist_key_val_compare_with_size_Params plist_key_val_compare_with_size = 62;
+    plist_key_val_contains_Params plist_key_val_contains = 63;
+    plist_mem_free_Params plist_mem_free = 64;
+    plist_new_array_Params plist_new_array = 65;
+    plist_new_bool_Params plist_new_bool = 66;
+    plist_new_data_Params plist_new_data = 67;
+    plist_new_date_Params plist_new_date = 68;
+    plist_new_dict_Params plist_new_dict = 69;
+    plist_new_int_Params plist_new_int = 70;
+    plist_new_null_Params plist_new_null = 71;
+    plist_new_real_Params plist_new_real = 72;
+    plist_new_string_Params plist_new_string = 73;
+    plist_new_uid_Params plist_new_uid = 74;
+    plist_new_uint_Params plist_new_uint = 75;
+    plist_print_Params plist_print = 76;
+    plist_read_from_file_Params plist_read_from_file = 77;
+    plist_real_val_compare_Params plist_real_val_compare = 78;
+    plist_set_bool_val_Params plist_set_bool_val = 79;
+    plist_set_data_val_Params plist_set_data_val = 80;
+    plist_set_date_val_Params plist_set_date_val = 81;
+    plist_set_debug_Params plist_set_debug = 82;
+    plist_set_int_val_Params plist_set_int_val = 83;
+    plist_set_key_val_Params plist_set_key_val = 84;
+    plist_set_real_val_Params plist_set_real_val = 85;
+    plist_set_string_val_Params plist_set_string_val = 86;
+    plist_set_uid_val_Params plist_set_uid_val = 87;
+    plist_set_uint_val_Params plist_set_uint_val = 88;
+    plist_sort_Params plist_sort = 89;
+    plist_string_val_compare_Params plist_string_val_compare = 90;
+    plist_string_val_compare_with_size_Params plist_string_val_compare_with_size = 91;
+    plist_string_val_contains_Params plist_string_val_contains = 92;
+    plist_to_bin_Params plist_to_bin = 93;
+    plist_to_json_Params plist_to_json = 94;
+    plist_to_openstep_Params plist_to_openstep = 95;
+    plist_to_xml_Params plist_to_xml = 96;
+    plist_uid_val_compare_Params plist_uid_val_compare = 97;
+    plist_uint_val_compare_Params plist_uint_val_compare = 98;
+    plist_write_to_file_Params plist_write_to_file = 99;
+    plist_write_to_stream_Params plist_write_to_stream = 100;
+    plist_write_to_string_Params plist_write_to_string = 101;
+    dict_iter_chain_Params dict_iter_chain = 102;
+    parse_serialize_chain_Params parse_serialize_chain = 103;
+    dict_remove_chain_Params dict_remove_chain = 104;
+    array_lifecycle_chain_Params array_lifecycle_chain = 105;
+    setter_compare_chain_Params setter_compare_chain = 106;
+    mutation_readback_chain_Params mutation_readback_chain = 107;
+  }
+}
+
+// Top-level fuzz input (v2). Dynamic sequence of Actions.
+message FuzzInput {
+  optional uint32 global_seed = 1;
+  repeated Action actions = 2;
+  optional uint32 max_actions_hint = 3;
+  optional bool favor_valid_state = 4;
+}

@@ -75,6 +75,22 @@ struct ScalarTable {
 static ScalarTable g_scalar_tables[ST__COUNT];
 static bool g_hard_constraint_redirected = false;
 
+// libErator's LLVM metadata occasionally describes a by-value C record as an
+// integer (for example Dwarf_Cmdline_Options_s). Decode real scalar/enum types
+// normally and safely default-initialize aggregate values instead of emitting
+// an invalid integer-to-record cast.
+template <typename T, typename V>
+static typename std::enable_if<std::is_scalar<T>::value || std::is_enum<T>::value, T>::type
+plb_decode_scalar(V value) {
+    return static_cast<T>(value);
+}
+
+template <typename T, typename V>
+static typename std::enable_if<!std::is_scalar<T>::value && !std::is_enum<T>::value, T>::type
+plb_decode_scalar(V) {
+    return T{};
+}
+
 static void handles_reset() {
     for (size_t t = 0; t < (size_t)HT__COUNT; t++) {
         g_tables[t].count = 0;
@@ -1363,9 +1379,9 @@ static void TestOneProtoInput(const {{ package_name }}::{{ fuzz_input_type }}& i
                             &slot_value,
                             &sel_scalar_{{ arg.i }}
                         )) {
-                        arg_{{ arg.i }} = ({{ arg.c_type }})slot_value;
+                        arg_{{ arg.i }} = plb_decode_scalar<typename std::remove_const<{{ arg.c_type }}>::type>(slot_value);
                     } else if (params.has_param_{{ arg.i }}()) {
-                        arg_{{ arg.i }} = ({{ arg.c_type }})params.param_{{ arg.i }}();
+                        arg_{{ arg.i }} = plb_decode_scalar<typename std::remove_const<{{ arg.c_type }}>::type>(params.param_{{ arg.i }}());
                     } else if (strict_scalar_deps && {{ "true" if arg.scalar_dep_required else "false" }} && !allow_stale) {
                         should_skip_call = true;
                         g_hard_constraint_redirected = true;
@@ -1386,9 +1402,9 @@ static void TestOneProtoInput(const {{ package_name }}::{{ fuzz_input_type }}& i
                             &slot_value,
                             &sel_scalar_{{ arg.i }}
                         )) {
-                        arg_{{ arg.i }} = ({{ arg.c_type }})slot_value;
+                        arg_{{ arg.i }} = plb_decode_scalar<typename std::remove_const<{{ arg.c_type }}>::type>(slot_value);
                     } else if (params.has_param_{{ arg.i }}()) {
-                        arg_{{ arg.i }} = ({{ arg.c_type }})params.param_{{ arg.i }}();
+                        arg_{{ arg.i }} = plb_decode_scalar<typename std::remove_const<{{ arg.c_type }}>::type>(params.param_{{ arg.i }}());
                     } else if (strict_scalar_deps && {{ "true" if arg.scalar_dep_required else "false" }} && !allow_stale) {
                         should_skip_call = true;
                         g_hard_constraint_redirected = true;
@@ -1396,7 +1412,7 @@ static void TestOneProtoInput(const {{ package_name }}::{{ fuzz_input_type }}& i
                 }
                 {% else %}
                 if (params.has_param_{{ arg.i }}()) {
-                    arg_{{ arg.i }} = ({{ arg.c_type }})params.param_{{ arg.i }}();
+                    arg_{{ arg.i }} = plb_decode_scalar<typename std::remove_const<{{ arg.c_type }}>::type>(params.param_{{ arg.i }}());
                 }
                 {% endif %}
                 {% elif arg.param.kind == "va_list" %}
@@ -1522,6 +1538,21 @@ static void TestOneProtoInput(const {{ package_name }}::{{ fuzz_input_type }}& i
                 {% endif %}
 
                 // Finalize pointer arguments from storage (after potential clamps/resizes).
+                {% if api.name == "pthreadpool_create" %}
+                // A fuzzed size_t can otherwise ask pthreadpool to create thousands of
+                // OS threads before libFuzzer's timeout can interrupt the call. Keep
+                // small explicit-thread behavior while bounding this process-wide
+                // resource allocation. Zero means "all online CPUs" to pthreadpool,
+                // so map it into the bounded range as well.
+                {
+                    int thread_cap = plb_env_int("PROTO_LIBERATOR_PTHREADPOOL_MAX_THREADS", 2);
+                    if (thread_cap > 0) {
+                        arg_0 = static_cast<decltype(arg_0)>(
+                            1 + (arg_0 % static_cast<decltype(arg_0)>(thread_cap))
+                        );
+                    }
+                }
+                {% endif %}
                 {% for arg in api.args %}
                 {% if arg.param.kind == "bytes" or arg.param.kind == "bytes_array" %}
                 {% if arg.is_pointer %}
@@ -1604,9 +1635,9 @@ static void TestOneProtoInput(const {{ package_name }}::{{ fuzz_input_type }}& i
 
                 // Call
                 {% if not api.return_is_void %}
-                auto ret = {{ api.name }}(
+                auto ret = {{ api.qualified_name }}(
                 {% else %}
-                {{ api.name }}(
+                {{ api.qualified_name }}(
                 {% endif %}
                     {% for arg in api.args %}
                     arg_{{ arg.i }}{% if not loop.last %}, {% endif %}

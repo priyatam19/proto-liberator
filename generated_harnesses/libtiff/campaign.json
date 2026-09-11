@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "reference_report": "artifacts/libtiff/rerun15m_hardened6_20260330_210854/coverage/final/report_full.txt",
+  "reference_corpus": "artifacts/libtiff/rerun15m_hardened6_20260330_210854/corpus_min",
+  "initial_corpus": {"archive": "initial_corpus.tar.gz", "sha256": "d7a698f123c9161d6e03a92cefed067c97e1124ebf3317844c0e2ae0690f376c", "files": 2752},
+  "runtime": {"fork": 2, "jobs": 1, "workers": 1, "seed": 1337, "max_len": 4096, "timeout_sec": 25, "max_actions": 64},
+  "reference_duration_sec": 900,
+  "recommended_duration_sec": 86400,
+  "use_minimum_apis": false
+}

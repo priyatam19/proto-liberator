@@ -1,0 +1,3917 @@
+syntax = "proto2";
+
+package libtiff_fuzzer;
+
+
+// Parameters for LogL10fromY
+// param_0: double
+// param_1: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message LogL10fromY_Params {
+  optional double param_0 = 1;
+  optional int32 param_1 = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for LogL10toY
+// param_0: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message LogL10toY_Params {
+  optional int32 param_0 = 1;
+  optional bool allow_double_delete = 2;
+}
+
+// Parameters for LogL16fromY
+// param_0: double
+// param_1: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message LogL16fromY_Params {
+  optional double param_0 = 1;
+  optional int32 param_1 = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for LogL16toY
+// param_0: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message LogL16toY_Params {
+  optional int32 param_0 = 1;
+  optional bool allow_double_delete = 2;
+}
+
+// Parameters for LogLuv24fromXYZ
+// param_0: float*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_1: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message LogLuv24fromXYZ_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional int32 param_1 = 5;
+  optional bool allow_double_delete = 6;
+}
+
+// Parameters for LogLuv24toXYZ
+// param_0: i32
+// param_1: float*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message LogLuv24toXYZ_Params {
+  optional int32 param_0 = 1;
+  optional bytes param_1 = 2;
+  optional uint32 param_1_length = 3;
+  optional uint32 param_1_length_override = 4;
+  optional bool param_1_is_null = 5;
+  optional bool skip_dependency_check = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for LogLuv32fromXYZ
+// param_0: float*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_1: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message LogLuv32fromXYZ_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional int32 param_1 = 5;
+  optional bool allow_double_delete = 6;
+}
+
+// Parameters for LogLuv32toXYZ
+// param_0: i32
+// param_1: float*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message LogLuv32toXYZ_Params {
+  optional int32 param_0 = 1;
+  optional bytes param_1 = 2;
+  optional uint32 param_1_length = 3;
+  optional uint32 param_1_length_override = 4;
+  optional bool param_1_is_null = 5;
+  optional bool skip_dependency_check = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for TIFFAccessTagMethods
+// param_0: %struct.tiff.181*
+//   ↳ Struct blob init (size=10816)
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFAccessTagMethods_Params {
+  optional bytes param_0_blob = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for TIFFCIELabToRGBInit
+// param_0: %struct.TIFFCIELabToRGB*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: %struct.TIFFDisplay*
+//   ↳ Struct blob init (size=672)
+//   ↳ Nullable exploration knob
+// param_2: float*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message TIFFCIELabToRGBInit_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1_blob = 3;
+  optional bool param_1_is_null = 4;
+  optional bytes param_2 = 5;
+  optional uint32 param_2_length = 6;
+  optional uint32 param_2_length_override = 7;
+  optional bool param_2_is_null = 8;
+  optional bool skip_dependency_check = 9;
+  optional bool allow_double_delete = 10;
+}
+
+// Parameters for TIFFCIELabToXYZ
+// param_0: %struct.TIFFCIELabToRGB*
+//   ↳ Struct blob init (size=144992)
+//   ↳ Nullable exploration knob
+// param_1: i32
+// param_2: i32
+// param_3: i32
+// param_4: float*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_5: float*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_6: float*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message TIFFCIELabToXYZ_Params {
+  optional bytes param_0_blob = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional int32 param_2 = 4;
+  optional int32 param_3 = 5;
+  optional uint32 param_4_handle = 6;
+  optional bool param_4_is_null = 7;
+  optional uint32 param_5_handle = 8;
+  optional bool param_5_is_null = 9;
+  optional uint32 param_6_handle = 10;
+  optional bool param_6_is_null = 11;
+  optional bool skip_dependency_check = 12;
+  optional bool allow_double_delete = 13;
+}
+
+// Parameters for TIFFCheckTile
+// param_0: %struct.tiff*
+//   ↳ Handle to %struct.tiff* object
+//   ↳ Nullable exploration knob
+// param_1: i32
+// param_2: i32
+// param_3: i32
+// param_4: i16
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFCheckTile_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional int32 param_2 = 4;
+  optional int32 param_3 = 5;
+  optional int32 param_4 = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for TIFFCheckpointDirectory
+// param_0: %struct.tiff.108*
+//   ↳ Struct blob init (size=10816)
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFCheckpointDirectory_Params {
+  optional bytes param_0_blob = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for TIFFCleanup
+// param_0: %struct.tiff.17*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFCleanup_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for TIFFClientOpen
+// param_0: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_2: i8*
+//   ↳ Nullable exploration knob
+// param_3: i64 (i8*, i8*, i64)*
+//   ↳ Nullable exploration knob
+// param_4: i64 (i8*, i8*, i64)*
+//   ↳ Nullable exploration knob
+// param_5: i64 (i8*, i64, i32)*
+//   ↳ Nullable exploration knob
+// param_6: i32 (i8*)*
+//   ↳ Nullable exploration knob
+// param_7: i64 (i8*)*
+//   ↳ Nullable exploration knob
+// param_8: i32 (i8*, i8**, i64*)*
+//   ↳ Nullable exploration knob
+// param_9: void (i8*, i8*, i64)*
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFClientOpen_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional bytes param_1 = 5;
+  optional uint32 param_1_length = 6;
+  optional uint32 param_1_length_override = 7;
+  optional bool param_1_is_null = 8;
+  optional bytes param_2 = 9;
+  optional bool param_2_is_null = 10;
+  optional bytes param_3 = 11;
+  optional bool param_3_is_null = 12;
+  optional bytes param_4 = 13;
+  optional bool param_4_is_null = 14;
+  optional bytes param_5 = 15;
+  optional bool param_5_is_null = 16;
+  optional bytes param_6 = 17;
+  optional bool param_6_is_null = 18;
+  optional bytes param_7 = 19;
+  optional bool param_7_is_null = 20;
+  optional bytes param_8 = 21;
+  optional bool param_8_is_null = 22;
+  optional bytes param_9 = 23;
+  optional bool param_9_is_null = 24;
+  optional bool allow_double_delete = 25;
+}
+
+// Parameters for TIFFClientOpenExt
+// param_0: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_2: i8*
+//   ↳ Nullable exploration knob
+// param_3: i64 (i8*, i8*, i64)*
+//   ↳ Nullable exploration knob
+// param_4: i64 (i8*, i8*, i64)*
+//   ↳ Nullable exploration knob
+// param_5: i64 (i8*, i64, i32)*
+//   ↳ Nullable exploration knob
+// param_6: i32 (i8*)*
+//   ↳ Nullable exploration knob
+// param_7: i64 (i8*)*
+//   ↳ Nullable exploration knob
+// param_8: i32 (i8*, i8**, i64*)*
+//   ↳ Nullable exploration knob
+// param_9: void (i8*, i8*, i64)*
+//   ↳ Nullable exploration knob
+// param_10: %struct.TIFFOpenOptions*
+//   ↳ Handle to %struct.TIFFOpenOptions* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFClientOpenExt_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional bytes param_1 = 5;
+  optional uint32 param_1_length = 6;
+  optional uint32 param_1_length_override = 7;
+  optional bool param_1_is_null = 8;
+  optional bytes param_2 = 9;
+  optional bool param_2_is_null = 10;
+  optional bytes param_3 = 11;
+  optional bool param_3_is_null = 12;
+  optional bytes param_4 = 13;
+  optional bool param_4_is_null = 14;
+  optional bytes param_5 = 15;
+  optional bool param_5_is_null = 16;
+  optional bytes param_6 = 17;
+  optional bool param_6_is_null = 18;
+  optional bytes param_7 = 19;
+  optional bool param_7_is_null = 20;
+  optional bytes param_8 = 21;
+  optional bool param_8_is_null = 22;
+  optional bytes param_9 = 23;
+  optional bool param_9_is_null = 24;
+  optional uint32 param_10_handle = 25;
+  optional bool param_10_is_null = 26;
+  optional bool allow_double_delete = 27;
+}
+
+// Parameters for TIFFClientdata
+// param_0: %struct.tiff.163*
+//   ↳ Handle to %struct.tiff.163* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFClientdata_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for TIFFClose
+// param_0: %struct.tiff.17*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFClose_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for TIFFComputeStrip
+// param_0: %struct.tiff*
+//   ↳ Handle to %struct.tiff* object
+//   ↳ Nullable exploration knob
+// param_1: i32
+// param_2: i16
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFComputeStrip_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional int32 param_2 = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for TIFFComputeTile
+// param_0: %struct.tiff*
+//   ↳ Handle to %struct.tiff* object
+//   ↳ Nullable exploration knob
+// param_1: i32
+// param_2: i32
+// param_3: i32
+// param_4: i16
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFComputeTile_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional int32 param_2 = 4;
+  optional int32 param_3 = 5;
+  optional int32 param_4 = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for TIFFCreateCustomDirectory
+// param_0: %struct.tiff*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: %struct._TIFFFieldArray*
+//   ↳ Struct blob init (size=192)
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message TIFFCreateCustomDirectory_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1_blob = 3;
+  optional bool param_1_is_null = 4;
+  optional bool skip_dependency_check = 5;
+  optional bool allow_double_delete = 6;
+}
+
+// Parameters for TIFFCreateDirectory
+// param_0: %struct.tiff*
+//   ↳ Handle to %struct.tiff* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFCreateDirectory_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for TIFFCreateEXIFDirectory
+// param_0: %struct.tiff*
+//   ↳ Handle to %struct.tiff* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFCreateEXIFDirectory_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for TIFFCreateGPSDirectory
+// param_0: %struct.tiff*
+//   ↳ Handle to %struct.tiff* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFCreateGPSDirectory_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for TIFFCurrentDirOffset
+// param_0: %struct.tiff*
+//   ↳ Handle to %struct.tiff* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFCurrentDirOffset_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for TIFFCurrentDirectory
+// param_0: %struct.tiff.163*
+//   ↳ Handle to %struct.tiff.163* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFCurrentDirectory_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for TIFFCurrentRow
+// param_0: %struct.tiff.163*
+//   ↳ Handle to %struct.tiff.163* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFCurrentRow_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for TIFFCurrentStrip
+// param_0: %struct.tiff.163*
+//   ↳ Handle to %struct.tiff.163* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFCurrentStrip_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for TIFFCurrentTile
+// param_0: %struct.tiff.163*
+//   ↳ Handle to %struct.tiff.163* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFCurrentTile_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for TIFFDataWidth
+// param_0: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFDataWidth_Params {
+  optional int32 param_0 = 1;
+  optional bool allow_double_delete = 2;
+}
+
+// Parameters for TIFFDefaultStripSize
+// param_0: %struct.tiff*
+//   ↳ Handle to %struct.tiff* object
+//   ↳ Nullable exploration knob
+// param_1: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFDefaultStripSize_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional bool allow_double_delete = 4;
+}
+
+// Parameters for TIFFDefaultTileSize
+// param_0: %struct.tiff*
+//   ↳ Handle to %struct.tiff* object
+//   ↳ Nullable exploration knob
+// param_1: i32*
+//   ↳ Nullable exploration knob
+// param_2: i32*
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFDefaultTileSize_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional bool param_1_is_null = 4;
+  optional bytes param_2 = 5;
+  optional bool param_2_is_null = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for TIFFDeferStrileArrayWriting
+// param_0: %struct.tiff.108*
+//   ↳ Struct blob init (size=10816)
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFDeferStrileArrayWriting_Params {
+  optional bytes param_0_blob = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for TIFFError
+// param_0: i8*
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFError_Params {
+  optional bytes param_0 = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional bool param_1_is_null = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for TIFFErrorExt
+// param_0: i8*
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Nullable exploration knob
+// param_2: i8*
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFErrorExt_Params {
+  optional bytes param_0 = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional bool param_1_is_null = 4;
+  optional bytes param_2 = 5;
+  optional bool param_2_is_null = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for TIFFErrorExtR
+// param_0: %struct.tiff.163*
+//   ↳ Handle to %struct.tiff.163* object
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Nullable exploration knob
+// param_2: i8*
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFErrorExtR_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional bool param_1_is_null = 4;
+  optional bytes param_2 = 5;
+  optional bool param_2_is_null = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for TIFFFdOpen
+// param_0: i32
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_2: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFFdOpen_Params {
+  optional int32 param_0 = 1;
+  optional bytes param_1 = 2;
+  optional uint32 param_1_length = 3;
+  optional uint32 param_1_length_override = 4;
+  optional bool param_1_is_null = 5;
+  optional bytes param_2 = 6;
+  optional uint32 param_2_length = 7;
+  optional uint32 param_2_length_override = 8;
+  optional bool param_2_is_null = 9;
+  optional bool allow_double_delete = 10;
+}
+
+// Parameters for TIFFFdOpenExt
+// param_0: i32
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_2: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_3: %struct.TIFFOpenOptions.623*
+//   ↳ Struct blob init (size=384)
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFFdOpenExt_Params {
+  optional int32 param_0 = 1;
+  optional bytes param_1 = 2;
+  optional uint32 param_1_length = 3;
+  optional uint32 param_1_length_override = 4;
+  optional bool param_1_is_null = 5;
+  optional bytes param_2 = 6;
+  optional uint32 param_2_length = 7;
+  optional uint32 param_2_length_override = 8;
+  optional bool param_2_is_null = 9;
+  optional bytes param_3_blob = 10;
+  optional bool param_3_is_null = 11;
+  optional bool allow_double_delete = 12;
+}
+
+// Parameters for TIFFFieldDataType
+// param_0: %struct._TIFFField*
+//   ↳ Handle to %struct._TIFFField* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFFieldDataType_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for TIFFFieldIsAnonymous
+// param_0: %struct._TIFFField*
+//   ↳ Handle to %struct._TIFFField* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFFieldIsAnonymous_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for TIFFFieldName
+// param_0: %struct._TIFFField*
+//   ↳ Handle to %struct._TIFFField* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFFieldName_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for TIFFFieldPassCount
+// param_0: %struct._TIFFField*
+//   ↳ Handle to %struct._TIFFField* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFFieldPassCount_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for TIFFFieldReadCount
+// param_0: %struct._TIFFField*
+//   ↳ Handle to %struct._TIFFField* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFFieldReadCount_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for TIFFFieldSetGetCountSize
+// param_0: %struct._TIFFField*
+//   ↳ Handle to %struct._TIFFField* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFFieldSetGetCountSize_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for TIFFFieldSetGetSize
+// param_0: %struct._TIFFField*
+//   ↳ Handle to %struct._TIFFField* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFFieldSetGetSize_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for TIFFFieldTag
+// param_0: %struct._TIFFField*
+//   ↳ Handle to %struct._TIFFField* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFFieldTag_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for TIFFFieldWithName
+// param_0: %struct.tiff*
+//   ↳ Handle to %struct.tiff* object
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFFieldWithName_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional bool param_1_is_null = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for TIFFFieldWithTag
+// param_0: %struct.tiff*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message TIFFFieldWithTag_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional bool skip_dependency_check = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for TIFFFieldWriteCount
+// param_0: %struct._TIFFField*
+//   ↳ Handle to %struct._TIFFField* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFFieldWriteCount_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for TIFFFileName
+// param_0: %struct.tiff.163*
+//   ↳ Handle to %struct.tiff.163* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFFileName_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for TIFFFileno
+// param_0: %struct.tiff.163*
+//   ↳ Handle to %struct.tiff.163* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFFileno_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for TIFFFindCODEC
+// param_0: i16
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFFindCODEC_Params {
+  optional int32 param_0 = 1;
+  optional bool allow_double_delete = 2;
+}
+
+// Parameters for TIFFFindField
+// param_0: %struct.tiff*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32
+// param_2: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message TIFFFindField_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional int32 param_2 = 4;
+  optional bool skip_dependency_check = 5;
+  optional bool allow_double_delete = 6;
+}
+
+// Parameters for TIFFFlush
+// param_0: %struct.tiff.108*
+//   ↳ Struct blob init (size=10816)
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFFlush_Params {
+  optional bytes param_0_blob = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for TIFFFlushData
+// param_0: %struct.tiff.108*
+//   ↳ Struct blob init (size=10816)
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFFlushData_Params {
+  optional bytes param_0_blob = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for TIFFForceStrileArrayWriting
+// param_0: %struct.tiff.108*
+//   ↳ Struct blob init (size=10816)
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFForceStrileArrayWriting_Params {
+  optional bytes param_0_blob = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for TIFFFreeDirectory
+// param_0: %struct.tiff*
+//   ↳ Handle to %struct.tiff* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFFreeDirectory_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for TIFFGetBitRevTable
+// param_0: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFGetBitRevTable_Params {
+  optional int32 param_0 = 1;
+  optional bool allow_double_delete = 2;
+}
+
+// Parameters for TIFFGetClientInfo
+// param_0: %struct.tiff.181*
+//   ↳ Struct blob init (size=10816)
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFGetClientInfo_Params {
+  optional bytes param_0_blob = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional bool param_1_is_null = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for TIFFGetCloseProc
+// param_0: %struct.tiff.163*
+//   ↳ Handle to %struct.tiff.163* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFGetCloseProc_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for TIFFGetConfiguredCODECs
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFGetConfiguredCODECs_Params {
+  optional bool allow_double_delete = 1;
+}
+
+// Parameters for TIFFGetField
+// param_0: %struct.tiff*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32
+//   ↳ Scalar (deps ignored for schema shape)
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message TIFFGetField_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional bool skip_dependency_check = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for TIFFGetFieldDefaulted
+// param_0: %struct.tiff*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32
+//   ↳ Scalar (deps ignored for schema shape)
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message TIFFGetFieldDefaulted_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional bool skip_dependency_check = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for TIFFGetMapFileProc
+// param_0: %struct.tiff.163*
+//   ↳ Handle to %struct.tiff.163* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFGetMapFileProc_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for TIFFGetMode
+// param_0: %struct.tiff.163*
+//   ↳ Handle to %struct.tiff.163* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFGetMode_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for TIFFGetReadProc
+// param_0: %struct.tiff.163*
+//   ↳ Handle to %struct.tiff.163* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFGetReadProc_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for TIFFGetSeekProc
+// param_0: %struct.tiff.163*
+//   ↳ Handle to %struct.tiff.163* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFGetSeekProc_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for TIFFGetSizeProc
+// param_0: %struct.tiff.163*
+//   ↳ Handle to %struct.tiff.163* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFGetSizeProc_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for TIFFGetStrileByteCount
+// param_0: %struct.tiff.108*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message TIFFGetStrileByteCount_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bool skip_dependency_check = 7;
+  optional bool allow_double_delete = 8;
+}
+
+// Parameters for TIFFGetStrileByteCountWithErr
+// param_0: %struct.tiff.108*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_2: i32*
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message TIFFGetStrileByteCountWithErr_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bytes param_2 = 7;
+  optional bool param_2_is_null = 8;
+  optional bool skip_dependency_check = 9;
+  optional bool allow_double_delete = 10;
+}
+
+// Parameters for TIFFGetStrileOffset
+// param_0: %struct.tiff.108*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message TIFFGetStrileOffset_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bool skip_dependency_check = 7;
+  optional bool allow_double_delete = 8;
+}
+
+// Parameters for TIFFGetStrileOffsetWithErr
+// param_0: %struct.tiff.108*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_2: i32*
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message TIFFGetStrileOffsetWithErr_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bytes param_2 = 7;
+  optional bool param_2_is_null = 8;
+  optional bool skip_dependency_check = 9;
+  optional bool allow_double_delete = 10;
+}
+
+// Parameters for TIFFGetTagListCount
+// param_0: %struct.tiff.181*
+//   ↳ Struct blob init (size=10816)
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFGetTagListCount_Params {
+  optional bytes param_0_blob = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for TIFFGetTagListEntry
+// param_0: %struct.tiff.181*
+//   ↳ Struct blob init (size=10816)
+//   ↳ Nullable exploration knob
+// param_1: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFGetTagListEntry_Params {
+  optional bytes param_0_blob = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional bool allow_double_delete = 4;
+}
+
+// Parameters for TIFFGetUnmapFileProc
+// param_0: %struct.tiff.163*
+//   ↳ Handle to %struct.tiff.163* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFGetUnmapFileProc_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for TIFFGetVersion
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFGetVersion_Params {
+  optional bool allow_double_delete = 1;
+}
+
+// Parameters for TIFFGetWriteProc
+// param_0: %struct.tiff.163*
+//   ↳ Handle to %struct.tiff.163* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFGetWriteProc_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for TIFFIsBigEndian
+// param_0: %struct.tiff.163*
+//   ↳ Handle to %struct.tiff.163* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFIsBigEndian_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for TIFFIsBigTIFF
+// param_0: %struct.tiff.163*
+//   ↳ Handle to %struct.tiff.163* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFIsBigTIFF_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for TIFFIsByteSwapped
+// param_0: %struct.tiff.163*
+//   ↳ Handle to %struct.tiff.163* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFIsByteSwapped_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for TIFFIsCODECConfigured
+// param_0: i16
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFIsCODECConfigured_Params {
+  optional int32 param_0 = 1;
+  optional bool allow_double_delete = 2;
+}
+
+// Parameters for TIFFIsMSB2LSB
+// param_0: %struct.tiff.163*
+//   ↳ Handle to %struct.tiff.163* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFIsMSB2LSB_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for TIFFIsTiled
+// param_0: %struct.tiff.163*
+//   ↳ Handle to %struct.tiff.163* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFIsTiled_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for TIFFIsUpSampled
+// param_0: %struct.tiff.163*
+//   ↳ Handle to %struct.tiff.163* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFIsUpSampled_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for TIFFLastDirectory
+// param_0: %struct.tiff*
+//   ↳ Handle to %struct.tiff* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFLastDirectory_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for TIFFMergeFieldInfo
+// param_0: %struct.tiff*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: %struct.TIFFFieldInfo*
+//   ↳ Struct blob init (size=192)
+//   ↳ Nullable exploration knob
+// param_2: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message TIFFMergeFieldInfo_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1_blob = 3;
+  optional bool param_1_is_null = 4;
+  optional int32 param_2 = 5;
+  optional bool skip_dependency_check = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for TIFFNumberOfDirectories
+// param_0: %struct.tiff*
+//   ↳ Handle to %struct.tiff* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFNumberOfDirectories_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for TIFFNumberOfStrips
+// param_0: %struct.tiff*
+//   ↳ Handle to %struct.tiff* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFNumberOfStrips_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for TIFFNumberOfTiles
+// param_0: %struct.tiff*
+//   ↳ Handle to %struct.tiff* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFNumberOfTiles_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for TIFFOpen
+// param_0: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFOpen_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional bytes param_1 = 5;
+  optional uint32 param_1_length = 6;
+  optional uint32 param_1_length_override = 7;
+  optional bool param_1_is_null = 8;
+  optional bool allow_double_delete = 9;
+}
+
+// Parameters for TIFFOpenExt
+// param_0: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_2: %struct.TIFFOpenOptions.623*
+//   ↳ Struct blob init (size=384)
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFOpenExt_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional bytes param_1 = 5;
+  optional uint32 param_1_length = 6;
+  optional uint32 param_1_length_override = 7;
+  optional bool param_1_is_null = 8;
+  optional bytes param_2_blob = 9;
+  optional bool param_2_is_null = 10;
+  optional bool allow_double_delete = 11;
+}
+
+// Parameters for TIFFOpenOptionsAlloc
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFOpenOptionsAlloc_Params {
+  optional bool allow_double_delete = 1;
+}
+
+// Parameters for TIFFOpenOptionsFree
+// param_0: %struct.TIFFOpenOptions*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFOpenOptionsFree_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for TIFFOpenOptionsSetErrorHandlerExtR
+// param_0: %struct.TIFFOpenOptions*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32 (%struct.tiff.163*, i8*, i8*, i8*, %struct.__va_list_tag*)*
+//   ↳ Nullable exploration knob
+// param_2: i8*
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message TIFFOpenOptionsSetErrorHandlerExtR_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional bool param_1_is_null = 4;
+  optional bytes param_2 = 5;
+  optional bool param_2_is_null = 6;
+  optional bool skip_dependency_check = 7;
+  optional bool allow_double_delete = 8;
+}
+
+// Parameters for TIFFOpenOptionsSetMaxCumulatedMemAlloc
+// param_0: %struct.TIFFOpenOptions*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i64
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message TIFFOpenOptionsSetMaxCumulatedMemAlloc_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int64 param_1 = 3;
+  optional bool skip_dependency_check = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for TIFFOpenOptionsSetMaxSingleMemAlloc
+// param_0: %struct.TIFFOpenOptions*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i64
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message TIFFOpenOptionsSetMaxSingleMemAlloc_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int64 param_1 = 3;
+  optional bool skip_dependency_check = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for TIFFOpenOptionsSetWarningHandlerExtR
+// param_0: %struct.TIFFOpenOptions*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32 (%struct.tiff.163*, i8*, i8*, i8*, %struct.__va_list_tag*)*
+//   ↳ Nullable exploration knob
+// param_2: i8*
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message TIFFOpenOptionsSetWarningHandlerExtR_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional bool param_1_is_null = 4;
+  optional bytes param_2 = 5;
+  optional bool param_2_is_null = 6;
+  optional bool skip_dependency_check = 7;
+  optional bool allow_double_delete = 8;
+}
+
+// Parameters for TIFFPrintDirectory
+// param_0: %struct.tiff.470*
+//   ↳ Struct blob init (size=10816)
+//   ↳ Nullable exploration knob
+// param_1: %struct._IO_FILE*
+//   ↳ Struct blob init (size=1728)
+//   ↳ Nullable exploration knob
+// param_2: i64
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFPrintDirectory_Params {
+  optional bytes param_0_blob = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1_blob = 3;
+  optional bool param_1_is_null = 4;
+  optional int64 param_2 = 5;
+  optional bool allow_double_delete = 6;
+}
+
+// Parameters for TIFFRGBAImageBegin
+// param_0: %struct._TIFFRGBAImage*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: %struct.tiff*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_2: i32
+// param_3: i8*
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message TIFFRGBAImageBegin_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional uint32 param_1_handle = 3;
+  optional bool param_1_is_null = 4;
+  optional int32 param_2 = 5;
+  optional bytes param_3 = 6;
+  optional bool param_3_is_null = 7;
+  optional bool skip_dependency_check = 8;
+  optional bool allow_double_delete = 9;
+}
+
+// Parameters for TIFFRGBAImageEnd
+// param_0: %struct._TIFFRGBAImage*
+//   ↳ Struct blob init (size=1152)
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFRGBAImageEnd_Params {
+  optional bytes param_0_blob = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for TIFFRGBAImageGet
+// param_0: %struct._TIFFRGBAImage*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_2: i32
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_3: i32
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message TIFFRGBAImageGet_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bytes param_2 = 7;
+  optional uint32 param_2_length = 8;
+  optional uint32 param_2_length_override = 9;
+  optional bool param_2_is_null = 10;
+  optional bytes param_3 = 11;
+  optional uint32 param_3_length = 12;
+  optional uint32 param_3_length_override = 13;
+  optional bool param_3_is_null = 14;
+  optional bool skip_dependency_check = 15;
+  optional bool allow_double_delete = 16;
+}
+
+// Parameters for TIFFRGBAImageOK
+// param_0: %struct.tiff*
+//   ↳ Handle to %struct.tiff* object
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFRGBAImageOK_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional bool param_1_is_null = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for TIFFRasterScanlineSize
+// param_0: %struct.tiff*
+//   ↳ Handle to %struct.tiff* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFRasterScanlineSize_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for TIFFRasterScanlineSize64
+// param_0: %struct.tiff*
+//   ↳ Handle to %struct.tiff* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFRasterScanlineSize64_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for TIFFRawStripSize
+// param_0: %struct.tiff*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message TIFFRawStripSize_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bool skip_dependency_check = 7;
+  optional bool allow_double_delete = 8;
+}
+
+// Parameters for TIFFRawStripSize64
+// param_0: %struct.tiff*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message TIFFRawStripSize64_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bool skip_dependency_check = 7;
+  optional bool allow_double_delete = 8;
+}
+
+// Parameters for TIFFReadBufferSetup
+// param_0: %struct.tiff*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Nullable exploration knob
+// param_2: i64
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message TIFFReadBufferSetup_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional bool param_1_is_null = 4;
+  optional int64 param_2 = 5;
+  optional bool skip_dependency_check = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for TIFFReadCustomDirectory
+// param_0: %struct.tiff.108*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i64
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_2: %struct._TIFFFieldArray*
+//   ↳ Struct blob init (size=192)
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message TIFFReadCustomDirectory_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bytes param_2_blob = 7;
+  optional bool param_2_is_null = 8;
+  optional bool skip_dependency_check = 9;
+  optional bool allow_double_delete = 10;
+}
+
+// Parameters for TIFFReadDirectory
+// param_0: %struct.tiff.108*
+//   ↳ Struct blob init (size=10816)
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFReadDirectory_Params {
+  optional bytes param_0_blob = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for TIFFReadEXIFDirectory
+// param_0: %struct.tiff.108*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i64
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message TIFFReadEXIFDirectory_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bool skip_dependency_check = 7;
+  optional bool allow_double_delete = 8;
+}
+
+// Parameters for TIFFReadEncodedStrip
+// param_0: %struct.tiff*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_2: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_3: i64
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message TIFFReadEncodedStrip_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bytes param_2 = 7;
+  optional uint32 param_2_length = 8;
+  optional uint32 param_2_length_override = 9;
+  optional bool param_2_is_null = 10;
+  optional int64 param_3 = 11;
+  optional bool skip_dependency_check = 12;
+  optional bool allow_double_delete = 13;
+}
+
+// Parameters for TIFFReadEncodedTile
+// param_0: %struct.tiff*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_2: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_3: i64
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message TIFFReadEncodedTile_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bytes param_2 = 7;
+  optional uint32 param_2_length = 8;
+  optional uint32 param_2_length_override = 9;
+  optional bool param_2_is_null = 10;
+  optional int64 param_3 = 11;
+  optional bool skip_dependency_check = 12;
+  optional bool allow_double_delete = 13;
+}
+
+// Parameters for TIFFReadFromUserBuffer
+// param_0: %struct.tiff*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_2: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_3: i64
+// param_4: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_5: i64
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message TIFFReadFromUserBuffer_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bytes param_2 = 7;
+  optional uint32 param_2_length = 8;
+  optional uint32 param_2_length_override = 9;
+  optional bool param_2_is_null = 10;
+  optional int64 param_3 = 11;
+  optional bytes param_4 = 12;
+  optional uint32 param_4_length = 13;
+  optional uint32 param_4_length_override = 14;
+  optional bool param_4_is_null = 15;
+  optional int64 param_5 = 16;
+  optional bool skip_dependency_check = 17;
+  optional bool allow_double_delete = 18;
+}
+
+// Parameters for TIFFReadGPSDirectory
+// param_0: %struct.tiff.108*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i64
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message TIFFReadGPSDirectory_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bool skip_dependency_check = 7;
+  optional bool allow_double_delete = 8;
+}
+
+// Parameters for TIFFReadRGBAImage
+// param_0: %struct.tiff*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_2: i32
+//   ↳ Scalar (deps ignored for schema shape)
+// param_3: i32*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_4: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message TIFFReadRGBAImage_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional int32 param_2 = 7;
+  optional bytes param_3 = 8;
+  optional uint32 param_3_length = 9;
+  optional uint32 param_3_length_override = 10;
+  optional bool param_3_is_null = 11;
+  optional int32 param_4 = 12;
+  optional bool skip_dependency_check = 13;
+  optional bool allow_double_delete = 14;
+}
+
+// Parameters for TIFFReadRGBAImageOriented
+// param_0: %struct.tiff*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_2: i32
+//   ↳ Scalar (deps ignored for schema shape)
+// param_3: i32*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_4: i32
+// param_5: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message TIFFReadRGBAImageOriented_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional int32 param_2 = 7;
+  optional bytes param_3 = 8;
+  optional uint32 param_3_length = 9;
+  optional uint32 param_3_length_override = 10;
+  optional bool param_3_is_null = 11;
+  optional int32 param_4 = 12;
+  optional int32 param_5 = 13;
+  optional bool skip_dependency_check = 14;
+  optional bool allow_double_delete = 15;
+}
+
+// Parameters for TIFFReadRGBAStrip
+// param_0: %struct.tiff*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_2: i32*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message TIFFReadRGBAStrip_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bytes param_2 = 7;
+  optional uint32 param_2_length = 8;
+  optional uint32 param_2_length_override = 9;
+  optional bool param_2_is_null = 10;
+  optional bool skip_dependency_check = 11;
+  optional bool allow_double_delete = 12;
+}
+
+// Parameters for TIFFReadRGBAStripExt
+// param_0: %struct.tiff*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_2: i32*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_3: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message TIFFReadRGBAStripExt_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bytes param_2 = 7;
+  optional uint32 param_2_length = 8;
+  optional uint32 param_2_length_override = 9;
+  optional bool param_2_is_null = 10;
+  optional int32 param_3 = 11;
+  optional bool skip_dependency_check = 12;
+  optional bool allow_double_delete = 13;
+}
+
+// Parameters for TIFFReadRGBATile
+// param_0: %struct.tiff*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_2: i32
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_3: i32*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message TIFFReadRGBATile_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bytes param_2 = 7;
+  optional uint32 param_2_length = 8;
+  optional uint32 param_2_length_override = 9;
+  optional bool param_2_is_null = 10;
+  optional bytes param_3 = 11;
+  optional uint32 param_3_length = 12;
+  optional uint32 param_3_length_override = 13;
+  optional bool param_3_is_null = 14;
+  optional bool skip_dependency_check = 15;
+  optional bool allow_double_delete = 16;
+}
+
+// Parameters for TIFFReadRGBATileExt
+// param_0: %struct.tiff*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_2: i32
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_3: i32*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_4: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message TIFFReadRGBATileExt_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bytes param_2 = 7;
+  optional uint32 param_2_length = 8;
+  optional uint32 param_2_length_override = 9;
+  optional bool param_2_is_null = 10;
+  optional bytes param_3 = 11;
+  optional uint32 param_3_length = 12;
+  optional uint32 param_3_length_override = 13;
+  optional bool param_3_is_null = 14;
+  optional int32 param_4 = 15;
+  optional bool skip_dependency_check = 16;
+  optional bool allow_double_delete = 17;
+}
+
+// Parameters for TIFFReadRawStrip
+// param_0: %struct.tiff*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_2: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_3: i64
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message TIFFReadRawStrip_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bytes param_2 = 7;
+  optional uint32 param_2_length = 8;
+  optional uint32 param_2_length_override = 9;
+  optional bool param_2_is_null = 10;
+  optional int64 param_3 = 11;
+  optional bool skip_dependency_check = 12;
+  optional bool allow_double_delete = 13;
+}
+
+// Parameters for TIFFReadRawTile
+// param_0: %struct.tiff*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_2: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_3: i64
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message TIFFReadRawTile_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bytes param_2 = 7;
+  optional uint32 param_2_length = 8;
+  optional uint32 param_2_length_override = 9;
+  optional bool param_2_is_null = 10;
+  optional int64 param_3 = 11;
+  optional bool skip_dependency_check = 12;
+  optional bool allow_double_delete = 13;
+}
+
+// Parameters for TIFFReadScanline
+// param_0: %struct.tiff*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_2: i32
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_3: i16
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message TIFFReadScanline_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bytes param_2 = 7;
+  optional uint32 param_2_length = 8;
+  optional uint32 param_2_length_override = 9;
+  optional bool param_2_is_null = 10;
+  optional bytes param_3 = 11;
+  optional uint32 param_3_length = 12;
+  optional uint32 param_3_length_override = 13;
+  optional bool param_3_is_null = 14;
+  optional bool skip_dependency_check = 15;
+  optional bool allow_double_delete = 16;
+}
+
+// Parameters for TIFFReadTile
+// param_0: %struct.tiff*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_2: i32
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_3: i32
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_4: i32
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_5: i16
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message TIFFReadTile_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bytes param_2 = 7;
+  optional uint32 param_2_length = 8;
+  optional uint32 param_2_length_override = 9;
+  optional bool param_2_is_null = 10;
+  optional bytes param_3 = 11;
+  optional uint32 param_3_length = 12;
+  optional uint32 param_3_length_override = 13;
+  optional bool param_3_is_null = 14;
+  optional bytes param_4 = 15;
+  optional uint32 param_4_length = 16;
+  optional uint32 param_4_length_override = 17;
+  optional bool param_4_is_null = 18;
+  optional bytes param_5 = 19;
+  optional uint32 param_5_length = 20;
+  optional uint32 param_5_length_override = 21;
+  optional bool param_5_is_null = 22;
+  optional bool skip_dependency_check = 23;
+  optional bool allow_double_delete = 24;
+}
+
+// Parameters for TIFFRegisterCODEC
+// param_0: i16
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_2: i32 (%struct.tiff.53*, i32)*
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFRegisterCODEC_Params {
+  optional int32 param_0 = 1;
+  optional bytes param_1 = 2;
+  optional uint32 param_1_length = 3;
+  optional uint32 param_1_length_override = 4;
+  optional bool param_1_is_null = 5;
+  optional bytes param_2 = 6;
+  optional bool param_2_is_null = 7;
+  optional bool allow_double_delete = 8;
+}
+
+// Parameters for TIFFReverseBits
+// param_0: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_1: i64
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message TIFFReverseBits_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional int64 param_1 = 5;
+  optional bool skip_dependency_check = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for TIFFRewriteDirectory
+// param_0: %struct.tiff.108*
+//   ↳ Struct blob init (size=10816)
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFRewriteDirectory_Params {
+  optional bytes param_0_blob = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for TIFFScanlineSize
+// param_0: %struct.tiff*
+//   ↳ Handle to %struct.tiff* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFScanlineSize_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for TIFFScanlineSize64
+// param_0: %struct.tiff*
+//   ↳ Handle to %struct.tiff* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFScanlineSize64_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for TIFFSetClientInfo
+// param_0: %struct.tiff.181*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Nullable exploration knob
+// param_2: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message TIFFSetClientInfo_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional bool param_1_is_null = 4;
+  optional bytes param_2 = 5;
+  optional uint32 param_2_length = 6;
+  optional uint32 param_2_length_override = 7;
+  optional bool param_2_is_null = 8;
+  optional bool skip_dependency_check = 9;
+  optional bool allow_double_delete = 10;
+}
+
+// Parameters for TIFFSetClientdata
+// param_0: %struct.tiff.163*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message TIFFSetClientdata_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional bool param_1_is_null = 4;
+  optional bool skip_dependency_check = 5;
+  optional bool allow_double_delete = 6;
+}
+
+// Parameters for TIFFSetDirectory
+// param_0: %struct.tiff*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message TIFFSetDirectory_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional bool skip_dependency_check = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for TIFFSetErrorHandler
+// param_0: void (i8*, i8*, %struct.__va_list_tag*)*
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFSetErrorHandler_Params {
+  optional bytes param_0 = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for TIFFSetErrorHandlerExt
+// param_0: void (i8*, i8*, i8*, %struct.__va_list_tag*)*
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFSetErrorHandlerExt_Params {
+  optional bytes param_0 = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for TIFFSetField
+// param_0: %struct.tiff*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32
+//   ↳ Scalar (deps ignored for schema shape)
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message TIFFSetField_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional bool skip_dependency_check = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for TIFFSetFileName
+// param_0: %struct.tiff.163*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message TIFFSetFileName_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional bool param_1_is_null = 4;
+  optional bool skip_dependency_check = 5;
+  optional bool allow_double_delete = 6;
+}
+
+// Parameters for TIFFSetFileno
+// param_0: %struct.tiff.163*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message TIFFSetFileno_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional bool skip_dependency_check = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for TIFFSetMode
+// param_0: %struct.tiff.163*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message TIFFSetMode_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional bool skip_dependency_check = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for TIFFSetSubDirectory
+// param_0: %struct.tiff*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i64
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message TIFFSetSubDirectory_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int64 param_1 = 3;
+  optional bool skip_dependency_check = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for TIFFSetTagExtender
+// param_0: void (%struct.tiff*)*
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFSetTagExtender_Params {
+  optional bytes param_0 = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for TIFFSetWarningHandler
+// param_0: void (i8*, i8*, %struct.__va_list_tag*)*
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFSetWarningHandler_Params {
+  optional bytes param_0 = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for TIFFSetWarningHandlerExt
+// param_0: void (i8*, i8*, i8*, %struct.__va_list_tag*)*
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFSetWarningHandlerExt_Params {
+  optional bytes param_0 = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for TIFFSetWriteOffset
+// param_0: %struct.tiff*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i64
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message TIFFSetWriteOffset_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int64 param_1 = 3;
+  optional bool skip_dependency_check = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for TIFFSetupStrips
+// param_0: %struct.tiff*
+//   ↳ Handle to %struct.tiff* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFSetupStrips_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for TIFFStripSize
+// param_0: %struct.tiff*
+//   ↳ Handle to %struct.tiff* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFStripSize_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for TIFFStripSize64
+// param_0: %struct.tiff*
+//   ↳ Handle to %struct.tiff* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFStripSize64_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for TIFFSwabArrayOfDouble
+// param_0: double*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_1: i64
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message TIFFSwabArrayOfDouble_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional int64 param_1 = 5;
+  optional bool skip_dependency_check = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for TIFFSwabArrayOfFloat
+// param_0: float*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_1: i64
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message TIFFSwabArrayOfFloat_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional int64 param_1 = 5;
+  optional bool skip_dependency_check = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for TIFFSwabArrayOfLong
+// param_0: i32*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_1: i64
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message TIFFSwabArrayOfLong_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional int64 param_1 = 5;
+  optional bool skip_dependency_check = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for TIFFSwabArrayOfLong8
+// param_0: i64*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_1: i64
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message TIFFSwabArrayOfLong8_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional int64 param_1 = 5;
+  optional bool skip_dependency_check = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for TIFFSwabArrayOfShort
+// param_0: i16*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_1: i64
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message TIFFSwabArrayOfShort_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional int64 param_1 = 5;
+  optional bool skip_dependency_check = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for TIFFSwabArrayOfTriples
+// param_0: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_1: i64
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message TIFFSwabArrayOfTriples_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional int64 param_1 = 5;
+  optional bool skip_dependency_check = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for TIFFSwabDouble
+// param_0: double*
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFSwabDouble_Params {
+  optional bytes param_0 = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for TIFFSwabFloat
+// param_0: float*
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFSwabFloat_Params {
+  optional bytes param_0 = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for TIFFSwabLong
+// param_0: i32*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFSwabLong_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for TIFFSwabLong8
+// param_0: i64*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFSwabLong8_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for TIFFSwabShort
+// param_0: i16*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFSwabShort_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for TIFFTileRowSize
+// param_0: %struct.tiff*
+//   ↳ Handle to %struct.tiff* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFTileRowSize_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for TIFFTileRowSize64
+// param_0: %struct.tiff*
+//   ↳ Handle to %struct.tiff* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFTileRowSize64_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for TIFFTileSize
+// param_0: %struct.tiff*
+//   ↳ Handle to %struct.tiff* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFTileSize_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for TIFFTileSize64
+// param_0: %struct.tiff*
+//   ↳ Handle to %struct.tiff* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFTileSize64_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for TIFFUnRegisterCODEC
+// param_0: %struct.TIFFCodec.54*
+//   ↳ Handle to %struct.TIFFCodec.54* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFUnRegisterCODEC_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for TIFFUnlinkDirectory
+// param_0: %struct.tiff*
+//   ↳ Handle to %struct.tiff* object
+//   ↳ Nullable exploration knob
+// param_1: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFUnlinkDirectory_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional bool allow_double_delete = 4;
+}
+
+// Parameters for TIFFUnsetField
+// param_0: %struct.tiff*
+//   ↳ Handle to %struct.tiff* object
+//   ↳ Nullable exploration knob
+// param_1: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFUnsetField_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional bool allow_double_delete = 4;
+}
+
+// Parameters for TIFFVGetField
+// param_0: %struct.tiff*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32
+//   ↳ Scalar (deps ignored for schema shape)
+// param_2: %struct.__va_list_tag*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message TIFFVGetField_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional uint32 param_2_handle = 4;
+  optional bool param_2_is_null = 5;
+  optional bool skip_dependency_check = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for TIFFVGetFieldDefaulted
+// param_0: %struct.tiff*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32
+//   ↳ Scalar (deps ignored for schema shape)
+// param_2: %struct.__va_list_tag*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message TIFFVGetFieldDefaulted_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional uint32 param_2_handle = 4;
+  optional bool param_2_is_null = 5;
+  optional bool skip_dependency_check = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for TIFFVSetField
+// param_0: %struct.tiff*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32
+//   ↳ Scalar (deps ignored for schema shape)
+// param_2: %struct.__va_list_tag*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message TIFFVSetField_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional uint32 param_2_handle = 4;
+  optional bool param_2_is_null = 5;
+  optional bool skip_dependency_check = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for TIFFVStripSize
+// param_0: %struct.tiff*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message TIFFVStripSize_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional bool skip_dependency_check = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for TIFFVStripSize64
+// param_0: %struct.tiff*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message TIFFVStripSize64_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional bool skip_dependency_check = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for TIFFVTileSize
+// param_0: %struct.tiff*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message TIFFVTileSize_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional bool skip_dependency_check = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for TIFFVTileSize64
+// param_0: %struct.tiff*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message TIFFVTileSize64_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional bool skip_dependency_check = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for TIFFWarning
+// param_0: i8*
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFWarning_Params {
+  optional bytes param_0 = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional bool param_1_is_null = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for TIFFWarningExt
+// param_0: i8*
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Nullable exploration knob
+// param_2: i8*
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFWarningExt_Params {
+  optional bytes param_0 = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional bool param_1_is_null = 4;
+  optional bytes param_2 = 5;
+  optional bool param_2_is_null = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for TIFFWarningExtR
+// param_0: %struct.tiff*
+//   ↳ Handle to %struct.tiff* object
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Nullable exploration knob
+// param_2: i8*
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFWarningExtR_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional bool param_1_is_null = 4;
+  optional bytes param_2 = 5;
+  optional bool param_2_is_null = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for TIFFWriteBufferSetup
+// param_0: %struct.tiff*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Nullable exploration knob
+// param_2: i64
+//   ↳ malloc size override for overflow testing
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message TIFFWriteBufferSetup_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional bool param_1_is_null = 4;
+  optional int64 param_2 = 5;
+  optional uint32 param_2_malloc_override = 6;
+  optional bool skip_dependency_check = 7;
+  optional bool allow_double_delete = 8;
+}
+
+// Parameters for TIFFWriteCheck
+// param_0: %struct.tiff*
+//   ↳ Handle to %struct.tiff* object
+//   ↳ Nullable exploration knob
+// param_1: i32
+// param_2: i8*
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFWriteCheck_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional bytes param_2 = 4;
+  optional bool param_2_is_null = 5;
+  optional bool allow_double_delete = 6;
+}
+
+// Parameters for TIFFWriteCustomDirectory
+// param_0: %struct.tiff.108*
+//   ↳ Struct blob init (size=10816)
+//   ↳ Nullable exploration knob
+// param_1: i64*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message TIFFWriteCustomDirectory_Params {
+  optional bytes param_0_blob = 1;
+  optional bool param_0_is_null = 2;
+  optional uint32 param_1_handle = 3;
+  optional bool param_1_is_null = 4;
+  optional bool skip_dependency_check = 5;
+  optional bool allow_double_delete = 6;
+}
+
+// Parameters for TIFFWriteDirectory
+// param_0: %struct.tiff.108*
+//   ↳ Struct blob init (size=10816)
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message TIFFWriteDirectory_Params {
+  optional bytes param_0_blob = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for TIFFWriteEncodedStrip
+// param_0: %struct.tiff*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32
+//   ↳ Scalar (deps ignored for schema shape)
+//   ↳ malloc size override for overflow testing
+// param_2: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_3: i64
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message TIFFWriteEncodedStrip_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional uint32 param_1_malloc_override = 4;
+  optional bytes param_2 = 5;
+  optional uint32 param_2_length = 6;
+  optional uint32 param_2_length_override = 7;
+  optional bool param_2_is_null = 8;
+  optional bytes param_3 = 9;
+  optional uint32 param_3_length = 10;
+  optional uint32 param_3_length_override = 11;
+  optional bool param_3_is_null = 12;
+  optional bool skip_dependency_check = 13;
+  optional bool allow_double_delete = 14;
+}
+
+// Parameters for TIFFWriteEncodedTile
+// param_0: %struct.tiff*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32
+//   ↳ Scalar (deps ignored for schema shape)
+//   ↳ malloc size override for overflow testing
+// param_2: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_3: i64
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message TIFFWriteEncodedTile_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional uint32 param_1_malloc_override = 4;
+  optional bytes param_2 = 5;
+  optional uint32 param_2_length = 6;
+  optional uint32 param_2_length_override = 7;
+  optional bool param_2_is_null = 8;
+  optional bytes param_3 = 9;
+  optional uint32 param_3_length = 10;
+  optional uint32 param_3_length_override = 11;
+  optional bool param_3_is_null = 12;
+  optional bool skip_dependency_check = 13;
+  optional bool allow_double_delete = 14;
+}
+
+// Parameters for TIFFWriteRawStrip
+// param_0: %struct.tiff*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32
+//   ↳ Scalar (deps ignored for schema shape)
+//   ↳ malloc size override for overflow testing
+// param_2: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_3: i64
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message TIFFWriteRawStrip_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional uint32 param_1_malloc_override = 4;
+  optional bytes param_2 = 5;
+  optional uint32 param_2_length = 6;
+  optional uint32 param_2_length_override = 7;
+  optional bool param_2_is_null = 8;
+  optional bytes param_3 = 9;
+  optional uint32 param_3_length = 10;
+  optional uint32 param_3_length_override = 11;
+  optional bool param_3_is_null = 12;
+  optional bool skip_dependency_check = 13;
+  optional bool allow_double_delete = 14;
+}
+
+// Parameters for TIFFWriteRawTile
+// param_0: %struct.tiff*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32
+//   ↳ Scalar (deps ignored for schema shape)
+//   ↳ malloc size override for overflow testing
+// param_2: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_3: i64
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message TIFFWriteRawTile_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional uint32 param_1_malloc_override = 4;
+  optional bytes param_2 = 5;
+  optional uint32 param_2_length = 6;
+  optional uint32 param_2_length_override = 7;
+  optional bool param_2_is_null = 8;
+  optional bytes param_3 = 9;
+  optional uint32 param_3_length = 10;
+  optional uint32 param_3_length_override = 11;
+  optional bool param_3_is_null = 12;
+  optional bool skip_dependency_check = 13;
+  optional bool allow_double_delete = 14;
+}
+
+// Parameters for TIFFWriteScanline
+// param_0: %struct.tiff*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Nullable exploration knob
+// param_2: i32
+// param_3: i16
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message TIFFWriteScanline_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional bool param_1_is_null = 4;
+  optional int32 param_2 = 5;
+  optional int32 param_3 = 6;
+  optional bool skip_dependency_check = 7;
+  optional bool allow_double_delete = 8;
+}
+
+// Parameters for TIFFWriteTile
+// param_0: %struct.tiff*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_2: i32
+//   ↳ Scalar (deps ignored for schema shape)
+//   ↳ malloc size override for overflow testing
+// param_3: i32
+//   ↳ Scalar (deps ignored for schema shape)
+//   ↳ malloc size override for overflow testing
+// param_4: i32
+//   ↳ Scalar (deps ignored for schema shape)
+//   ↳ malloc size override for overflow testing
+// param_5: i16
+//   ↳ Scalar (deps ignored for schema shape)
+//   ↳ malloc size override for overflow testing
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message TIFFWriteTile_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional int32 param_2 = 7;
+  optional uint32 param_2_malloc_override = 8;
+  optional int32 param_3 = 9;
+  optional uint32 param_3_malloc_override = 10;
+  optional int32 param_4 = 11;
+  optional uint32 param_4_malloc_override = 12;
+  optional int32 param_5 = 13;
+  optional uint32 param_5_malloc_override = 14;
+  optional bool skip_dependency_check = 15;
+  optional bool allow_double_delete = 16;
+}
+
+// Parameters for TIFFXYZToRGB
+// param_0: %struct.TIFFCIELabToRGB*
+//   ↳ Struct blob init (size=144992)
+//   ↳ Nullable exploration knob
+// param_1: float
+// param_2: float
+// param_3: float
+// param_4: i32*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_5: i32*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_6: i32*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message TIFFXYZToRGB_Params {
+  optional bytes param_0_blob = 1;
+  optional bool param_0_is_null = 2;
+  optional float param_1 = 3;
+  optional float param_2 = 4;
+  optional float param_3 = 5;
+  optional uint32 param_4_handle = 6;
+  optional bool param_4_is_null = 7;
+  optional uint32 param_5_handle = 8;
+  optional bool param_5_is_null = 9;
+  optional uint32 param_6_handle = 10;
+  optional bool param_6_is_null = 11;
+  optional bool skip_dependency_check = 12;
+  optional bool allow_double_delete = 13;
+}
+
+// Parameters for TIFFYCbCrToRGBInit
+// param_0: %struct.TIFFYCbCrToRGB*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: float*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_2: float*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message TIFFYCbCrToRGBInit_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bytes param_2 = 7;
+  optional uint32 param_2_length = 8;
+  optional uint32 param_2_length_override = 9;
+  optional bool param_2_is_null = 10;
+  optional bool skip_dependency_check = 11;
+  optional bool allow_double_delete = 12;
+}
+
+// Parameters for TIFFYCbCrtoRGB
+// param_0: %struct.TIFFYCbCrToRGB*
+//   ↳ Struct blob init (size=384)
+//   ↳ Nullable exploration knob
+// param_1: i32
+// param_2: i32
+// param_3: i32
+// param_4: i32*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_5: i32*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_6: i32*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message TIFFYCbCrtoRGB_Params {
+  optional bytes param_0_blob = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional int32 param_2 = 4;
+  optional int32 param_3 = 5;
+  optional uint32 param_4_handle = 6;
+  optional bool param_4_is_null = 7;
+  optional uint32 param_5_handle = 8;
+  optional bool param_5_is_null = 9;
+  optional uint32 param_6_handle = 10;
+  optional bool param_6_is_null = 11;
+  optional bool skip_dependency_check = 12;
+  optional bool allow_double_delete = 13;
+}
+
+// Parameters for XYZtoRGB24
+// param_0: float*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message XYZtoRGB24_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional bytes param_1 = 5;
+  optional uint32 param_1_length = 6;
+  optional uint32 param_1_length_override = 7;
+  optional bool param_1_is_null = 8;
+  optional bool allow_double_delete = 9;
+}
+
+// Parameters for _TIFFcalloc
+// param_0: i64
+// param_1: i64
+//   ↳ malloc size override for overflow testing
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message _TIFFcalloc_Params {
+  optional int64 param_0 = 1;
+  optional int64 param_1 = 2;
+  optional uint32 param_1_malloc_override = 3;
+  optional bool allow_double_delete = 4;
+}
+
+// Parameters for _TIFFfree
+// param_0: i8*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message _TIFFfree_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for _TIFFmalloc
+// param_0: i64
+//   ↳ malloc size override for overflow testing
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message _TIFFmalloc_Params {
+  optional int64 param_0 = 1;
+  optional uint32 param_0_malloc_override = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for _TIFFmemcmp
+// param_0: i8*
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Nullable exploration knob
+// param_2: i64
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message _TIFFmemcmp_Params {
+  optional bytes param_0 = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional bool param_1_is_null = 4;
+  optional int64 param_2 = 5;
+  optional bool allow_double_delete = 6;
+}
+
+// Parameters for _TIFFmemcpy
+// param_0: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_2: i64
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message _TIFFmemcpy_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional bytes param_1 = 5;
+  optional uint32 param_1_length = 6;
+  optional uint32 param_1_length_override = 7;
+  optional bool param_1_is_null = 8;
+  optional int64 param_2 = 9;
+  optional bool allow_double_delete = 10;
+}
+
+// Parameters for _TIFFmemset
+// param_0: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_1: i32
+// param_2: i64
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message _TIFFmemset_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional int32 param_1 = 5;
+  optional int64 param_2 = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for _TIFFrealloc
+// param_0: i8*
+//   ↳ Nullable exploration knob
+// param_1: i64
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message _TIFFrealloc_Params {
+  optional bytes param_0 = 1;
+  optional bool param_0_is_null = 2;
+  optional int64 param_1 = 3;
+  optional bool allow_double_delete = 4;
+}
+
+// Parameters for uv_decode
+// param_0: double*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: double*
+//   ↳ Nullable exploration knob
+// param_2: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message uv_decode_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional bool param_1_is_null = 4;
+  optional int32 param_2 = 5;
+  optional bool skip_dependency_check = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for uv_encode
+// param_0: double
+// param_1: double
+// param_2: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message uv_encode_Params {
+  optional double param_0 = 1;
+  optional double param_1 = 2;
+  optional int32 param_2 = 3;
+  optional bool allow_double_delete = 4;
+}
+
+// Dynamic dispatch: exactly one API call variant per Action.
+message Action {
+  oneof action {
+    LogL10fromY_Params log_l10from_y = 1;
+    LogL10toY_Params log_l10to_y = 2;
+    LogL16fromY_Params log_l16from_y = 3;
+    LogL16toY_Params log_l16to_y = 4;
+    LogLuv24fromXYZ_Params log_luv24from_xyz = 5;
+    LogLuv24toXYZ_Params log_luv24to_xyz = 6;
+    LogLuv32fromXYZ_Params log_luv32from_xyz = 7;
+    LogLuv32toXYZ_Params log_luv32to_xyz = 8;
+    TIFFAccessTagMethods_Params tiff_access_tag_methods = 9;
+    TIFFCIELabToRGBInit_Params tiffcie_lab_to_rgb_init = 10;
+    TIFFCIELabToXYZ_Params tiffcie_lab_to_xyz = 11;
+    TIFFCheckTile_Params tiff_check_tile = 12;
+    TIFFCheckpointDirectory_Params tiff_checkpoint_directory = 13;
+    TIFFCleanup_Params tiff_cleanup = 14;
+    TIFFClientOpen_Params tiff_client_open = 15;
+    TIFFClientOpenExt_Params tiff_client_open_ext = 16;
+    TIFFClientdata_Params tiff_clientdata = 17;
+    TIFFClose_Params tiff_close = 18;
+    TIFFComputeStrip_Params tiff_compute_strip = 19;
+    TIFFComputeTile_Params tiff_compute_tile = 20;
+    TIFFCreateCustomDirectory_Params tiff_create_custom_directory = 21;
+    TIFFCreateDirectory_Params tiff_create_directory = 22;
+    TIFFCreateEXIFDirectory_Params tiff_create_exif_directory = 23;
+    TIFFCreateGPSDirectory_Params tiff_create_gps_directory = 24;
+    TIFFCurrentDirOffset_Params tiff_current_dir_offset = 25;
+    TIFFCurrentDirectory_Params tiff_current_directory = 26;
+    TIFFCurrentRow_Params tiff_current_row = 27;
+    TIFFCurrentStrip_Params tiff_current_strip = 28;
+    TIFFCurrentTile_Params tiff_current_tile = 29;
+    TIFFDataWidth_Params tiff_data_width = 30;
+    TIFFDefaultStripSize_Params tiff_default_strip_size = 31;
+    TIFFDefaultTileSize_Params tiff_default_tile_size = 32;
+    TIFFDeferStrileArrayWriting_Params tiff_defer_strile_array_writing = 33;
+    TIFFError_Params tiff_error = 34;
+    TIFFErrorExt_Params tiff_error_ext = 35;
+    TIFFErrorExtR_Params tiff_error_ext_r = 36;
+    TIFFFdOpen_Params tiff_fd_open = 37;
+    TIFFFdOpenExt_Params tiff_fd_open_ext = 38;
+    TIFFFieldDataType_Params tiff_field_data_type = 39;
+    TIFFFieldIsAnonymous_Params tiff_field_is_anonymous = 40;
+    TIFFFieldName_Params tiff_field_name = 41;
+    TIFFFieldPassCount_Params tiff_field_pass_count = 42;
+    TIFFFieldReadCount_Params tiff_field_read_count = 43;
+    TIFFFieldSetGetCountSize_Params tiff_field_set_get_count_size = 44;
+    TIFFFieldSetGetSize_Params tiff_field_set_get_size = 45;
+    TIFFFieldTag_Params tiff_field_tag = 46;
+    TIFFFieldWithName_Params tiff_field_with_name = 47;
+    TIFFFieldWithTag_Params tiff_field_with_tag = 48;
+    TIFFFieldWriteCount_Params tiff_field_write_count = 49;
+    TIFFFileName_Params tiff_file_name = 50;
+    TIFFFileno_Params tiff_fileno = 51;
+    TIFFFindCODEC_Params tiff_find_codec = 52;
+    TIFFFindField_Params tiff_find_field = 53;
+    TIFFFlush_Params tiff_flush = 54;
+    TIFFFlushData_Params tiff_flush_data = 55;
+    TIFFForceStrileArrayWriting_Params tiff_force_strile_array_writing = 56;
+    TIFFFreeDirectory_Params tiff_free_directory = 57;
+    TIFFGetBitRevTable_Params tiff_get_bit_rev_table = 58;
+    TIFFGetClientInfo_Params tiff_get_client_info = 59;
+    TIFFGetCloseProc_Params tiff_get_close_proc = 60;
+    TIFFGetConfiguredCODECs_Params tiff_get_configured_code_cs = 61;
+    TIFFGetField_Params tiff_get_field = 62;
+    TIFFGetFieldDefaulted_Params tiff_get_field_defaulted = 63;
+    TIFFGetMapFileProc_Params tiff_get_map_file_proc = 64;
+    TIFFGetMode_Params tiff_get_mode = 65;
+    TIFFGetReadProc_Params tiff_get_read_proc = 66;
+    TIFFGetSeekProc_Params tiff_get_seek_proc = 67;
+    TIFFGetSizeProc_Params tiff_get_size_proc = 68;
+    TIFFGetStrileByteCount_Params tiff_get_strile_byte_count = 69;
+    TIFFGetStrileByteCountWithErr_Params tiff_get_strile_byte_count_with_err = 70;
+    TIFFGetStrileOffset_Params tiff_get_strile_offset = 71;
+    TIFFGetStrileOffsetWithErr_Params tiff_get_strile_offset_with_err = 72;
+    TIFFGetTagListCount_Params tiff_get_tag_list_count = 73;
+    TIFFGetTagListEntry_Params tiff_get_tag_list_entry = 74;
+    TIFFGetUnmapFileProc_Params tiff_get_unmap_file_proc = 75;
+    TIFFGetVersion_Params tiff_get_version = 76;
+    TIFFGetWriteProc_Params tiff_get_write_proc = 77;
+    TIFFIsBigEndian_Params tiff_is_big_endian = 78;
+    TIFFIsBigTIFF_Params tiff_is_big_tiff = 79;
+    TIFFIsByteSwapped_Params tiff_is_byte_swapped = 80;
+    TIFFIsCODECConfigured_Params tiff_is_codec_configured = 81;
+    TIFFIsMSB2LSB_Params tiff_is_msb2_lsb = 82;
+    TIFFIsTiled_Params tiff_is_tiled = 83;
+    TIFFIsUpSampled_Params tiff_is_up_sampled = 84;
+    TIFFLastDirectory_Params tiff_last_directory = 85;
+    TIFFMergeFieldInfo_Params tiff_merge_field_info = 86;
+    TIFFNumberOfDirectories_Params tiff_number_of_directories = 87;
+    TIFFNumberOfStrips_Params tiff_number_of_strips = 88;
+    TIFFNumberOfTiles_Params tiff_number_of_tiles = 89;
+    TIFFOpen_Params tiff_open = 90;
+    TIFFOpenExt_Params tiff_open_ext = 91;
+    TIFFOpenOptionsAlloc_Params tiff_open_options_alloc = 92;
+    TIFFOpenOptionsFree_Params tiff_open_options_free = 93;
+    TIFFOpenOptionsSetErrorHandlerExtR_Params tiff_open_options_set_error_handler_ext_r = 94;
+    TIFFOpenOptionsSetMaxCumulatedMemAlloc_Params tiff_open_options_set_max_cumulated_mem_alloc = 95;
+    TIFFOpenOptionsSetMaxSingleMemAlloc_Params tiff_open_options_set_max_single_mem_alloc = 96;
+    TIFFOpenOptionsSetWarningHandlerExtR_Params tiff_open_options_set_warning_handler_ext_r = 97;
+    TIFFPrintDirectory_Params tiff_print_directory = 98;
+    TIFFRGBAImageBegin_Params tiffrgba_image_begin = 99;
+    TIFFRGBAImageEnd_Params tiffrgba_image_end = 100;
+    TIFFRGBAImageGet_Params tiffrgba_image_get = 101;
+    TIFFRGBAImageOK_Params tiffrgba_image_ok = 102;
+    TIFFRasterScanlineSize_Params tiff_raster_scanline_size = 103;
+    TIFFRasterScanlineSize64_Params tiff_raster_scanline_size64 = 104;
+    TIFFRawStripSize_Params tiff_raw_strip_size = 105;
+    TIFFRawStripSize64_Params tiff_raw_strip_size64 = 106;
+    TIFFReadBufferSetup_Params tiff_read_buffer_setup = 107;
+    TIFFReadCustomDirectory_Params tiff_read_custom_directory = 108;
+    TIFFReadDirectory_Params tiff_read_directory = 109;
+    TIFFReadEXIFDirectory_Params tiff_read_exif_directory = 110;
+    TIFFReadEncodedStrip_Params tiff_read_encoded_strip = 111;
+    TIFFReadEncodedTile_Params tiff_read_encoded_tile = 112;
+    TIFFReadFromUserBuffer_Params tiff_read_from_user_buffer = 113;
+    TIFFReadGPSDirectory_Params tiff_read_gps_directory = 114;
+    TIFFReadRGBAImage_Params tiff_read_rgba_image = 115;
+    TIFFReadRGBAImageOriented_Params tiff_read_rgba_image_oriented = 116;
+    TIFFReadRGBAStrip_Params tiff_read_rgba_strip = 117;
+    TIFFReadRGBAStripExt_Params tiff_read_rgba_strip_ext = 118;
+    TIFFReadRGBATile_Params tiff_read_rgba_tile = 119;
+    TIFFReadRGBATileExt_Params tiff_read_rgba_tile_ext = 120;
+    TIFFReadRawStrip_Params tiff_read_raw_strip = 121;
+    TIFFReadRawTile_Params tiff_read_raw_tile = 122;
+    TIFFReadScanline_Params tiff_read_scanline = 123;
+    TIFFReadTile_Params tiff_read_tile = 124;
+    TIFFRegisterCODEC_Params tiff_register_codec = 125;
+    TIFFReverseBits_Params tiff_reverse_bits = 126;
+    TIFFRewriteDirectory_Params tiff_rewrite_directory = 127;
+    TIFFScanlineSize_Params tiff_scanline_size = 128;
+    TIFFScanlineSize64_Params tiff_scanline_size64 = 129;
+    TIFFSetClientInfo_Params tiff_set_client_info = 130;
+    TIFFSetClientdata_Params tiff_set_clientdata = 131;
+    TIFFSetDirectory_Params tiff_set_directory = 132;
+    TIFFSetErrorHandler_Params tiff_set_error_handler = 133;
+    TIFFSetErrorHandlerExt_Params tiff_set_error_handler_ext = 134;
+    TIFFSetField_Params tiff_set_field = 135;
+    TIFFSetFileName_Params tiff_set_file_name = 136;
+    TIFFSetFileno_Params tiff_set_fileno = 137;
+    TIFFSetMode_Params tiff_set_mode = 138;
+    TIFFSetSubDirectory_Params tiff_set_sub_directory = 139;
+    TIFFSetTagExtender_Params tiff_set_tag_extender = 140;
+    TIFFSetWarningHandler_Params tiff_set_warning_handler = 141;
+    TIFFSetWarningHandlerExt_Params tiff_set_warning_handler_ext = 142;
+    TIFFSetWriteOffset_Params tiff_set_write_offset = 143;
+    TIFFSetupStrips_Params tiff_setup_strips = 144;
+    TIFFStripSize_Params tiff_strip_size = 145;
+    TIFFStripSize64_Params tiff_strip_size64 = 146;
+    TIFFSwabArrayOfDouble_Params tiff_swab_array_of_double = 147;
+    TIFFSwabArrayOfFloat_Params tiff_swab_array_of_float = 148;
+    TIFFSwabArrayOfLong_Params tiff_swab_array_of_long = 149;
+    TIFFSwabArrayOfLong8_Params tiff_swab_array_of_long8 = 150;
+    TIFFSwabArrayOfShort_Params tiff_swab_array_of_short = 151;
+    TIFFSwabArrayOfTriples_Params tiff_swab_array_of_triples = 152;
+    TIFFSwabDouble_Params tiff_swab_double = 153;
+    TIFFSwabFloat_Params tiff_swab_float = 154;
+    TIFFSwabLong_Params tiff_swab_long = 155;
+    TIFFSwabLong8_Params tiff_swab_long8 = 156;
+    TIFFSwabShort_Params tiff_swab_short = 157;
+    TIFFTileRowSize_Params tiff_tile_row_size = 158;
+    TIFFTileRowSize64_Params tiff_tile_row_size64 = 159;
+    TIFFTileSize_Params tiff_tile_size = 160;
+    TIFFTileSize64_Params tiff_tile_size64 = 161;
+    TIFFUnRegisterCODEC_Params tiff_un_register_codec = 162;
+    TIFFUnlinkDirectory_Params tiff_unlink_directory = 163;
+    TIFFUnsetField_Params tiff_unset_field = 164;
+    TIFFVGetField_Params tiffv_get_field = 165;
+    TIFFVGetFieldDefaulted_Params tiffv_get_field_defaulted = 166;
+    TIFFVSetField_Params tiffv_set_field = 167;
+    TIFFVStripSize_Params tiffv_strip_size = 168;
+    TIFFVStripSize64_Params tiffv_strip_size64 = 169;
+    TIFFVTileSize_Params tiffv_tile_size = 170;
+    TIFFVTileSize64_Params tiffv_tile_size64 = 171;
+    TIFFWarning_Params tiff_warning = 172;
+    TIFFWarningExt_Params tiff_warning_ext = 173;
+    TIFFWarningExtR_Params tiff_warning_ext_r = 174;
+    TIFFWriteBufferSetup_Params tiff_write_buffer_setup = 175;
+    TIFFWriteCheck_Params tiff_write_check = 176;
+    TIFFWriteCustomDirectory_Params tiff_write_custom_directory = 177;
+    TIFFWriteDirectory_Params tiff_write_directory = 178;
+    TIFFWriteEncodedStrip_Params tiff_write_encoded_strip = 179;
+    TIFFWriteEncodedTile_Params tiff_write_encoded_tile = 180;
+    TIFFWriteRawStrip_Params tiff_write_raw_strip = 181;
+    TIFFWriteRawTile_Params tiff_write_raw_tile = 182;
+    TIFFWriteScanline_Params tiff_write_scanline = 183;
+    TIFFWriteTile_Params tiff_write_tile = 184;
+    TIFFXYZToRGB_Params tiffxyz_to_rgb = 185;
+    TIFFYCbCrToRGBInit_Params tiffy_cb_cr_to_rgb_init = 186;
+    TIFFYCbCrtoRGB_Params tiffy_cb_crto_rgb = 187;
+    XYZtoRGB24_Params xy_zto_rgb24 = 188;
+    _TIFFcalloc_Params tif_fcalloc = 189;
+    _TIFFfree_Params tif_ffree = 190;
+    _TIFFmalloc_Params tif_fmalloc = 191;
+    _TIFFmemcmp_Params tif_fmemcmp = 192;
+    _TIFFmemcpy_Params tif_fmemcpy = 193;
+    _TIFFmemset_Params tif_fmemset = 194;
+    _TIFFrealloc_Params tif_frealloc = 195;
+    uv_decode_Params uv_decode = 196;
+    uv_encode_Params uv_encode = 197;
+  }
+}
+
+// Bounded stateful pressure block for TIFFYCbCr conversion chains.
+// This nudges mutators to emit valid init -> convert sequences.
+message TIFFYCbCrChainBlock {
+  optional uint32 repeat_count = 1;
+  optional uint32 y = 2;
+  optional int32 cb = 3;
+  optional int32 cr = 4;
+}
+
+// Top-level fuzz input (v2). Dynamic sequence of Actions.
+message FuzzInput {
+  optional uint32 global_seed = 1;
+  repeated Action actions = 2;
+  optional uint32 max_actions_hint = 3;
+  optional bool favor_valid_state = 4;
+  repeated TIFFYCbCrChainBlock tiffy_cb_cr_chain = 5;
+}

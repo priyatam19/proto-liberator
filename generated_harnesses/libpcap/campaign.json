@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "reference_report": "artifacts/libpcap/default/runs/rerun15m_hardened4_p1p3_20260330_205001/coverage/final/report_full.txt",
+  "reference_corpus": "artifacts/libpcap/default/runs/rerun15m_hardened4_p1p3_20260330_205001/corpus_min",
+  "initial_corpus": {"archive": "initial_corpus.tar.gz", "sha256": "fe1c39707e11cc31657858582179687e5f44bf7cfab5edcacafd04d3405bf553", "files": 2692},
+  "runtime": {"fork": 2, "jobs": 1, "workers": 1, "seed": 1337, "max_len": 4096, "timeout_sec": 25, "max_actions": 64},
+  "reference_duration_sec": 900,
+  "recommended_duration_sec": 86400,
+  "use_minimum_apis": false
+}

@@ -1,10 +1,19 @@
 #!/usr/bin/env python3
+import io
 import json
+import os
 import subprocess
 import sys
 import tempfile
 import unittest
+from contextlib import redirect_stdout
 from pathlib import Path
+from unittest import mock
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+
+import run_all
+from run_all import _target_libs_for_profile
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -13,6 +22,16 @@ FIXTURES = REPO_ROOT / "tests" / "fixtures"
 
 
 class TestRunAll(unittest.TestCase):
+    def test_profile_archive_discovery_supports_pie_naming(self):
+        with tempfile.TemporaryDirectory() as td:
+            lib_dir = Path(td)
+            regular = lib_dir / "libminijail.pie.a"
+            profile = lib_dir / "libminijail_profile.pie.a"
+            regular.touch()
+            profile.touch()
+
+            self.assertEqual(_target_libs_for_profile([str(regular)]), [str(profile)])
+
     def test_dry_run_v2(self):
         out_dir = REPO_ROOT / "tests" / "output_orch"
         conditions = FIXTURES / "minimal_conditions.json"
@@ -45,6 +64,49 @@ class TestRunAll(unittest.TestCase):
         self.assertIn("wrapper_generator.py", proc.stdout)
         self.assertIn("--schema-mode v2", proc.stdout)
         self.assertIn("seed_generator.py", proc.stdout)
+
+    def test_saved_campaign_sources_replace_generated_files_silently(self):
+        conditions = FIXTURES / "minimal_conditions.json"
+        apis = FIXTURES / "minimal_apis_clang.jsonl"
+
+        with tempfile.TemporaryDirectory() as td:
+            temp_dir = Path(td)
+            out_dir = temp_dir / "output"
+            saved_dir = temp_dir / "saved"
+            saved_dir.mkdir()
+            saved_proto = saved_dir / "demo.v2.proto"
+            saved_harness = saved_dir / "harness.cc"
+            saved_proto.write_text('syntax = "proto3";\n// saved proto\n')
+            saved_harness.write_text("// saved harness\n")
+
+            argv = [
+                str(SRC_DIR / "run_all.py"),
+                "--library",
+                "demo",
+                "--conditions",
+                str(conditions),
+                "--apis",
+                str(apis),
+                "--out-dir",
+                str(out_dir),
+                "--schema-mode",
+                "v2",
+            ]
+            output = io.StringIO()
+            with (
+                mock.patch.dict(
+                    os.environ,
+                    {"PROTO_LIBERATOR_GENERATED_HARNESS_DIR": str(saved_dir)},
+                ),
+                mock.patch.object(sys, "argv", argv),
+                mock.patch.object(run_all, "_run"),
+                redirect_stdout(output),
+            ):
+                self.assertEqual(run_all.main(), 0)
+
+            self.assertEqual((out_dir / "demo.v2.proto").read_bytes(), saved_proto.read_bytes())
+            self.assertEqual((out_dir / "harness.cc").read_bytes(), saved_harness.read_bytes())
+            self.assertNotIn(str(saved_dir), output.getvalue())
 
     def test_dry_run_v2_auto_feedback_signal(self):
         conditions = FIXTURES / "minimal_conditions.json"

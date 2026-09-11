@@ -1,0 +1,1686 @@
+syntax = "proto2";
+
+package libpcap_fuzzer;
+
+
+// Parameters for bpf_dump
+// param_0: %struct.bpf_program*
+//   ↳ Struct blob init (size=128)
+//   ↳ Nullable exploration knob
+// param_1: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message bpf_dump_Params {
+  optional bytes param_0_blob = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional bool allow_double_delete = 4;
+}
+
+// Parameters for bpf_filter
+// param_0: %struct.bpf_insn*
+//   ↳ Struct blob init (size=64)
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_2: i32
+// param_3: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message bpf_filter_Params {
+  optional bytes param_0_blob = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional int32 param_2 = 7;
+  optional int32 param_3 = 8;
+  optional bool allow_double_delete = 9;
+}
+
+// Parameters for bpf_image
+// param_0: %struct.bpf_insn*
+//   ↳ Struct blob init (size=64)
+//   ↳ Nullable exploration knob
+// param_1: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message bpf_image_Params {
+  optional bytes param_0_blob = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional bool allow_double_delete = 4;
+}
+
+// Parameters for bpf_validate
+// param_0: %struct.bpf_insn*
+//   ↳ Struct blob init (size=64)
+//   ↳ Nullable exploration knob
+// param_1: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message bpf_validate_Params {
+  optional bytes param_0_blob = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional bool allow_double_delete = 4;
+}
+
+// Parameters for pcap_activate
+// param_0: %struct.pcap.49*
+//   ↳ Handle to %struct.pcap.49* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message pcap_activate_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for pcap_breakloop
+// param_0: %struct.pcap.49*
+//   ↳ Handle to %struct.pcap.49* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message pcap_breakloop_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for pcap_bufsize
+// param_0: %struct.pcap.49*
+//   ↳ Handle to %struct.pcap.49* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message pcap_bufsize_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for pcap_can_set_rfmon
+// param_0: %struct.pcap.49*
+//   ↳ Handle to %struct.pcap.49* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message pcap_can_set_rfmon_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for pcap_close
+// param_0: %struct.pcap.49*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message pcap_close_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for pcap_compile
+// param_0: %struct.pcap.49*
+//   ↳ Handle to %struct.pcap.49* object
+//   ↳ Nullable exploration knob
+// param_1: %struct.bpf_program*
+//   ↳ Output capture (callee writes compiled BPF program)
+//   ↳ Nullable exploration knob
+// param_2: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_3: i32
+// param_4: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message pcap_compile_Params {
+  optional bytes param_0_blob = 1 [deprecated = true];
+  optional bool param_0_is_null = 2;
+  optional uint32 param_1_handle = 3 [deprecated = true];
+  optional bool param_1_is_null = 4;
+  optional bytes param_2 = 5;
+  optional uint32 param_2_length = 6;
+  optional uint32 param_2_length_override = 7;
+  optional bool param_2_is_null = 8;
+  optional int32 param_3 = 9;
+  optional int32 param_4 = 10;
+  optional bool skip_dependency_check = 11;
+  optional bool allow_double_delete = 12;
+  optional uint32 param_0_handle = 13;
+  optional bool param_1_capture_output = 14;
+}
+
+// Parameters for pcap_compile_nopcap
+// param_0: i32
+// param_1: i32
+// param_2: %struct.bpf_program*
+//   ↳ Output capture (callee writes compiled BPF program)
+//   ↳ Nullable exploration knob
+// param_3: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_4: i32
+// param_5: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message pcap_compile_nopcap_Params {
+  optional int32 param_0 = 1;
+  optional int32 param_1 = 2;
+  optional uint32 param_2_handle = 3 [deprecated = true];
+  optional bool param_2_is_null = 4;
+  optional bytes param_3 = 5;
+  optional uint32 param_3_length = 6;
+  optional uint32 param_3_length_override = 7;
+  optional bool param_3_is_null = 8;
+  optional int32 param_4 = 9;
+  optional int32 param_5 = 10;
+  optional bool skip_dependency_check = 11;
+  optional bool allow_double_delete = 12;
+  optional bool param_2_capture_output = 13;
+}
+
+// Parameters for pcap_create
+// param_0: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message pcap_create_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional bytes param_1 = 5;
+  optional uint32 param_1_length = 6;
+  optional uint32 param_1_length_override = 7;
+  optional bool param_1_is_null = 8;
+  optional bool allow_double_delete = 9;
+}
+
+// Parameters for pcap_createsrcstr
+// param_0: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_1: i32
+// param_2: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_3: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_4: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_5: i8*
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message pcap_createsrcstr_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional int32 param_1 = 5;
+  optional bytes param_2 = 6;
+  optional uint32 param_2_length = 7;
+  optional uint32 param_2_length_override = 8;
+  optional bool param_2_is_null = 9;
+  optional bytes param_3 = 10;
+  optional uint32 param_3_length = 11;
+  optional uint32 param_3_length_override = 12;
+  optional bool param_3_is_null = 13;
+  optional bytes param_4 = 14;
+  optional uint32 param_4_length = 15;
+  optional uint32 param_4_length_override = 16;
+  optional bool param_4_is_null = 17;
+  optional bytes param_5 = 18;
+  optional bool param_5_is_null = 19;
+  optional bool skip_dependency_check = 20;
+  optional bool allow_double_delete = 21;
+}
+
+// Parameters for pcap_datalink
+// param_0: %struct.pcap.49*
+//   ↳ Handle to %struct.pcap.49* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message pcap_datalink_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for pcap_datalink_ext
+// param_0: %struct.pcap.49*
+//   ↳ Handle to %struct.pcap.49* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message pcap_datalink_ext_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for pcap_datalink_name_to_val
+// param_0: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message pcap_datalink_name_to_val_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for pcap_datalink_val_to_description
+// param_0: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message pcap_datalink_val_to_description_Params {
+  optional int32 param_0 = 1;
+  optional bool allow_double_delete = 2;
+}
+
+// Parameters for pcap_datalink_val_to_description_or_dlt
+// param_0: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message pcap_datalink_val_to_description_or_dlt_Params {
+  optional int32 param_0 = 1;
+  optional bool allow_double_delete = 2;
+}
+
+// Parameters for pcap_datalink_val_to_name
+// param_0: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message pcap_datalink_val_to_name_Params {
+  optional int32 param_0 = 1;
+  optional bool allow_double_delete = 2;
+}
+
+// Parameters for pcap_dispatch
+// param_0: %struct.pcap.49*
+//   ↳ Handle to %struct.pcap.49* object
+//   ↳ Nullable exploration knob
+// param_1: i32
+// param_2: void (i8*, %struct.pcap_pkthdr*, i8*)*
+//   ↳ Uses internal safe callback trampoline when non-null
+//   ↳ Nullable exploration knob
+// param_3: i8*
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message pcap_dispatch_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional bytes param_2 = 4 [deprecated = true];
+  optional bool param_2_is_null = 5;
+  optional bytes param_3 = 6;
+  optional bool param_3_is_null = 7;
+  optional bool allow_double_delete = 8;
+  optional bool param_2_use_trampoline = 9;
+}
+
+// Parameters for pcap_dump
+// param_0: %struct.pcap_dumper*
+//   ↳ Handle to %struct.pcap_dumper* object
+//   ↳ Legacy blob field retained for backward compatibility
+//   ↳ Nullable exploration knob
+// param_1: %struct.pcap_pkthdr*
+//   ↳ Struct blob init (size=192)
+//   ↳ Nullable exploration knob
+// param_2: i8*
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message pcap_dump_Params {
+  optional bytes param_0 = 1 [deprecated = true];
+  optional bool param_0_is_null = 2;
+  optional bytes param_1_blob = 3;
+  optional bool param_1_is_null = 4;
+  optional bytes param_2 = 5;
+  optional bool param_2_is_null = 6;
+  optional bool allow_double_delete = 7;
+  optional uint32 param_0_handle = 8;
+}
+
+// Parameters for pcap_dump_close
+// param_0: %struct.pcap_dumper*
+//   ↳ Handle to %struct.pcap_dumper* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message pcap_dump_close_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for pcap_dump_file
+// param_0: %struct.pcap_dumper*
+//   ↳ Handle to %struct.pcap_dumper* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message pcap_dump_file_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for pcap_dump_flush
+// param_0: %struct.pcap_dumper*
+//   ↳ Handle to %struct.pcap_dumper* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message pcap_dump_flush_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for pcap_dump_fopen
+// param_0: %struct.pcap.49*
+//   ↳ Handle to %struct.pcap.49* object
+//   ↳ Nullable exploration knob
+// param_1: %struct._IO_FILE*
+//   ↳ Handle to %struct._IO_FILE* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message pcap_dump_fopen_Params {
+  optional bytes param_0_blob = 1 [deprecated = true];
+  optional bool param_0_is_null = 2;
+  optional uint32 param_1_handle = 3;
+  optional bool param_1_is_null = 4;
+  optional bool allow_double_delete = 5;
+  optional uint32 param_0_handle = 6;
+}
+
+// Parameters for pcap_dump_ftell
+// param_0: %struct.pcap_dumper*
+//   ↳ Handle to %struct.pcap_dumper* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message pcap_dump_ftell_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for pcap_dump_ftell64
+// param_0: %struct.pcap_dumper*
+//   ↳ Handle to %struct.pcap_dumper* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message pcap_dump_ftell64_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for pcap_dump_open
+// param_0: %struct.pcap.49*
+//   ↳ Handle to %struct.pcap.49* object
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message pcap_dump_open_Params {
+  optional bytes param_0_blob = 1 [deprecated = true];
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bool allow_double_delete = 7;
+  optional uint32 param_0_handle = 8;
+}
+
+// Parameters for pcap_dump_open_append
+// param_0: %struct.pcap.49*
+//   ↳ Handle to %struct.pcap.49* object
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message pcap_dump_open_append_Params {
+  optional bytes param_0_blob = 1 [deprecated = true];
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bool allow_double_delete = 7;
+  optional uint32 param_0_handle = 8;
+}
+
+// Parameters for pcap_file
+// param_0: %struct.pcap.49*
+//   ↳ Handle to %struct.pcap.49* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message pcap_file_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for pcap_fileno
+// param_0: %struct.pcap.49*
+//   ↳ Handle to %struct.pcap.49* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message pcap_fileno_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for pcap_findalldevs
+// param_0: %struct.pcap_if**
+//   ↳ Output capture (callee writes discovered device list)
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message pcap_findalldevs_Params {
+  optional bytes param_0_blob = 1 [deprecated = true];
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for pcap_findalldevs_ex
+// param_0: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+//   ↳ malloc size override for overflow testing
+// param_1: %struct.pcap_rmtauth*
+//   ↳ Blob-derived safe auth (no raw fuzzed pointer dereferences)
+//   ↳ Nullable exploration knob
+// param_2: %struct.pcap_if**
+//   ↳ Output capture (callee writes discovered device list)
+//   ↳ Null output pointer requests are skipped to preserve valid state
+// param_3: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message pcap_findalldevs_ex_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional uint32 param_0_malloc_override = 5;
+  optional bytes param_1_blob = 6;
+  optional bool param_1_is_null = 7;
+  optional uint32 param_2_handle = 8 [deprecated = true];
+  optional bool param_2_is_null = 9;
+  optional bytes param_3 = 10;
+  optional uint32 param_3_length = 11;
+  optional uint32 param_3_length_override = 12;
+  optional bool param_3_is_null = 13;
+  optional bool skip_dependency_check = 14;
+  optional bool allow_double_delete = 15;
+  optional bool param_2_capture_output = 16;
+}
+
+// Parameters for pcap_fopen_offline
+// param_0: %struct._IO_FILE*
+//   ↳ Handle to %struct._IO_FILE* object
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message pcap_fopen_offline_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for pcap_fopen_offline_with_tstamp_precision
+// param_0: %struct._IO_FILE*
+//   ↳ Handle to %struct._IO_FILE* object
+//   ↳ Nullable exploration knob
+// param_1: i32
+// param_2: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message pcap_fopen_offline_with_tstamp_precision_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional bytes param_2 = 4;
+  optional uint32 param_2_length = 5;
+  optional uint32 param_2_length_override = 6;
+  optional bool param_2_is_null = 7;
+  optional bool allow_double_delete = 8;
+}
+
+// Parameters for pcap_free_datalinks
+// param_0: i32*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message pcap_free_datalinks_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for pcap_free_tstamp_types
+// param_0: i32*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message pcap_free_tstamp_types_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for pcap_freealldevs
+// param_0: %struct.pcap_if*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message pcap_freealldevs_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for pcap_freecode
+// param_0: %struct.bpf_program*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message pcap_freecode_Params {
+  optional bytes param_0_blob = 1 [deprecated = true];
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+  optional uint32 param_0_handle = 4;
+}
+
+// Parameters for pcap_get_required_select_timeout
+// param_0: %struct.pcap.49*
+//   ↳ Handle to %struct.pcap.49* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message pcap_get_required_select_timeout_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for pcap_get_selectable_fd
+// param_0: %struct.pcap.49*
+//   ↳ Handle to %struct.pcap.49* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message pcap_get_selectable_fd_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for pcap_get_tstamp_precision
+// param_0: %struct.pcap.49*
+//   ↳ Handle to %struct.pcap.49* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message pcap_get_tstamp_precision_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for pcap_geterr
+// param_0: %struct.pcap.49*
+//   ↳ Handle to %struct.pcap.49* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message pcap_geterr_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for pcap_getnonblock
+// param_0: %struct.pcap.49*
+//   ↳ Handle to %struct.pcap.49* object
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message pcap_getnonblock_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bool skip_dependency_check = 7;
+  optional bool allow_double_delete = 8;
+}
+
+// Parameters for pcap_init
+// param_0: i32
+// param_1: i8*
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message pcap_init_Params {
+  optional int32 param_0 = 1;
+  optional bytes param_1 = 2;
+  optional bool param_1_is_null = 3;
+  optional bool allow_double_delete = 4;
+}
+
+// Parameters for pcap_inject
+// param_0: %struct.pcap.49*
+//   ↳ Handle to %struct.pcap.49* object
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Nullable exploration knob
+// param_2: i64
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message pcap_inject_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional bool param_1_is_null = 4;
+  optional int64 param_2 = 5;
+  optional bool allow_double_delete = 6;
+}
+
+// Parameters for pcap_is_swapped
+// param_0: %struct.pcap.49*
+//   ↳ Handle to %struct.pcap.49* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message pcap_is_swapped_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for pcap_lib_version
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message pcap_lib_version_Params {
+  optional bool allow_double_delete = 1;
+}
+
+// Parameters for pcap_list_datalinks
+// param_0: %struct.pcap.49*
+//   ↳ Handle to %struct.pcap.49* object
+//   ↳ Nullable exploration knob
+// param_1: i32**
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message pcap_list_datalinks_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bool skip_dependency_check = 7;
+  optional bool allow_double_delete = 8;
+}
+
+// Parameters for pcap_list_tstamp_types
+// param_0: %struct.pcap.49*
+//   ↳ Handle to %struct.pcap.49* object (harness prefers readable/activated captures)
+//   ↳ Nullable exploration knob
+// param_1: i32**
+//   ↳ Output capture (callee writes timestamp type list pointer)
+//   ↳ Null output pointer requests are skipped to preserve valid state
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message pcap_list_tstamp_types_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for pcap_lookupdev
+// param_0: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message pcap_lookupdev_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for pcap_lookupnet
+// param_0: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_1: i32*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_2: i32*
+//   ↳ Nullable exploration knob
+// param_3: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message pcap_lookupnet_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional uint32 param_1_handle = 5;
+  optional bool param_1_is_null = 6;
+  optional bytes param_2 = 7;
+  optional bool param_2_is_null = 8;
+  optional bytes param_3 = 9;
+  optional uint32 param_3_length = 10;
+  optional uint32 param_3_length_override = 11;
+  optional bool param_3_is_null = 12;
+  optional bool skip_dependency_check = 13;
+  optional bool allow_double_delete = 14;
+}
+
+// Parameters for pcap_loop
+// param_0: %struct.pcap.49*
+//   ↳ Handle to %struct.pcap.49* object
+//   ↳ Nullable exploration knob
+// param_1: i32
+// param_2: void (i8*, %struct.pcap_pkthdr*, i8*)*
+//   ↳ Uses internal safe callback trampoline when non-null
+//   ↳ Nullable exploration knob
+// param_3: i8*
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message pcap_loop_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional bytes param_2 = 4 [deprecated = true];
+  optional bool param_2_is_null = 5;
+  optional bytes param_3 = 6;
+  optional bool param_3_is_null = 7;
+  optional bool allow_double_delete = 8;
+  optional bool param_2_use_trampoline = 9;
+}
+
+// Parameters for pcap_major_version
+// param_0: %struct.pcap.49*
+//   ↳ Handle to %struct.pcap.49* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message pcap_major_version_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for pcap_minor_version
+// param_0: %struct.pcap.49*
+//   ↳ Handle to %struct.pcap.49* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message pcap_minor_version_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for pcap_next
+// param_0: %struct.pcap.49*
+//   ↳ Handle to %struct.pcap.49* object (harness prefers readable/activated captures)
+//   ↳ Nullable exploration knob
+// param_1: %struct.pcap_pkthdr*
+//   ↳ Call-site scratch header storage (blob retained for backward compatibility)
+//   ↳ Null pointer requests are skipped to preserve valid state
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message pcap_next_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1_blob = 3;
+  optional bool param_1_is_null = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for pcap_next_ex
+// param_0: %struct.pcap.49*
+//   ↳ Handle to %struct.pcap.49* object (harness prefers readable/activated captures)
+//   ↳ Nullable exploration knob
+// param_1: %struct.pcap_pkthdr**
+//   ↳ Output capture (callee writes packet header pointer)
+//   ↳ Null output pointer requests are skipped to preserve valid state
+// param_2: i8**
+//   ↳ Output capture (callee writes packet payload pointer)
+//   ↳ Null output pointer requests are skipped to preserve valid state
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message pcap_next_ex_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional uint32 param_1_handle = 3 [deprecated = true];
+  optional bool param_1_is_null = 4;
+  optional bytes param_2 = 5 [deprecated = true];
+  optional bool param_2_is_null = 6;
+  optional bool skip_dependency_check = 7;
+  optional bool allow_double_delete = 8;
+  optional bool param_1_capture_output = 9;
+  optional bool param_2_capture_output = 10;
+}
+
+// Parameters for pcap_offline_filter
+// param_0: %struct.bpf_program*
+//   ↳ Handle to %struct.bpf_program* object
+//   ↳ Legacy blob field retained for backward compatibility
+//   ↳ Nullable exploration knob
+// param_1: %struct.pcap_pkthdr*
+//   ↳ Struct blob init (size=192)
+//   ↳ Nullable exploration knob
+// param_2: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message pcap_offline_filter_Params {
+  optional bytes param_0_blob = 1 [deprecated = true];
+  optional bool param_0_is_null = 2;
+  optional bytes param_1_blob = 3;
+  optional bool param_1_is_null = 4;
+  optional bytes param_2 = 5;
+  optional uint32 param_2_length = 6;
+  optional uint32 param_2_length_override = 7;
+  optional bool param_2_is_null = 8;
+  optional bool allow_double_delete = 9;
+  optional uint32 param_0_handle = 10;
+}
+
+// Parameters for pcap_open
+// param_0: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+//   ↳ malloc size override for overflow testing
+// param_1: i32
+// param_2: i32
+// param_3: i32
+// param_4: %struct.pcap_rmtauth*
+//   ↳ Struct blob init (size=192)
+//   ↳ Nullable exploration knob
+// param_5: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message pcap_open_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional uint32 param_0_malloc_override = 5;
+  optional int32 param_1 = 6;
+  optional int32 param_2 = 7;
+  optional int32 param_3 = 8;
+  optional bytes param_4_blob = 9;
+  optional bool param_4_is_null = 10;
+  optional bytes param_5 = 11;
+  optional uint32 param_5_length = 12;
+  optional uint32 param_5_length_override = 13;
+  optional bool param_5_is_null = 14;
+  optional bool skip_dependency_check = 15;
+  optional bool allow_double_delete = 16;
+}
+
+// Parameters for pcap_open_dead
+// param_0: i32
+// param_1: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message pcap_open_dead_Params {
+  optional int32 param_0 = 1;
+  optional int32 param_1 = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for pcap_open_dead_with_tstamp_precision
+// param_0: i32
+// param_1: i32
+// param_2: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message pcap_open_dead_with_tstamp_precision_Params {
+  optional int32 param_0 = 1;
+  optional int32 param_1 = 2;
+  optional int32 param_2 = 3;
+  optional bool allow_double_delete = 4;
+}
+
+// Parameters for pcap_open_live
+// param_0: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_1: i32
+// param_2: i32
+// param_3: i32
+// param_4: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message pcap_open_live_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional int32 param_1 = 5;
+  optional int32 param_2 = 6;
+  optional int32 param_3 = 7;
+  optional bytes param_4 = 8;
+  optional uint32 param_4_length = 9;
+  optional uint32 param_4_length_override = 10;
+  optional bool param_4_is_null = 11;
+  optional bool allow_double_delete = 12;
+}
+
+// Parameters for pcap_open_offline
+// param_0: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message pcap_open_offline_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional bytes param_1 = 5;
+  optional uint32 param_1_length = 6;
+  optional uint32 param_1_length_override = 7;
+  optional bool param_1_is_null = 8;
+  optional bool allow_double_delete = 9;
+}
+
+// Parameters for pcap_open_offline_with_tstamp_precision
+// param_0: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_1: i32
+// param_2: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message pcap_open_offline_with_tstamp_precision_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional int32 param_1 = 5;
+  optional bytes param_2 = 6;
+  optional uint32 param_2_length = 7;
+  optional uint32 param_2_length_override = 8;
+  optional bool param_2_is_null = 9;
+  optional bool allow_double_delete = 10;
+}
+
+// Parameters for pcap_parsesrcstr
+// param_0: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+//   ↳ malloc size override for overflow testing
+// param_1: i32*
+//   ↳ Nullable exploration knob
+// param_2: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_3: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_4: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_5: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message pcap_parsesrcstr_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional uint32 param_0_malloc_override = 5;
+  optional bytes param_1 = 6;
+  optional bool param_1_is_null = 7;
+  optional bytes param_2 = 8;
+  optional uint32 param_2_length = 9;
+  optional uint32 param_2_length_override = 10;
+  optional bool param_2_is_null = 11;
+  optional bytes param_3 = 12;
+  optional uint32 param_3_length = 13;
+  optional uint32 param_3_length_override = 14;
+  optional bool param_3_is_null = 15;
+  optional bytes param_4 = 16;
+  optional uint32 param_4_length = 17;
+  optional uint32 param_4_length_override = 18;
+  optional bool param_4_is_null = 19;
+  optional bytes param_5 = 20;
+  optional uint32 param_5_length = 21;
+  optional uint32 param_5_length_override = 22;
+  optional bool param_5_is_null = 23;
+  optional bool skip_dependency_check = 24;
+  optional bool allow_double_delete = 25;
+}
+
+// Parameters for pcap_perror
+// param_0: %struct.pcap.49*
+//   ↳ Handle to %struct.pcap.49* object
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message pcap_perror_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional bool param_1_is_null = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for pcap_sendpacket
+// param_0: %struct.pcap.49*
+//   ↳ Handle to %struct.pcap.49* object
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Nullable exploration knob
+// param_2: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message pcap_sendpacket_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional bool param_1_is_null = 4;
+  optional int32 param_2 = 5;
+  optional bool allow_double_delete = 6;
+}
+
+// Parameters for pcap_set_buffer_size
+// param_0: %struct.pcap.49*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message pcap_set_buffer_size_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional bool skip_dependency_check = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for pcap_set_datalink
+// param_0: %struct.pcap.49*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message pcap_set_datalink_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional bool skip_dependency_check = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for pcap_set_immediate_mode
+// param_0: %struct.pcap.49*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message pcap_set_immediate_mode_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional bool skip_dependency_check = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for pcap_set_promisc
+// param_0: %struct.pcap.49*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message pcap_set_promisc_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional bool skip_dependency_check = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for pcap_set_protocol_linux
+// param_0: %struct.pcap.49*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message pcap_set_protocol_linux_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional bool skip_dependency_check = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for pcap_set_rfmon
+// param_0: %struct.pcap.49*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message pcap_set_rfmon_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional bool skip_dependency_check = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for pcap_set_snaplen
+// param_0: %struct.pcap.49*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message pcap_set_snaplen_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional bool skip_dependency_check = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for pcap_set_timeout
+// param_0: %struct.pcap.49*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message pcap_set_timeout_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional bool skip_dependency_check = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for pcap_set_tstamp_precision
+// param_0: %struct.pcap.49*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message pcap_set_tstamp_precision_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional bool skip_dependency_check = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for pcap_set_tstamp_type
+// param_0: %struct.pcap.49*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message pcap_set_tstamp_type_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional bool skip_dependency_check = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for pcap_setdirection
+// param_0: %struct.pcap.49*
+//   ↳ Handle to %struct.pcap.49* object
+//   ↳ Nullable exploration knob
+// param_1: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message pcap_setdirection_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional bool allow_double_delete = 4;
+}
+
+// Parameters for pcap_setfilter
+// param_0: %struct.pcap.49*
+//   ↳ Handle to %struct.pcap.49* object
+//   ↳ Nullable exploration knob
+// param_1: %struct.bpf_program*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message pcap_setfilter_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1_blob = 3 [deprecated = true];
+  optional bool param_1_is_null = 4;
+  optional bool allow_double_delete = 5;
+  optional uint32 param_1_handle = 6;
+}
+
+// Parameters for pcap_setnonblock
+// param_0: %struct.pcap.49*
+//   ↳ Handle to %struct.pcap.49* object
+//   ↳ Nullable exploration knob
+// param_1: i32
+// param_2: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message pcap_setnonblock_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional bytes param_2 = 4;
+  optional uint32 param_2_length = 5;
+  optional uint32 param_2_length_override = 6;
+  optional bool param_2_is_null = 7;
+  optional bool skip_dependency_check = 8;
+  optional bool allow_double_delete = 9;
+}
+
+// Parameters for pcap_setsampling
+// param_0: %struct.pcap.49*
+//   ↳ Handle to %struct.pcap.49* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message pcap_setsampling_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for pcap_snapshot
+// param_0: %struct.pcap.49*
+//   ↳ Handle to %struct.pcap.49* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message pcap_snapshot_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for pcap_stats
+// param_0: %struct.pcap.49*
+//   ↳ Handle to %struct.pcap.49* object
+//   ↳ Nullable exploration knob
+// param_1: %struct.pcap_stat*
+//   ↳ Struct blob init (size=96)
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message pcap_stats_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1_blob = 3;
+  optional bool param_1_is_null = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for pcap_statustostr
+// param_0: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message pcap_statustostr_Params {
+  optional int32 param_0 = 1;
+  optional bool allow_double_delete = 2;
+}
+
+// Parameters for pcap_strerror
+// param_0: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message pcap_strerror_Params {
+  optional int32 param_0 = 1;
+  optional bool allow_double_delete = 2;
+}
+
+// Parameters for pcap_tstamp_type_name_to_val
+// param_0: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message pcap_tstamp_type_name_to_val_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for pcap_tstamp_type_val_to_description
+// param_0: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message pcap_tstamp_type_val_to_description_Params {
+  optional int32 param_0 = 1;
+  optional bool allow_double_delete = 2;
+}
+
+// Parameters for pcap_tstamp_type_val_to_name
+// param_0: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message pcap_tstamp_type_val_to_name_Params {
+  optional int32 param_0 = 1;
+  optional bool allow_double_delete = 2;
+}
+
+// Dynamic dispatch: exactly one API call variant per Action.
+message Action {
+  oneof action {
+    bpf_dump_Params bpf_dump = 1;
+    bpf_filter_Params bpf_filter = 2;
+    bpf_image_Params bpf_image = 3;
+    bpf_validate_Params bpf_validate = 4;
+    pcap_activate_Params pcap_activate = 5;
+    pcap_breakloop_Params pcap_breakloop = 6;
+    pcap_bufsize_Params pcap_bufsize = 7;
+    pcap_can_set_rfmon_Params pcap_can_set_rfmon = 8;
+    pcap_close_Params pcap_close = 9;
+    pcap_compile_Params pcap_compile = 10;
+    pcap_compile_nopcap_Params pcap_compile_nopcap = 11;
+    pcap_create_Params pcap_create = 12;
+    pcap_createsrcstr_Params pcap_createsrcstr = 13;
+    pcap_datalink_Params pcap_datalink = 14;
+    pcap_datalink_ext_Params pcap_datalink_ext = 15;
+    pcap_datalink_name_to_val_Params pcap_datalink_name_to_val = 16;
+    pcap_datalink_val_to_description_Params pcap_datalink_val_to_description = 17;
+    pcap_datalink_val_to_description_or_dlt_Params pcap_datalink_val_to_description_or_dlt = 18;
+    pcap_datalink_val_to_name_Params pcap_datalink_val_to_name = 19;
+    pcap_dispatch_Params pcap_dispatch = 20;
+    pcap_dump_Params pcap_dump = 21;
+    pcap_dump_close_Params pcap_dump_close = 22;
+    pcap_dump_file_Params pcap_dump_file = 23;
+    pcap_dump_flush_Params pcap_dump_flush = 24;
+    pcap_dump_fopen_Params pcap_dump_fopen = 25;
+    pcap_dump_ftell_Params pcap_dump_ftell = 26;
+    pcap_dump_ftell64_Params pcap_dump_ftell64 = 27;
+    pcap_dump_open_Params pcap_dump_open = 28;
+    pcap_dump_open_append_Params pcap_dump_open_append = 29;
+    pcap_file_Params pcap_file = 30;
+    pcap_fileno_Params pcap_fileno = 31;
+    pcap_findalldevs_Params pcap_findalldevs = 32;
+    pcap_findalldevs_ex_Params pcap_findalldevs_ex = 33;
+    pcap_fopen_offline_Params pcap_fopen_offline = 34;
+    pcap_fopen_offline_with_tstamp_precision_Params pcap_fopen_offline_with_tstamp_precision = 35;
+    pcap_free_datalinks_Params pcap_free_datalinks = 36;
+    pcap_free_tstamp_types_Params pcap_free_tstamp_types = 37;
+    pcap_freealldevs_Params pcap_freealldevs = 38;
+    pcap_freecode_Params pcap_freecode = 39;
+    pcap_get_required_select_timeout_Params pcap_get_required_select_timeout = 40;
+    pcap_get_selectable_fd_Params pcap_get_selectable_fd = 41;
+    pcap_get_tstamp_precision_Params pcap_get_tstamp_precision = 42;
+    pcap_geterr_Params pcap_geterr = 43;
+    pcap_getnonblock_Params pcap_getnonblock = 44;
+    pcap_init_Params pcap_init = 45;
+    pcap_inject_Params pcap_inject = 46;
+    pcap_is_swapped_Params pcap_is_swapped = 47;
+    pcap_lib_version_Params pcap_lib_version = 48;
+    pcap_list_datalinks_Params pcap_list_datalinks = 49;
+    pcap_list_tstamp_types_Params pcap_list_tstamp_types = 50;
+    pcap_lookupdev_Params pcap_lookupdev = 51;
+    pcap_lookupnet_Params pcap_lookupnet = 52;
+    pcap_loop_Params pcap_loop = 53;
+    pcap_major_version_Params pcap_major_version = 54;
+    pcap_minor_version_Params pcap_minor_version = 55;
+    pcap_next_Params pcap_next = 56;
+    pcap_next_ex_Params pcap_next_ex = 57;
+    pcap_offline_filter_Params pcap_offline_filter = 58;
+    pcap_open_Params pcap_open = 59;
+    pcap_open_dead_Params pcap_open_dead = 60;
+    pcap_open_dead_with_tstamp_precision_Params pcap_open_dead_with_tstamp_precision = 61;
+    pcap_open_live_Params pcap_open_live = 62;
+    pcap_open_offline_Params pcap_open_offline = 63;
+    pcap_open_offline_with_tstamp_precision_Params pcap_open_offline_with_tstamp_precision = 64;
+    pcap_parsesrcstr_Params pcap_parsesrcstr = 65;
+    pcap_perror_Params pcap_perror = 66;
+    pcap_sendpacket_Params pcap_sendpacket = 67;
+    pcap_set_buffer_size_Params pcap_set_buffer_size = 68;
+    pcap_set_datalink_Params pcap_set_datalink = 69;
+    pcap_set_immediate_mode_Params pcap_set_immediate_mode = 70;
+    pcap_set_promisc_Params pcap_set_promisc = 71;
+    pcap_set_protocol_linux_Params pcap_set_protocol_linux = 72;
+    pcap_set_rfmon_Params pcap_set_rfmon = 73;
+    pcap_set_snaplen_Params pcap_set_snaplen = 74;
+    pcap_set_timeout_Params pcap_set_timeout = 75;
+    pcap_set_tstamp_precision_Params pcap_set_tstamp_precision = 76;
+    pcap_set_tstamp_type_Params pcap_set_tstamp_type = 77;
+    pcap_setdirection_Params pcap_setdirection = 78;
+    pcap_setfilter_Params pcap_setfilter = 79;
+    pcap_setnonblock_Params pcap_setnonblock = 80;
+    pcap_setsampling_Params pcap_setsampling = 81;
+    pcap_snapshot_Params pcap_snapshot = 82;
+    pcap_stats_Params pcap_stats = 83;
+    pcap_statustostr_Params pcap_statustostr = 84;
+    pcap_strerror_Params pcap_strerror = 85;
+    pcap_tstamp_type_name_to_val_Params pcap_tstamp_type_name_to_val = 86;
+    pcap_tstamp_type_val_to_description_Params pcap_tstamp_type_val_to_description = 87;
+    pcap_tstamp_type_val_to_name_Params pcap_tstamp_type_val_to_name = 88;
+  }
+}
+
+// Top-level fuzz input (v2). Dynamic sequence of Actions.
+message FuzzInput {
+  optional uint32 global_seed = 1;
+  repeated Action actions = 2;
+  optional uint32 max_actions_hint = 3;
+  optional bool favor_valid_state = 4;
+}

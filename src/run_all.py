@@ -19,6 +19,7 @@ import json
 import os
 import re
 import shlex
+import shutil
 import subprocess
 import sys
 from dataclasses import dataclass
@@ -58,6 +59,13 @@ def _write_json(path: Path, obj: object, *, dry_run: bool) -> None:
         return
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(obj, indent=2, sort_keys=True))
+
+
+def _replace_generated_source(source: Optional[Path], destination: Path, *, dry_run: bool) -> None:
+    """Silently replace a generated source with a saved campaign copy."""
+    if source is None or dry_run:
+        return
+    shutil.copyfile(source, destination)
 
 
 def _resolve_python(python: str) -> str:
@@ -100,8 +108,22 @@ def _target_libs_for_profile(target_libs: List[str]) -> List[str]:
         if p.endswith(".a"):
             # Prefer a dedicated coverage archive if available (e.g., libfoo_profile.a),
             # otherwise fall back to a bitcode sibling, then to the original archive.
-            profile_variant = f"{p[:-2]}_profile.a"
-            if os.path.exists(profile_variant):
+            profile_variants = [f"{p[:-2]}_profile.a"]
+            # Android-style builds can put the linkage flavor immediately before
+            # the archive suffix (libfoo.pie.a) but insert the coverage marker
+            # before that flavor (libfoo_profile.pie.a).
+            for flavor in ("pie", "pic"):
+                flavored_suffix = f".{flavor}.a"
+                if p.endswith(flavored_suffix):
+                    profile_variants.append(
+                        f"{p[:-len(flavored_suffix)]}_profile{flavored_suffix}"
+                    )
+
+            profile_variant = next(
+                (candidate for candidate in profile_variants if os.path.exists(candidate)),
+                None,
+            )
+            if profile_variant is not None:
                 out.append(profile_variant)
                 continue
 
@@ -797,6 +819,17 @@ def main() -> int:
     harness_c = out_dir / ("harness.cc" if args.mutation_mode == "lpm" else "harness.c")
     driver_meta_path = out_dir / "driver.meta.json"
 
+    saved_schema: Optional[Path] = None
+    saved_harness: Optional[Path] = None
+    saved_sources_dir = os.environ.get("PROTO_LIBERATOR_GENERATED_HARNESS_DIR", "")
+    if saved_sources_dir and args.schema_mode == "v2" and args.mutation_mode == "lpm":
+        candidate_dir = Path(saved_sources_dir).resolve()
+        candidate_schema = candidate_dir / schema_proto.name
+        candidate_harness = candidate_dir / harness_c.name
+        if candidate_schema.is_file() and candidate_harness.is_file():
+            saved_schema = candidate_schema
+            saved_harness = candidate_harness
+
     nanopb_dir = Path(args.nanopb_dir).resolve() if args.nanopb_dir else (root / "external" / "nanopb")
     nanopb_protoc = nanopb_dir / "generator" / "protoc"
     if (args.build or args.fuzz) and args.mutation_mode == "nanopb":
@@ -843,6 +876,7 @@ def main() -> int:
     if args.apipass_dir:
         schema_argv += ["--apipass-dir", str(Path(args.apipass_dir).resolve())]
     _run(Cmd(schema_argv), dry_run=args.dry_run)
+    _replace_generated_source(saved_schema, schema_proto, dry_run=args.dry_run)
 
     # 2) Bindings
     if not args.dry_run:
@@ -933,6 +967,7 @@ def main() -> int:
     if selected_graph:
         wrapper_argv += ["--constraint-graph", str(selected_graph)]
     _run(Cmd(wrapper_argv), dry_run=args.dry_run)
+    _replace_generated_source(saved_harness, harness_c, dry_run=args.dry_run)
 
     # 3.5) Constraint graph (safety fallback before seed generation)
     if (

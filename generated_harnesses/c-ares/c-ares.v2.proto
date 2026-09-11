@@ -1,0 +1,2600 @@
+syntax = "proto2";
+
+package c_ares_fuzzer;
+
+
+// Parameters for ares_cancel
+// param_0: %struct.ares_channeldata*
+//   ↳ Struct blob init (size=3072)
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message ares_cancel_Params {
+  optional bytes param_0_blob = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for ares_create_query
+// param_0: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_1: i32
+// param_2: i32
+// param_3: i16
+// param_4: i32
+// param_5: i8**
+//   ↳ Nullable exploration knob
+// param_6: i32*
+//   ↳ Nullable exploration knob
+// param_7: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message ares_create_query_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional int32 param_1 = 5;
+  optional int32 param_2 = 6;
+  optional int32 param_3 = 7;
+  optional int32 param_4 = 8;
+  optional bytes param_5 = 9;
+  optional bool param_5_is_null = 10;
+  optional bytes param_6 = 11;
+  optional bool param_6_is_null = 12;
+  optional int32 param_7 = 13;
+  optional bool allow_double_delete = 14;
+}
+
+// Parameters for ares_destroy
+// param_0: %struct.ares_channeldata*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message ares_destroy_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for ares_destroy_options
+// param_0: %struct.ares_options*
+//   ↳ Struct blob init (size=1216)
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message ares_destroy_options_Params {
+  optional bytes param_0_blob = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for ares_dns_addr_to_ptr
+// param_0: %struct.ares_addr*
+//   ↳ Struct blob init (size=160)
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message ares_dns_addr_to_ptr_Params {
+  optional bytes param_0_blob = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for ares_dns_class_fromstr
+// param_0: i32*
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message ares_dns_class_fromstr_Params {
+  optional bytes param_0 = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional bool param_1_is_null = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for ares_dns_class_tostr
+// param_0: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message ares_dns_class_tostr_Params {
+  optional int32 param_0 = 1;
+  optional bool allow_double_delete = 2;
+}
+
+// Parameters for ares_dns_opcode_tostr
+// param_0: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message ares_dns_opcode_tostr_Params {
+  optional int32 param_0 = 1;
+  optional bool allow_double_delete = 2;
+}
+
+// Parameters for ares_dns_opt_get_datatype
+// param_0: i32
+// param_1: i16
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message ares_dns_opt_get_datatype_Params {
+  optional int32 param_0 = 1;
+  optional int32 param_1 = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for ares_dns_opt_get_name
+// param_0: i32
+// param_1: i16
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message ares_dns_opt_get_name_Params {
+  optional int32 param_0 = 1;
+  optional int32 param_1 = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for ares_dns_parse
+// param_0: i8*
+//   ↳ Nullable exploration knob
+// param_1: i64
+// param_2: i32
+// param_3: %struct.ares_dns_record**
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message ares_dns_parse_Params {
+  optional bytes param_0 = 1;
+  optional bool param_0_is_null = 2;
+  optional int64 param_1 = 3;
+  optional int32 param_2 = 4;
+  optional uint32 param_3_handle = 5;
+  optional bool param_3_is_null = 6;
+  optional bool skip_dependency_check = 7;
+  optional bool allow_double_delete = 8;
+}
+
+// Parameters for ares_dns_pton
+// param_0: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_1: %struct.ares_addr*
+//   ↳ Struct blob init (size=160)
+//   ↳ Nullable exploration knob
+// param_2: i64*
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message ares_dns_pton_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional bytes param_1_blob = 5;
+  optional bool param_1_is_null = 6;
+  optional bytes param_2 = 7;
+  optional bool param_2_is_null = 8;
+  optional bool allow_double_delete = 9;
+}
+
+// Parameters for ares_dns_rcode_tostr
+// param_0: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message ares_dns_rcode_tostr_Params {
+  optional int32 param_0 = 1;
+  optional bool allow_double_delete = 2;
+}
+
+// Parameters for ares_dns_rec_type_fromstr
+// param_0: i32*
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message ares_dns_rec_type_fromstr_Params {
+  optional bytes param_0 = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional bool param_1_is_null = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for ares_dns_rec_type_tostr
+// param_0: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message ares_dns_rec_type_tostr_Params {
+  optional int32 param_0 = 1;
+  optional bool allow_double_delete = 2;
+}
+
+// Parameters for ares_dns_record_create
+// param_0: %struct.ares_dns_record**
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i16
+// param_2: i16
+// param_3: i32
+// param_4: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message ares_dns_record_create_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional int32 param_2 = 4;
+  optional int32 param_3 = 5;
+  optional int32 param_4 = 6;
+  optional bool skip_dependency_check = 7;
+  optional bool allow_double_delete = 8;
+}
+
+// Parameters for ares_dns_record_destroy
+// param_0: %struct.ares_dns_record*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message ares_dns_record_destroy_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for ares_dns_record_duplicate
+// param_0: %struct.ares_dns_record*
+//   ↳ Handle to %struct.ares_dns_record* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message ares_dns_record_duplicate_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for ares_dns_record_get_flags
+// param_0: %struct.ares_dns_record*
+//   ↳ Handle to %struct.ares_dns_record* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message ares_dns_record_get_flags_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for ares_dns_record_get_id
+// param_0: %struct.ares_dns_record*
+//   ↳ Handle to %struct.ares_dns_record* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message ares_dns_record_get_id_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for ares_dns_record_get_opcode
+// param_0: %struct.ares_dns_record*
+//   ↳ Handle to %struct.ares_dns_record* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message ares_dns_record_get_opcode_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for ares_dns_record_get_rcode
+// param_0: %struct.ares_dns_record*
+//   ↳ Handle to %struct.ares_dns_record* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message ares_dns_record_get_rcode_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for ares_dns_record_query_add
+// param_0: %struct.ares_dns_record*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_2: i32
+// param_3: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message ares_dns_record_query_add_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional int32 param_2 = 7;
+  optional int32 param_3 = 8;
+  optional bool skip_dependency_check = 9;
+  optional bool allow_double_delete = 10;
+}
+
+// Parameters for ares_dns_record_query_cnt
+// param_0: %struct.ares_dns_record*
+//   ↳ Handle to %struct.ares_dns_record* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message ares_dns_record_query_cnt_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for ares_dns_record_query_get
+// param_0: %struct.ares_dns_record*
+//   ↳ Handle to %struct.ares_dns_record* object
+//   ↳ Nullable exploration knob
+// param_1: i64
+// param_2: i8**
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_3: i32*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_4: i32*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message ares_dns_record_query_get_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int64 param_1 = 3;
+  optional uint32 param_2_handle = 4;
+  optional bool param_2_is_null = 5;
+  optional uint32 param_3_handle = 6;
+  optional bool param_3_is_null = 7;
+  optional uint32 param_4_handle = 8;
+  optional bool param_4_is_null = 9;
+  optional bool skip_dependency_check = 10;
+  optional bool allow_double_delete = 11;
+}
+
+// Parameters for ares_dns_record_query_set_name
+// param_0: %struct.ares_dns_record*
+//   ↳ Handle to %struct.ares_dns_record* object
+//   ↳ Nullable exploration knob
+// param_1: i64
+//   ↳ Scalar (deps ignored for schema shape)
+// param_2: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message ares_dns_record_query_set_name_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int64 param_1 = 3;
+  optional bytes param_2 = 4;
+  optional uint32 param_2_length = 5;
+  optional uint32 param_2_length_override = 6;
+  optional bool param_2_is_null = 7;
+  optional bool skip_dependency_check = 8;
+  optional bool allow_double_delete = 9;
+}
+
+// Parameters for ares_dns_record_query_set_type
+// param_0: %struct.ares_dns_record*
+//   ↳ Handle to %struct.ares_dns_record* object
+//   ↳ Nullable exploration knob
+// param_1: i64
+//   ↳ Scalar (deps ignored for schema shape)
+// param_2: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message ares_dns_record_query_set_type_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int64 param_1 = 3;
+  optional int32 param_2 = 4;
+  optional bool skip_dependency_check = 5;
+  optional bool allow_double_delete = 6;
+}
+
+// Parameters for ares_dns_record_rr_add
+// param_0: %struct.ares_dns_rr**
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: %struct.ares_dns_record*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_2: i32
+// param_3: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_4: i32
+// param_5: i32
+// param_6: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message ares_dns_record_rr_add_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional uint32 param_1_handle = 3;
+  optional bool param_1_is_null = 4;
+  optional int32 param_2 = 5;
+  optional bytes param_3 = 6;
+  optional uint32 param_3_length = 7;
+  optional uint32 param_3_length_override = 8;
+  optional bool param_3_is_null = 9;
+  optional int32 param_4 = 10;
+  optional int32 param_5 = 11;
+  optional int32 param_6 = 12;
+  optional bool skip_dependency_check = 13;
+  optional bool allow_double_delete = 14;
+}
+
+// Parameters for ares_dns_record_rr_cnt
+// param_0: %struct.ares_dns_record*
+//   ↳ Handle to %struct.ares_dns_record* object
+//   ↳ Nullable exploration knob
+// param_1: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message ares_dns_record_rr_cnt_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional bool allow_double_delete = 4;
+}
+
+// Parameters for ares_dns_record_rr_del
+// param_0: %struct.ares_dns_record*
+//   ↳ Handle to %struct.ares_dns_record* object
+//   ↳ Nullable exploration knob
+// param_1: i32
+// param_2: i64
+//   ↳ Scalar (deps ignored for schema shape)
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message ares_dns_record_rr_del_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional int64 param_2 = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for ares_dns_record_rr_get
+// param_0: %struct.ares_dns_record*
+//   ↳ Handle to %struct.ares_dns_record* object
+//   ↳ Nullable exploration knob
+// param_1: i32
+// param_2: i64
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message ares_dns_record_rr_get_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional int64 param_2 = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for ares_dns_record_rr_get_const
+// param_0: %struct.ares_dns_record*
+//   ↳ Handle to %struct.ares_dns_record* object
+//   ↳ Nullable exploration knob
+// param_1: i32
+// param_2: i64
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message ares_dns_record_rr_get_const_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional int64 param_2 = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for ares_dns_rr_get_addr
+// param_0: %struct.ares_dns_rr*
+//   ↳ Handle to %struct.ares_dns_rr* object
+//   ↳ Nullable exploration knob
+// param_1: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message ares_dns_rr_get_addr_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional bool allow_double_delete = 4;
+}
+
+// Parameters for ares_dns_rr_get_addr6
+// param_0: %struct.ares_dns_rr*
+//   ↳ Handle to %struct.ares_dns_rr* object
+//   ↳ Nullable exploration knob
+// param_1: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message ares_dns_rr_get_addr6_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional bool allow_double_delete = 4;
+}
+
+// Parameters for ares_dns_rr_get_bin
+// param_0: %struct.ares_dns_rr*
+//   ↳ Handle to %struct.ares_dns_rr* object
+//   ↳ Nullable exploration knob
+// param_1: i32
+// param_2: i64*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message ares_dns_rr_get_bin_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional uint32 param_2_handle = 4;
+  optional bool param_2_is_null = 5;
+  optional bool skip_dependency_check = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for ares_dns_rr_get_class
+// param_0: %struct.ares_dns_rr*
+//   ↳ Handle to %struct.ares_dns_rr* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message ares_dns_rr_get_class_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for ares_dns_rr_get_keys
+// param_0: i32
+// param_1: i64*
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message ares_dns_rr_get_keys_Params {
+  optional int32 param_0 = 1;
+  optional bytes param_1 = 2;
+  optional bool param_1_is_null = 3;
+  optional bool allow_double_delete = 4;
+}
+
+// Parameters for ares_dns_rr_get_name
+// param_0: %struct.ares_dns_rr*
+//   ↳ Handle to %struct.ares_dns_rr* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message ares_dns_rr_get_name_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for ares_dns_rr_get_opt
+// param_0: %struct.ares_dns_rr*
+//   ↳ Handle to %struct.ares_dns_rr* object
+//   ↳ Nullable exploration knob
+// param_1: i32
+// param_2: i64
+// param_3: i8**
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_4: i64*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message ares_dns_rr_get_opt_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional int64 param_2 = 4;
+  optional uint32 param_3_handle = 5;
+  optional bool param_3_is_null = 6;
+  optional uint32 param_4_handle = 7;
+  optional bool param_4_is_null = 8;
+  optional bool skip_dependency_check = 9;
+  optional bool allow_double_delete = 10;
+}
+
+// Parameters for ares_dns_rr_get_opt_byid
+// param_0: %struct.ares_dns_rr*
+//   ↳ Handle to %struct.ares_dns_rr* object
+//   ↳ Nullable exploration knob
+// param_1: i32
+// param_2: i16
+// param_3: i8**
+//   ↳ Nullable exploration knob
+// param_4: i64*
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message ares_dns_rr_get_opt_byid_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional int32 param_2 = 4;
+  optional bytes param_3 = 5;
+  optional bool param_3_is_null = 6;
+  optional bytes param_4 = 7;
+  optional bool param_4_is_null = 8;
+  optional bool allow_double_delete = 9;
+}
+
+// Parameters for ares_dns_rr_get_opt_cnt
+// param_0: %struct.ares_dns_rr*
+//   ↳ Handle to %struct.ares_dns_rr* object
+//   ↳ Nullable exploration knob
+// param_1: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message ares_dns_rr_get_opt_cnt_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional bool allow_double_delete = 4;
+}
+
+// Parameters for ares_dns_rr_get_str
+// param_0: %struct.ares_dns_rr*
+//   ↳ Handle to %struct.ares_dns_rr* object
+//   ↳ Nullable exploration knob
+// param_1: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message ares_dns_rr_get_str_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional bool allow_double_delete = 4;
+}
+
+// Parameters for ares_dns_rr_get_ttl
+// param_0: %struct.ares_dns_rr*
+//   ↳ Handle to %struct.ares_dns_rr* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message ares_dns_rr_get_ttl_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for ares_dns_rr_get_type
+// param_0: %struct.ares_dns_rr*
+//   ↳ Handle to %struct.ares_dns_rr* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message ares_dns_rr_get_type_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for ares_dns_rr_get_u16
+// param_0: %struct.ares_dns_rr*
+//   ↳ Handle to %struct.ares_dns_rr* object
+//   ↳ Nullable exploration knob
+// param_1: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message ares_dns_rr_get_u16_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional bool allow_double_delete = 4;
+}
+
+// Parameters for ares_dns_rr_get_u32
+// param_0: %struct.ares_dns_rr*
+//   ↳ Handle to %struct.ares_dns_rr* object
+//   ↳ Nullable exploration knob
+// param_1: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message ares_dns_rr_get_u32_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional bool allow_double_delete = 4;
+}
+
+// Parameters for ares_dns_rr_get_u8
+// param_0: %struct.ares_dns_rr*
+//   ↳ Handle to %struct.ares_dns_rr* object
+//   ↳ Nullable exploration knob
+// param_1: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message ares_dns_rr_get_u8_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional bool allow_double_delete = 4;
+}
+
+// Parameters for ares_dns_rr_key_datatype
+// param_0: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message ares_dns_rr_key_datatype_Params {
+  optional int32 param_0 = 1;
+  optional bool allow_double_delete = 2;
+}
+
+// Parameters for ares_dns_rr_key_to_rec_type
+// param_0: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message ares_dns_rr_key_to_rec_type_Params {
+  optional int32 param_0 = 1;
+  optional bool allow_double_delete = 2;
+}
+
+// Parameters for ares_dns_rr_key_tostr
+// param_0: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message ares_dns_rr_key_tostr_Params {
+  optional int32 param_0 = 1;
+  optional bool allow_double_delete = 2;
+}
+
+// Parameters for ares_dns_rr_set_addr
+// param_0: %struct.ares_dns_rr*
+//   ↳ Handle to %struct.ares_dns_rr* object
+//   ↳ Nullable exploration knob
+// param_1: i32
+// param_2: %struct.in_addr*
+//   ↳ Handle to %struct.in_addr* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message ares_dns_rr_set_addr_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional uint32 param_2_handle = 4;
+  optional bool param_2_is_null = 5;
+  optional bool allow_double_delete = 6;
+}
+
+// Parameters for ares_dns_rr_set_addr6
+// param_0: %struct.ares_dns_rr*
+//   ↳ Handle to %struct.ares_dns_rr* object
+//   ↳ Nullable exploration knob
+// param_1: i32
+// param_2: %struct.ares_in6_addr*
+//   ↳ Handle to %struct.ares_in6_addr* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message ares_dns_rr_set_addr6_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional uint32 param_2_handle = 4;
+  optional bool param_2_is_null = 5;
+  optional bool allow_double_delete = 6;
+}
+
+// Parameters for ares_dns_rr_set_bin
+// param_0: %struct.ares_dns_rr*
+//   ↳ Handle to %struct.ares_dns_rr* object
+//   ↳ Nullable exploration knob
+// param_1: i32
+// param_2: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_3: i64
+//   ↳ malloc size override for overflow testing
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message ares_dns_rr_set_bin_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional bytes param_2 = 4;
+  optional uint32 param_2_length = 5;
+  optional uint32 param_2_length_override = 6;
+  optional bool param_2_is_null = 7;
+  optional int64 param_3 = 8;
+  optional uint32 param_3_malloc_override = 9;
+  optional bool allow_double_delete = 10;
+}
+
+// Parameters for ares_dns_rr_set_opt
+// param_0: %struct.ares_dns_rr*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32
+// param_2: i16
+// param_3: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_4: i64
+//   ↳ malloc size override for overflow testing
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message ares_dns_rr_set_opt_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional int32 param_2 = 4;
+  optional bytes param_3 = 5;
+  optional uint32 param_3_length = 6;
+  optional uint32 param_3_length_override = 7;
+  optional bool param_3_is_null = 8;
+  optional int64 param_4 = 9;
+  optional uint32 param_4_malloc_override = 10;
+  optional bool skip_dependency_check = 11;
+  optional bool allow_double_delete = 12;
+}
+
+// Parameters for ares_dns_rr_set_str
+// param_0: %struct.ares_dns_rr*
+//   ↳ Handle to %struct.ares_dns_rr* object
+//   ↳ Nullable exploration knob
+// param_1: i32
+// param_2: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message ares_dns_rr_set_str_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional bytes param_2 = 4;
+  optional uint32 param_2_length = 5;
+  optional uint32 param_2_length_override = 6;
+  optional bool param_2_is_null = 7;
+  optional bool allow_double_delete = 8;
+}
+
+// Parameters for ares_dns_rr_set_u16
+// param_0: %struct.ares_dns_rr*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32
+// param_2: i16
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message ares_dns_rr_set_u16_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional int32 param_2 = 4;
+  optional bool skip_dependency_check = 5;
+  optional bool allow_double_delete = 6;
+}
+
+// Parameters for ares_dns_rr_set_u32
+// param_0: %struct.ares_dns_rr*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32
+// param_2: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message ares_dns_rr_set_u32_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional int32 param_2 = 4;
+  optional bool skip_dependency_check = 5;
+  optional bool allow_double_delete = 6;
+}
+
+// Parameters for ares_dns_rr_set_u8
+// param_0: %struct.ares_dns_rr*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32
+// param_2: i8
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message ares_dns_rr_set_u8_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional int32 param_2 = 4;
+  optional bool skip_dependency_check = 5;
+  optional bool allow_double_delete = 6;
+}
+
+// Parameters for ares_dns_section_tostr
+// param_0: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message ares_dns_section_tostr_Params {
+  optional int32 param_0 = 1;
+  optional bool allow_double_delete = 2;
+}
+
+// Parameters for ares_dns_write
+// param_0: %struct.ares_dns_record*
+//   ↳ Handle to %struct.ares_dns_record* object
+//   ↳ Nullable exploration knob
+// param_1: i8**
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_2: i64*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message ares_dns_write_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional uint32 param_1_handle = 3;
+  optional bool param_1_is_null = 4;
+  optional uint32 param_2_handle = 5;
+  optional bool param_2_is_null = 6;
+  optional bool skip_dependency_check = 7;
+  optional bool allow_double_delete = 8;
+}
+
+// Parameters for ares_dup
+// param_0: %struct.ares_channeldata**
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: %struct.ares_channeldata*
+//   ↳ Struct blob init (size=3072)
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message ares_dup_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1_blob = 3;
+  optional bool param_1_is_null = 4;
+  optional bool skip_dependency_check = 5;
+  optional bool allow_double_delete = 6;
+}
+
+// Parameters for ares_expand_name
+// param_0: i8*
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_2: i32
+// param_3: i8**
+//   ↳ Nullable exploration knob
+// param_4: i64*
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message ares_expand_name_Params {
+  optional bytes param_0 = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional int32 param_2 = 7;
+  optional bytes param_3 = 8;
+  optional bool param_3_is_null = 9;
+  optional bytes param_4 = 10;
+  optional bool param_4_is_null = 11;
+  optional bool allow_double_delete = 12;
+}
+
+// Parameters for ares_expand_string
+// param_0: i8*
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_2: i32
+// param_3: i8**
+//   ↳ Nullable exploration knob
+// param_4: i64*
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message ares_expand_string_Params {
+  optional bytes param_0 = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional int32 param_2 = 7;
+  optional bytes param_3 = 8;
+  optional bool param_3_is_null = 9;
+  optional bytes param_4 = 10;
+  optional bool param_4_is_null = 11;
+  optional bool allow_double_delete = 12;
+}
+
+// Parameters for ares_fds
+// param_0: %struct.ares_channeldata*
+//   ↳ Struct blob init (size=3072)
+//   ↳ Nullable exploration knob
+// param_1: %struct.fd_set*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_2: %struct.fd_set*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message ares_fds_Params {
+  optional bytes param_0_blob = 1;
+  optional bool param_0_is_null = 2;
+  optional uint32 param_1_handle = 3;
+  optional bool param_1_is_null = 4;
+  optional uint32 param_2_handle = 5;
+  optional bool param_2_is_null = 6;
+  optional bool skip_dependency_check = 7;
+  optional bool allow_double_delete = 8;
+}
+
+// Parameters for ares_free_data
+// param_0: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message ares_free_data_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for ares_free_hostent
+// param_0: %struct.hostent*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message ares_free_hostent_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for ares_free_string
+// param_0: i8*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message ares_free_string_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for ares_freeaddrinfo
+// param_0: %struct.ares_addrinfo*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message ares_freeaddrinfo_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for ares_get_servers
+// param_0: %struct.ares_channeldata*
+//   ↳ Struct blob init (size=3072)
+//   ↳ Nullable exploration knob
+// param_1: %struct.ares_addr_node**
+//   ↳ Struct blob init (size=256)
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message ares_get_servers_Params {
+  optional bytes param_0_blob = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1_blob = 3;
+  optional bool param_1_is_null = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for ares_get_servers_csv
+// param_0: %struct.ares_channeldata*
+//   ↳ Struct blob init (size=3072)
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message ares_get_servers_csv_Params {
+  optional bytes param_0_blob = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for ares_get_servers_ports
+// param_0: %struct.ares_channeldata*
+//   ↳ Struct blob init (size=3072)
+//   ↳ Nullable exploration knob
+// param_1: %struct.ares_addr_port_node**
+//   ↳ Struct blob init (size=320)
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message ares_get_servers_ports_Params {
+  optional bytes param_0_blob = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1_blob = 3;
+  optional bool param_1_is_null = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for ares_getaddrinfo
+// param_0: %struct.ares_channeldata*
+//   ↳ Struct blob init (size=3072)
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_2: i8*
+//   ↳ Nullable exploration knob
+// param_3: %struct.ares_addrinfo_hints*
+//   ↳ Struct blob init (size=128)
+//   ↳ Nullable exploration knob
+// param_4: void (i8*, i32, i32, %struct.ares_addrinfo*)*
+//   ↳ Nullable exploration knob
+// param_5: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message ares_getaddrinfo_Params {
+  optional bytes param_0_blob = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bytes param_2 = 7;
+  optional bool param_2_is_null = 8;
+  optional bytes param_3_blob = 9;
+  optional bool param_3_is_null = 10;
+  optional bytes param_4 = 11;
+  optional bool param_4_is_null = 12;
+  optional bytes param_5 = 13;
+  optional uint32 param_5_length = 14;
+  optional uint32 param_5_length_override = 15;
+  optional bool param_5_is_null = 16;
+  optional bool allow_double_delete = 17;
+}
+
+// Parameters for ares_gethostbyaddr
+// param_0: %struct.ares_channeldata*
+//   ↳ Struct blob init (size=3072)
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Nullable exploration knob
+// param_2: i32
+// param_3: i32
+// param_4: void (i8*, i32, i32, %struct.hostent*)*
+//   ↳ Nullable exploration knob
+// param_5: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message ares_gethostbyaddr_Params {
+  optional bytes param_0_blob = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional bool param_1_is_null = 4;
+  optional int32 param_2 = 5;
+  optional int32 param_3 = 6;
+  optional bytes param_4 = 7;
+  optional bool param_4_is_null = 8;
+  optional bytes param_5 = 9;
+  optional uint32 param_5_length = 10;
+  optional uint32 param_5_length_override = 11;
+  optional bool param_5_is_null = 12;
+  optional bool skip_dependency_check = 13;
+  optional bool allow_double_delete = 14;
+}
+
+// Parameters for ares_gethostbyname
+// param_0: %struct.ares_channeldata*
+//   ↳ Struct blob init (size=3072)
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_2: i32
+// param_3: void (i8*, i32, i32, %struct.hostent*)*
+//   ↳ Nullable exploration knob
+// param_4: i8*
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message ares_gethostbyname_Params {
+  optional bytes param_0_blob = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional int32 param_2 = 7;
+  optional bytes param_3 = 8;
+  optional bool param_3_is_null = 9;
+  optional bytes param_4 = 10;
+  optional bool param_4_is_null = 11;
+  optional bool allow_double_delete = 12;
+}
+
+// Parameters for ares_gethostbyname_file
+// param_0: %struct.ares_channeldata*
+//   ↳ Struct blob init (size=3072)
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_2: i32
+// param_3: %struct.hostent**
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+//   ↳ malloc size override for overflow testing
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message ares_gethostbyname_file_Params {
+  optional bytes param_0_blob = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional int32 param_2 = 7;
+  optional uint32 param_3_handle = 8;
+  optional bool param_3_is_null = 9;
+  optional uint32 param_3_malloc_override = 10;
+  optional bool skip_dependency_check = 11;
+  optional bool allow_double_delete = 12;
+}
+
+// Parameters for ares_getnameinfo
+// param_0: %struct.ares_channeldata*
+//   ↳ Struct blob init (size=3072)
+//   ↳ Nullable exploration knob
+// param_1: %struct.sockaddr*
+//   ↳ Struct blob init (size=128)
+//   ↳ Nullable exploration knob
+// param_2: i32
+// param_3: i32
+// param_4: void (i8*, i32, i32, i8*, i8*)*
+//   ↳ Nullable exploration knob
+// param_5: i8*
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message ares_getnameinfo_Params {
+  optional bytes param_0_blob = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1_blob = 3;
+  optional bool param_1_is_null = 4;
+  optional int32 param_2 = 5;
+  optional int32 param_3 = 6;
+  optional bytes param_4 = 7;
+  optional bool param_4_is_null = 8;
+  optional bytes param_5 = 9;
+  optional bool param_5_is_null = 10;
+  optional bool allow_double_delete = 11;
+}
+
+// Parameters for ares_getsock
+// param_0: %struct.ares_channeldata*
+//   ↳ Struct blob init (size=3072)
+//   ↳ Nullable exploration knob
+// param_1: i32*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_2: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message ares_getsock_Params {
+  optional bytes param_0_blob = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional int32 param_2 = 7;
+  optional bool skip_dependency_check = 8;
+  optional bool allow_double_delete = 9;
+}
+
+// Parameters for ares_inet_ntop
+// param_0: i32
+// param_1: i8*
+//   ↳ Nullable exploration knob
+// param_2: i8*
+//   ↳ Nullable exploration knob
+// param_3: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message ares_inet_ntop_Params {
+  optional int32 param_0 = 1;
+  optional bytes param_1 = 2;
+  optional bool param_1_is_null = 3;
+  optional bytes param_2 = 4;
+  optional bool param_2_is_null = 5;
+  optional int32 param_3 = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for ares_inet_pton
+// param_0: i32
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_2: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message ares_inet_pton_Params {
+  optional int32 param_0 = 1;
+  optional bytes param_1 = 2;
+  optional uint32 param_1_length = 3;
+  optional uint32 param_1_length_override = 4;
+  optional bool param_1_is_null = 5;
+  optional bytes param_2 = 6;
+  optional uint32 param_2_length = 7;
+  optional uint32 param_2_length_override = 8;
+  optional bool param_2_is_null = 9;
+  optional bool allow_double_delete = 10;
+}
+
+// Parameters for ares_init
+// param_0: %struct.ares_channeldata**
+//   ↳ Struct blob init (size=3072)
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message ares_init_Params {
+  optional bytes param_0_blob = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for ares_init_options
+// param_0: %struct.ares_channeldata**
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: %struct.ares_options*
+//   ↳ Struct blob init (size=1216)
+//   ↳ Nullable exploration knob
+// param_2: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message ares_init_options_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1_blob = 3;
+  optional bool param_1_is_null = 4;
+  optional int32 param_2 = 5;
+  optional bool skip_dependency_check = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for ares_library_cleanup
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message ares_library_cleanup_Params {
+  optional bool allow_double_delete = 1;
+}
+
+// Parameters for ares_library_init
+// param_0: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message ares_library_init_Params {
+  optional int32 param_0 = 1;
+  optional bool allow_double_delete = 2;
+}
+
+// Parameters for ares_library_init_mem
+// param_0: i32
+// param_1: i8* (i64)*
+//   ↳ Nullable exploration knob
+// param_2: void (i8*)*
+//   ↳ Nullable exploration knob
+// param_3: i8* (i8*, i64)*
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message ares_library_init_mem_Params {
+  optional int32 param_0 = 1;
+  optional bytes param_1 = 2;
+  optional bool param_1_is_null = 3;
+  optional bytes param_2 = 4;
+  optional bool param_2_is_null = 5;
+  optional bytes param_3 = 6;
+  optional bool param_3_is_null = 7;
+  optional bool allow_double_delete = 8;
+}
+
+// Parameters for ares_library_initialized
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message ares_library_initialized_Params {
+  optional bool allow_double_delete = 1;
+}
+
+// Parameters for ares_mkquery
+// param_0: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_1: i32
+// param_2: i32
+// param_3: i16
+// param_4: i32
+// param_5: i8**
+//   ↳ Nullable exploration knob
+// param_6: i32*
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message ares_mkquery_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional int32 param_1 = 5;
+  optional int32 param_2 = 6;
+  optional int32 param_3 = 7;
+  optional int32 param_4 = 8;
+  optional bytes param_5 = 9;
+  optional bool param_5_is_null = 10;
+  optional bytes param_6 = 11;
+  optional bool param_6_is_null = 12;
+  optional bool allow_double_delete = 13;
+}
+
+// Parameters for ares_parse_a_reply
+// param_0: i8*
+//   ↳ Nullable exploration knob
+// param_1: i32
+// param_2: %struct.hostent**
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+//   ↳ malloc size override for overflow testing
+// param_3: %struct.ares_addrttl*
+//   ↳ Struct blob init (size=64)
+//   ↳ Nullable exploration knob
+// param_4: i32*
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message ares_parse_a_reply_Params {
+  optional bytes param_0 = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional uint32 param_2_handle = 4;
+  optional bool param_2_is_null = 5;
+  optional uint32 param_2_malloc_override = 6;
+  optional bytes param_3_blob = 7;
+  optional bool param_3_is_null = 8;
+  optional bytes param_4 = 9;
+  optional bool param_4_is_null = 10;
+  optional bool allow_double_delete = 11;
+}
+
+// Parameters for ares_parse_aaaa_reply
+// param_0: i8*
+//   ↳ Nullable exploration knob
+// param_1: i32
+// param_2: %struct.hostent**
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+//   ↳ malloc size override for overflow testing
+// param_3: %struct.ares_addr6ttl*
+//   ↳ Struct blob init (size=160)
+//   ↳ Nullable exploration knob
+// param_4: i32*
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message ares_parse_aaaa_reply_Params {
+  optional bytes param_0 = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional uint32 param_2_handle = 4;
+  optional bool param_2_is_null = 5;
+  optional uint32 param_2_malloc_override = 6;
+  optional bytes param_3_blob = 7;
+  optional bool param_3_is_null = 8;
+  optional bytes param_4 = 9;
+  optional bool param_4_is_null = 10;
+  optional bool allow_double_delete = 11;
+}
+
+// Parameters for ares_parse_caa_reply
+// param_0: i8*
+//   ↳ Nullable exploration knob
+// param_1: i32
+// param_2: %struct.ares_caa_reply**
+//   ↳ Struct blob init (size=384)
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message ares_parse_caa_reply_Params {
+  optional bytes param_0 = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional bytes param_2_blob = 4;
+  optional bool param_2_is_null = 5;
+  optional bool allow_double_delete = 6;
+}
+
+// Parameters for ares_parse_mx_reply
+// param_0: i8*
+//   ↳ Nullable exploration knob
+// param_1: i32
+// param_2: %struct.ares_mx_reply**
+//   ↳ Struct blob init (size=192)
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message ares_parse_mx_reply_Params {
+  optional bytes param_0 = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional bytes param_2_blob = 4;
+  optional bool param_2_is_null = 5;
+  optional bool allow_double_delete = 6;
+}
+
+// Parameters for ares_parse_naptr_reply
+// param_0: i8*
+//   ↳ Nullable exploration knob
+// param_1: i32
+// param_2: %struct.ares_naptr_reply**
+//   ↳ Struct blob init (size=384)
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message ares_parse_naptr_reply_Params {
+  optional bytes param_0 = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional bytes param_2_blob = 4;
+  optional bool param_2_is_null = 5;
+  optional bool allow_double_delete = 6;
+}
+
+// Parameters for ares_parse_ns_reply
+// param_0: i8*
+//   ↳ Nullable exploration knob
+// param_1: i32
+// param_2: %struct.hostent**
+//   ↳ Struct blob init (size=256)
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message ares_parse_ns_reply_Params {
+  optional bytes param_0 = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional bytes param_2_blob = 4;
+  optional bool param_2_is_null = 5;
+  optional bool allow_double_delete = 6;
+}
+
+// Parameters for ares_parse_ptr_reply
+// param_0: i8*
+//   ↳ Nullable exploration knob
+// param_1: i32
+// param_2: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_3: i32
+//   ↳ malloc size override for overflow testing
+// param_4: i32
+// param_5: %struct.hostent**
+//   ↳ Struct blob init (size=256)
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message ares_parse_ptr_reply_Params {
+  optional bytes param_0 = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional bytes param_2 = 4;
+  optional uint32 param_2_length = 5;
+  optional uint32 param_2_length_override = 6;
+  optional bool param_2_is_null = 7;
+  optional int32 param_3 = 8;
+  optional uint32 param_3_malloc_override = 9;
+  optional int32 param_4 = 10;
+  optional bytes param_5_blob = 11;
+  optional bool param_5_is_null = 12;
+  optional bool allow_double_delete = 13;
+}
+
+// Parameters for ares_parse_soa_reply
+// param_0: i8*
+//   ↳ Nullable exploration knob
+// param_1: i32
+// param_2: %struct.ares__dns_soa_t**
+//   ↳ Struct blob init (size=320)
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message ares_parse_soa_reply_Params {
+  optional bytes param_0 = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional bytes param_2_blob = 4;
+  optional bool param_2_is_null = 5;
+  optional bool allow_double_delete = 6;
+}
+
+// Parameters for ares_parse_srv_reply
+// param_0: i8*
+//   ↳ Nullable exploration knob
+// param_1: i32
+// param_2: %struct.ares_srv_reply**
+//   ↳ Struct blob init (size=192)
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message ares_parse_srv_reply_Params {
+  optional bytes param_0 = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional bytes param_2_blob = 4;
+  optional bool param_2_is_null = 5;
+  optional bool allow_double_delete = 6;
+}
+
+// Parameters for ares_parse_txt_reply
+// param_0: i8*
+//   ↳ Nullable exploration knob
+// param_1: i32
+// param_2: %struct.ares_txt_reply**
+//   ↳ Struct blob init (size=192)
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message ares_parse_txt_reply_Params {
+  optional bytes param_0 = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional bytes param_2_blob = 4;
+  optional bool param_2_is_null = 5;
+  optional bool allow_double_delete = 6;
+}
+
+// Parameters for ares_parse_txt_reply_ext
+// param_0: i8*
+//   ↳ Nullable exploration knob
+// param_1: i32
+// param_2: %struct.ares_txt_ext**
+//   ↳ Struct blob init (size=256)
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message ares_parse_txt_reply_ext_Params {
+  optional bytes param_0 = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional bytes param_2_blob = 4;
+  optional bool param_2_is_null = 5;
+  optional bool allow_double_delete = 6;
+}
+
+// Parameters for ares_parse_uri_reply
+// param_0: i8*
+//   ↳ Nullable exploration knob
+// param_1: i32
+// param_2: %struct.ares_uri_reply**
+//   ↳ Struct blob init (size=256)
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message ares_parse_uri_reply_Params {
+  optional bytes param_0 = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional bytes param_2_blob = 4;
+  optional bool param_2_is_null = 5;
+  optional bool allow_double_delete = 6;
+}
+
+// Parameters for ares_process
+// param_0: %struct.ares_channeldata*
+//   ↳ Struct blob init (size=3072)
+//   ↳ Nullable exploration knob
+// param_1: %struct.fd_set*
+//   ↳ Struct blob init (size=1024)
+//   ↳ Nullable exploration knob
+// param_2: %struct.fd_set*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message ares_process_Params {
+  optional bytes param_0_blob = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1_blob = 3;
+  optional bool param_1_is_null = 4;
+  optional uint32 param_2_handle = 5;
+  optional bool param_2_is_null = 6;
+  optional bool skip_dependency_check = 7;
+  optional bool allow_double_delete = 8;
+}
+
+// Parameters for ares_process_fd
+// param_0: %struct.ares_channeldata*
+//   ↳ Struct blob init (size=3072)
+//   ↳ Nullable exploration knob
+// param_1: i32
+// param_2: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message ares_process_fd_Params {
+  optional bytes param_0_blob = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional int32 param_2 = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for ares_query
+// param_0: %struct.ares_channeldata*
+//   ↳ Struct blob init (size=3072)
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_2: i32
+// param_3: i32
+// param_4: void (i8*, i32, i32, i8*, i32)*
+//   ↳ Nullable exploration knob
+// param_5: i8*
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message ares_query_Params {
+  optional bytes param_0_blob = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional int32 param_2 = 7;
+  optional int32 param_3 = 8;
+  optional bytes param_4 = 9;
+  optional bool param_4_is_null = 10;
+  optional bytes param_5 = 11;
+  optional bool param_5_is_null = 12;
+  optional bool allow_double_delete = 13;
+}
+
+// Parameters for ares_query_dnsrec
+// param_0: %struct.ares_channeldata*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_2: i32
+// param_3: i32
+// param_4: void (i8*, i32, i64, %struct.ares_dns_record*)*
+//   ↳ Nullable exploration knob
+// param_5: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+//   ↳ malloc size override for overflow testing
+// param_6: i16*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message ares_query_dnsrec_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional int32 param_2 = 7;
+  optional int32 param_3 = 8;
+  optional bytes param_4 = 9;
+  optional bool param_4_is_null = 10;
+  optional bytes param_5 = 11;
+  optional uint32 param_5_length = 12;
+  optional uint32 param_5_length_override = 13;
+  optional bool param_5_is_null = 14;
+  optional uint32 param_5_malloc_override = 15;
+  optional uint32 param_6_handle = 16;
+  optional bool param_6_is_null = 17;
+  optional bool skip_dependency_check = 18;
+  optional bool allow_double_delete = 19;
+}
+
+// Parameters for ares_queue_active_queries
+// param_0: %struct.ares_channeldata*
+//   ↳ Struct blob init (size=3072)
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message ares_queue_active_queries_Params {
+  optional bytes param_0_blob = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for ares_queue_wait_empty
+// param_0: %struct.ares_channeldata*
+//   ↳ Struct blob init (size=3072)
+//   ↳ Nullable exploration knob
+// param_1: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message ares_queue_wait_empty_Params {
+  optional bytes param_0_blob = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional bool allow_double_delete = 4;
+}
+
+// Parameters for ares_reinit
+// param_0: %struct.ares_channeldata*
+//   ↳ Struct blob init (size=3072)
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message ares_reinit_Params {
+  optional bytes param_0_blob = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for ares_save_options
+// param_0: %struct.ares_channeldata*
+//   ↳ Struct blob init (size=3072)
+//   ↳ Nullable exploration knob
+// param_1: %struct.ares_options*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_2: i32*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message ares_save_options_Params {
+  optional bytes param_0_blob = 1;
+  optional bool param_0_is_null = 2;
+  optional uint32 param_1_handle = 3;
+  optional bool param_1_is_null = 4;
+  optional uint32 param_2_handle = 5;
+  optional bool param_2_is_null = 6;
+  optional bool skip_dependency_check = 7;
+  optional bool allow_double_delete = 8;
+}
+
+// Parameters for ares_search
+// param_0: %struct.ares_channeldata*
+//   ↳ Struct blob init (size=3072)
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_2: i32
+// param_3: i32
+// param_4: void (i8*, i32, i32, i8*, i32)*
+//   ↳ Nullable exploration knob
+// param_5: i8*
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message ares_search_Params {
+  optional bytes param_0_blob = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional int32 param_2 = 7;
+  optional int32 param_3 = 8;
+  optional bytes param_4 = 9;
+  optional bool param_4_is_null = 10;
+  optional bytes param_5 = 11;
+  optional bool param_5_is_null = 12;
+  optional bool allow_double_delete = 13;
+}
+
+// Parameters for ares_search_dnsrec
+// param_0: %struct.ares_channeldata*
+//   ↳ Struct blob init (size=3072)
+//   ↳ Nullable exploration knob
+// param_1: %struct.ares_dns_record*
+//   ↳ Handle to %struct.ares_dns_record* object
+//   ↳ Nullable exploration knob
+// param_2: void (i8*, i32, i64, %struct.ares_dns_record*)*
+//   ↳ Nullable exploration knob
+// param_3: i8*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message ares_search_dnsrec_Params {
+  optional bytes param_0_blob = 1;
+  optional bool param_0_is_null = 2;
+  optional uint32 param_1_handle = 3;
+  optional bool param_1_is_null = 4;
+  optional bytes param_2 = 5;
+  optional bool param_2_is_null = 6;
+  optional uint32 param_3_handle = 7;
+  optional bool param_3_is_null = 8;
+  optional bool allow_double_delete = 9;
+}
+
+// Parameters for ares_send
+// param_0: %struct.ares_channeldata*
+//   ↳ Struct blob init (size=3072)
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Nullable exploration knob
+// param_2: i32
+// param_3: void (i8*, i32, i32, i8*, i32)*
+//   ↳ Nullable exploration knob
+// param_4: i8*
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message ares_send_Params {
+  optional bytes param_0_blob = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional bool param_1_is_null = 4;
+  optional int32 param_2 = 5;
+  optional bytes param_3 = 6;
+  optional bool param_3_is_null = 7;
+  optional bytes param_4 = 8;
+  optional bool param_4_is_null = 9;
+  optional bool allow_double_delete = 10;
+}
+
+// Parameters for ares_send_dnsrec
+// param_0: %struct.ares_channeldata*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: %struct.ares_dns_record*
+//   ↳ Handle to %struct.ares_dns_record* object
+//   ↳ Nullable exploration knob
+// param_2: void (i8*, i32, i64, %struct.ares_dns_record*)*
+//   ↳ Nullable exploration knob
+// param_3: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+//   ↳ malloc size override for overflow testing
+// param_4: i16*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message ares_send_dnsrec_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional uint32 param_1_handle = 3;
+  optional bool param_1_is_null = 4;
+  optional bytes param_2 = 5;
+  optional bool param_2_is_null = 6;
+  optional bytes param_3 = 7;
+  optional uint32 param_3_length = 8;
+  optional uint32 param_3_length_override = 9;
+  optional bool param_3_is_null = 10;
+  optional uint32 param_3_malloc_override = 11;
+  optional uint32 param_4_handle = 12;
+  optional bool param_4_is_null = 13;
+  optional bool skip_dependency_check = 14;
+  optional bool allow_double_delete = 15;
+}
+
+// Parameters for ares_set_local_dev
+// param_0: %struct.ares_channeldata*
+//   ↳ Struct blob init (size=3072)
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message ares_set_local_dev_Params {
+  optional bytes param_0_blob = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for ares_set_local_ip4
+// param_0: %struct.ares_channeldata*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message ares_set_local_ip4_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional bool skip_dependency_check = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for ares_set_local_ip6
+// param_0: %struct.ares_channeldata*
+//   ↳ Struct blob init (size=3072)
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message ares_set_local_ip6_Params {
+  optional bytes param_0_blob = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional bool param_1_is_null = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for ares_set_server_state_callback
+// param_0: %struct.ares_channeldata*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: void (i8*, i32, i32, i8*)*
+//   ↳ Nullable exploration knob
+// param_2: i8*
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message ares_set_server_state_callback_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional bool param_1_is_null = 4;
+  optional bytes param_2 = 5;
+  optional bool param_2_is_null = 6;
+  optional bool skip_dependency_check = 7;
+  optional bool allow_double_delete = 8;
+}
+
+// Parameters for ares_set_servers
+// param_0: %struct.ares_channeldata*
+//   ↳ Struct blob init (size=3072)
+//   ↳ Nullable exploration knob
+// param_1: %struct.ares_addr_node*
+//   ↳ Struct blob init (size=256)
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message ares_set_servers_Params {
+  optional bytes param_0_blob = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1_blob = 3;
+  optional bool param_1_is_null = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for ares_set_servers_csv
+// param_0: %struct.ares_channeldata*
+//   ↳ Struct blob init (size=3072)
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message ares_set_servers_csv_Params {
+  optional bytes param_0_blob = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for ares_set_servers_ports
+// param_0: %struct.ares_channeldata*
+//   ↳ Struct blob init (size=3072)
+//   ↳ Nullable exploration knob
+// param_1: %struct.ares_addr_port_node*
+//   ↳ Struct blob init (size=320)
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message ares_set_servers_ports_Params {
+  optional bytes param_0_blob = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1_blob = 3;
+  optional bool param_1_is_null = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for ares_set_servers_ports_csv
+// param_0: %struct.ares_channeldata*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message ares_set_servers_ports_csv_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bool skip_dependency_check = 7;
+  optional bool allow_double_delete = 8;
+}
+
+// Parameters for ares_set_socket_callback
+// param_0: %struct.ares_channeldata*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32 (i32, i32, i8*)*
+//   ↳ Nullable exploration knob
+// param_2: i8*
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message ares_set_socket_callback_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional bool param_1_is_null = 4;
+  optional bytes param_2 = 5;
+  optional bool param_2_is_null = 6;
+  optional bool skip_dependency_check = 7;
+  optional bool allow_double_delete = 8;
+}
+
+// Parameters for ares_set_socket_configure_callback
+// param_0: %struct.ares_channeldata*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32 (i32, i32, i8*)*
+//   ↳ Nullable exploration knob
+// param_2: i8*
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message ares_set_socket_configure_callback_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional bool param_1_is_null = 4;
+  optional bytes param_2 = 5;
+  optional bool param_2_is_null = 6;
+  optional bool skip_dependency_check = 7;
+  optional bool allow_double_delete = 8;
+}
+
+// Parameters for ares_set_socket_functions
+// param_0: %struct.ares_channeldata*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: %struct.ares_socket_functions*
+//   ↳ Struct blob init (size=320)
+//   ↳ Nullable exploration knob
+// param_2: i8*
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message ares_set_socket_functions_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1_blob = 3;
+  optional bool param_1_is_null = 4;
+  optional bytes param_2 = 5;
+  optional bool param_2_is_null = 6;
+  optional bool skip_dependency_check = 7;
+  optional bool allow_double_delete = 8;
+}
+
+// Parameters for ares_set_sortlist
+// param_0: %struct.ares_channeldata*
+//   ↳ Struct blob init (size=3072)
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message ares_set_sortlist_Params {
+  optional bytes param_0_blob = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for ares_strerror
+// param_0: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message ares_strerror_Params {
+  optional int32 param_0 = 1;
+  optional bool allow_double_delete = 2;
+}
+
+// Parameters for ares_threadsafety
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message ares_threadsafety_Params {
+  optional bool allow_double_delete = 1;
+}
+
+// Parameters for ares_timeout
+// param_0: %struct.ares_channeldata*
+//   ↳ Struct blob init (size=3072)
+//   ↳ Nullable exploration knob
+// param_1: %struct.timespec*
+//   ↳ Handle to %struct.timespec* object
+//   ↳ Nullable exploration knob
+// param_2: %struct.timespec*
+//   ↳ Handle to %struct.timespec* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message ares_timeout_Params {
+  optional bytes param_0_blob = 1;
+  optional bool param_0_is_null = 2;
+  optional uint32 param_1_handle = 3;
+  optional bool param_1_is_null = 4;
+  optional uint32 param_2_handle = 5;
+  optional bool param_2_is_null = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for ares_version
+// param_0: i32*
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message ares_version_Params {
+  optional bytes param_0 = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Dynamic dispatch: exactly one API call variant per Action.
+message Action {
+  oneof action {
+    ares_cancel_Params ares_cancel = 1;
+    ares_create_query_Params ares_create_query = 2;
+    ares_destroy_Params ares_destroy = 3;
+    ares_destroy_options_Params ares_destroy_options = 4;
+    ares_dns_addr_to_ptr_Params ares_dns_addr_to_ptr = 5;
+    ares_dns_class_fromstr_Params ares_dns_class_fromstr = 6;
+    ares_dns_class_tostr_Params ares_dns_class_tostr = 7;
+    ares_dns_opcode_tostr_Params ares_dns_opcode_tostr = 8;
+    ares_dns_opt_get_datatype_Params ares_dns_opt_get_datatype = 9;
+    ares_dns_opt_get_name_Params ares_dns_opt_get_name = 10;
+    ares_dns_parse_Params ares_dns_parse = 11;
+    ares_dns_pton_Params ares_dns_pton = 12;
+    ares_dns_rcode_tostr_Params ares_dns_rcode_tostr = 13;
+    ares_dns_rec_type_fromstr_Params ares_dns_rec_type_fromstr = 14;
+    ares_dns_rec_type_tostr_Params ares_dns_rec_type_tostr = 15;
+    ares_dns_record_create_Params ares_dns_record_create = 16;
+    ares_dns_record_destroy_Params ares_dns_record_destroy = 17;
+    ares_dns_record_duplicate_Params ares_dns_record_duplicate = 18;
+    ares_dns_record_get_flags_Params ares_dns_record_get_flags = 19;
+    ares_dns_record_get_id_Params ares_dns_record_get_id = 20;
+    ares_dns_record_get_opcode_Params ares_dns_record_get_opcode = 21;
+    ares_dns_record_get_rcode_Params ares_dns_record_get_rcode = 22;
+    ares_dns_record_query_add_Params ares_dns_record_query_add = 23;
+    ares_dns_record_query_cnt_Params ares_dns_record_query_cnt = 24;
+    ares_dns_record_query_get_Params ares_dns_record_query_get = 25;
+    ares_dns_record_query_set_name_Params ares_dns_record_query_set_name = 26;
+    ares_dns_record_query_set_type_Params ares_dns_record_query_set_type = 27;
+    ares_dns_record_rr_add_Params ares_dns_record_rr_add = 28;
+    ares_dns_record_rr_cnt_Params ares_dns_record_rr_cnt = 29;
+    ares_dns_record_rr_del_Params ares_dns_record_rr_del = 30;
+    ares_dns_record_rr_get_Params ares_dns_record_rr_get = 31;
+    ares_dns_record_rr_get_const_Params ares_dns_record_rr_get_const = 32;
+    ares_dns_rr_get_addr_Params ares_dns_rr_get_addr = 33;
+    ares_dns_rr_get_addr6_Params ares_dns_rr_get_addr6 = 34;
+    ares_dns_rr_get_bin_Params ares_dns_rr_get_bin = 35;
+    ares_dns_rr_get_class_Params ares_dns_rr_get_class = 36;
+    ares_dns_rr_get_keys_Params ares_dns_rr_get_keys = 37;
+    ares_dns_rr_get_name_Params ares_dns_rr_get_name = 38;
+    ares_dns_rr_get_opt_Params ares_dns_rr_get_opt = 39;
+    ares_dns_rr_get_opt_byid_Params ares_dns_rr_get_opt_byid = 40;
+    ares_dns_rr_get_opt_cnt_Params ares_dns_rr_get_opt_cnt = 41;
+    ares_dns_rr_get_str_Params ares_dns_rr_get_str = 42;
+    ares_dns_rr_get_ttl_Params ares_dns_rr_get_ttl = 43;
+    ares_dns_rr_get_type_Params ares_dns_rr_get_type = 44;
+    ares_dns_rr_get_u16_Params ares_dns_rr_get_u16 = 45;
+    ares_dns_rr_get_u32_Params ares_dns_rr_get_u32 = 46;
+    ares_dns_rr_get_u8_Params ares_dns_rr_get_u8 = 47;
+    ares_dns_rr_key_datatype_Params ares_dns_rr_key_datatype = 48;
+    ares_dns_rr_key_to_rec_type_Params ares_dns_rr_key_to_rec_type = 49;
+    ares_dns_rr_key_tostr_Params ares_dns_rr_key_tostr = 50;
+    ares_dns_rr_set_addr_Params ares_dns_rr_set_addr = 51;
+    ares_dns_rr_set_addr6_Params ares_dns_rr_set_addr6 = 52;
+    ares_dns_rr_set_bin_Params ares_dns_rr_set_bin = 53;
+    ares_dns_rr_set_opt_Params ares_dns_rr_set_opt = 54;
+    ares_dns_rr_set_str_Params ares_dns_rr_set_str = 55;
+    ares_dns_rr_set_u16_Params ares_dns_rr_set_u16 = 56;
+    ares_dns_rr_set_u32_Params ares_dns_rr_set_u32 = 57;
+    ares_dns_rr_set_u8_Params ares_dns_rr_set_u8 = 58;
+    ares_dns_section_tostr_Params ares_dns_section_tostr = 59;
+    ares_dns_write_Params ares_dns_write = 60;
+    ares_dup_Params ares_dup = 61;
+    ares_expand_name_Params ares_expand_name = 62;
+    ares_expand_string_Params ares_expand_string = 63;
+    ares_fds_Params ares_fds = 64;
+    ares_free_data_Params ares_free_data = 65;
+    ares_free_hostent_Params ares_free_hostent = 66;
+    ares_free_string_Params ares_free_string = 67;
+    ares_freeaddrinfo_Params ares_freeaddrinfo = 68;
+    ares_get_servers_Params ares_get_servers = 69;
+    ares_get_servers_csv_Params ares_get_servers_csv = 70;
+    ares_get_servers_ports_Params ares_get_servers_ports = 71;
+    ares_getaddrinfo_Params ares_getaddrinfo = 72;
+    ares_gethostbyaddr_Params ares_gethostbyaddr = 73;
+    ares_gethostbyname_Params ares_gethostbyname = 74;
+    ares_gethostbyname_file_Params ares_gethostbyname_file = 75;
+    ares_getnameinfo_Params ares_getnameinfo = 76;
+    ares_getsock_Params ares_getsock = 77;
+    ares_inet_ntop_Params ares_inet_ntop = 78;
+    ares_inet_pton_Params ares_inet_pton = 79;
+    ares_init_Params ares_init = 80;
+    ares_init_options_Params ares_init_options = 81;
+    ares_library_cleanup_Params ares_library_cleanup = 82;
+    ares_library_init_Params ares_library_init = 83;
+    ares_library_init_mem_Params ares_library_init_mem = 84;
+    ares_library_initialized_Params ares_library_initialized = 85;
+    ares_mkquery_Params ares_mkquery = 86;
+    ares_parse_a_reply_Params ares_parse_a_reply = 87;
+    ares_parse_aaaa_reply_Params ares_parse_aaaa_reply = 88;
+    ares_parse_caa_reply_Params ares_parse_caa_reply = 89;
+    ares_parse_mx_reply_Params ares_parse_mx_reply = 90;
+    ares_parse_naptr_reply_Params ares_parse_naptr_reply = 91;
+    ares_parse_ns_reply_Params ares_parse_ns_reply = 92;
+    ares_parse_ptr_reply_Params ares_parse_ptr_reply = 93;
+    ares_parse_soa_reply_Params ares_parse_soa_reply = 94;
+    ares_parse_srv_reply_Params ares_parse_srv_reply = 95;
+    ares_parse_txt_reply_Params ares_parse_txt_reply = 96;
+    ares_parse_txt_reply_ext_Params ares_parse_txt_reply_ext = 97;
+    ares_parse_uri_reply_Params ares_parse_uri_reply = 98;
+    ares_process_Params ares_process = 99;
+    ares_process_fd_Params ares_process_fd = 100;
+    ares_query_Params ares_query = 101;
+    ares_query_dnsrec_Params ares_query_dnsrec = 102;
+    ares_queue_active_queries_Params ares_queue_active_queries = 103;
+    ares_queue_wait_empty_Params ares_queue_wait_empty = 104;
+    ares_reinit_Params ares_reinit = 105;
+    ares_save_options_Params ares_save_options = 106;
+    ares_search_Params ares_search = 107;
+    ares_search_dnsrec_Params ares_search_dnsrec = 108;
+    ares_send_Params ares_send = 109;
+    ares_send_dnsrec_Params ares_send_dnsrec = 110;
+    ares_set_local_dev_Params ares_set_local_dev = 111;
+    ares_set_local_ip4_Params ares_set_local_ip4 = 112;
+    ares_set_local_ip6_Params ares_set_local_ip6 = 113;
+    ares_set_server_state_callback_Params ares_set_server_state_callback = 114;
+    ares_set_servers_Params ares_set_servers = 115;
+    ares_set_servers_csv_Params ares_set_servers_csv = 116;
+    ares_set_servers_ports_Params ares_set_servers_ports = 117;
+    ares_set_servers_ports_csv_Params ares_set_servers_ports_csv = 118;
+    ares_set_socket_callback_Params ares_set_socket_callback = 119;
+    ares_set_socket_configure_callback_Params ares_set_socket_configure_callback = 120;
+    ares_set_socket_functions_Params ares_set_socket_functions = 121;
+    ares_set_sortlist_Params ares_set_sortlist = 122;
+    ares_strerror_Params ares_strerror = 123;
+    ares_threadsafety_Params ares_threadsafety = 124;
+    ares_timeout_Params ares_timeout = 125;
+    ares_version_Params ares_version = 126;
+  }
+}
+
+// Top-level fuzz input (v2). Dynamic sequence of Actions.
+message FuzzInput {
+  optional uint32 global_seed = 1;
+  repeated Action actions = 2;
+  optional uint32 max_actions_hint = 3;
+  optional bool favor_valid_state = 4;
+}

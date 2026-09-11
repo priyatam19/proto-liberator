@@ -1,0 +1,1890 @@
+syntax = "proto2";
+
+package minijail_fuzzer;
+
+
+// Parameters for minijail_add_fs_restriction_access_rights
+// param_0: %struct.minijail*
+//   ↳ Handle to %struct.minijail* object
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_2: i16
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message minijail_add_fs_restriction_access_rights_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional int32 param_2 = 7;
+  optional bool allow_double_delete = 8;
+}
+
+// Parameters for minijail_add_fs_restriction_advanced_rw
+// param_0: %struct.minijail*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message minijail_add_fs_restriction_advanced_rw_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bool skip_dependency_check = 7;
+  optional bool allow_double_delete = 8;
+}
+
+// Parameters for minijail_add_fs_restriction_edit
+// param_0: %struct.minijail*
+//   ↳ Handle to %struct.minijail* object
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message minijail_add_fs_restriction_edit_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for minijail_add_fs_restriction_ro
+// param_0: %struct.minijail*
+//   ↳ Handle to %struct.minijail* object
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message minijail_add_fs_restriction_ro_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for minijail_add_fs_restriction_rw
+// param_0: %struct.minijail*
+//   ↳ Handle to %struct.minijail* object
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message minijail_add_fs_restriction_rw_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for minijail_add_fs_restriction_rx
+// param_0: %struct.minijail*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message minijail_add_fs_restriction_rx_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bool skip_dependency_check = 7;
+  optional bool allow_double_delete = 8;
+}
+
+// Parameters for minijail_add_hook
+// param_0: %struct.minijail*
+//   ↳ Handle to %struct.minijail* object
+//   ↳ Nullable exploration knob
+// param_1: i32 (i8*)*
+//   ↳ Nullable exploration knob
+// param_2: i8*
+//   ↳ Nullable exploration knob
+// param_3: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message minijail_add_hook_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional bool param_1_is_null = 4;
+  optional bytes param_2 = 5;
+  optional bool param_2_is_null = 6;
+  optional int32 param_3 = 7;
+  optional bool allow_double_delete = 8;
+}
+
+// Parameters for minijail_add_minimalistic_mountns_fs_rules
+// param_0: %struct.minijail*
+//   ↳ Handle to %struct.minijail* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message minijail_add_minimalistic_mountns_fs_rules_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for minijail_add_remount
+// param_0: %struct.minijail*
+//   ↳ Handle to %struct.minijail* object
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_2: i64
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message minijail_add_remount_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional int64 param_2 = 7;
+  optional bool allow_double_delete = 8;
+}
+
+// Parameters for minijail_add_to_cgroup
+// param_0: %struct.minijail*
+//   ↳ Handle to %struct.minijail* object
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message minijail_add_to_cgroup_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for minijail_bind
+// param_0: %struct.minijail*
+//   ↳ Handle to %struct.minijail* object
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_2: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_3: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message minijail_bind_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bytes param_2 = 7;
+  optional uint32 param_2_length = 8;
+  optional uint32 param_2_length_override = 9;
+  optional bool param_2_is_null = 10;
+  optional int32 param_3 = 11;
+  optional bool allow_double_delete = 12;
+}
+
+// Parameters for minijail_capbset_drop
+// param_0: %struct.minijail*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i64
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message minijail_capbset_drop_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int64 param_1 = 3;
+  optional bool skip_dependency_check = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for minijail_change_gid
+// param_0: %struct.minijail*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message minijail_change_gid_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional bool skip_dependency_check = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for minijail_change_group
+// param_0: %struct.minijail*
+//   ↳ Handle to %struct.minijail* object
+//   ↳ Nullable exploration knob
+// param_1: bytes
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message minijail_change_group_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional bool param_1_is_null = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for minijail_change_uid
+// param_0: %struct.minijail*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message minijail_change_uid_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional bool skip_dependency_check = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for minijail_change_user
+// param_0: %struct.minijail*
+//   ↳ Handle to %struct.minijail* object
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message minijail_change_user_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for minijail_close_open_fds
+// param_0: %struct.minijail*
+//   ↳ Handle to %struct.minijail* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message minijail_close_open_fds_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for minijail_copy_jail
+// param_0: %struct.minijail*
+//   ↳ Handle to %struct.minijail* object
+//   ↳ Nullable exploration knob
+// param_1: %struct.minijail*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message minijail_copy_jail_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional uint32 param_1_handle = 3;
+  optional bool param_1_is_null = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for minijail_create_session
+// param_0: %struct.minijail*
+//   ↳ Handle to %struct.minijail* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message minijail_create_session_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for minijail_destroy
+// param_0: %struct.minijail*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message minijail_destroy_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for minijail_disable_fs_restrictions
+// param_0: %struct.minijail*
+//   ↳ Handle to %struct.minijail* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message minijail_disable_fs_restrictions_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for minijail_enable_default_fs_restrictions
+// param_0: %struct.minijail*
+//   ↳ Handle to %struct.minijail* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message minijail_enable_default_fs_restrictions_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for minijail_enter
+// param_0: %struct.minijail*
+//   ↳ Handle to %struct.minijail* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message minijail_enter_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for minijail_enter_chroot
+// param_0: %struct.minijail*
+//   ↳ Handle to %struct.minijail* object
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message minijail_enter_chroot_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for minijail_enter_pivot_root
+// param_0: %struct.minijail*
+//   ↳ Handle to %struct.minijail* object
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message minijail_enter_pivot_root_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for minijail_fork
+// param_0: %struct.minijail*
+//   ↳ Handle to %struct.minijail* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message minijail_fork_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for minijail_forward_signals
+// param_0: %struct.minijail*
+//   ↳ Handle to %struct.minijail* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message minijail_forward_signals_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for minijail_get_enable_default_runtime
+// param_0: %struct.minijail*
+//   ↳ Handle to %struct.minijail* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message minijail_get_enable_default_runtime_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for minijail_get_original_path
+// param_0: %struct.minijail*
+//   ↳ Handle to %struct.minijail* object
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message minijail_get_original_path_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for minijail_gidmap
+// param_0: %struct.minijail*
+//   ↳ Handle to %struct.minijail* object
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message minijail_gidmap_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for minijail_inherit_usergroups
+// param_0: %struct.minijail*
+//   ↳ Handle to %struct.minijail* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message minijail_inherit_usergroups_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for minijail_is_fs_restriction_available
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message minijail_is_fs_restriction_available_Params {
+  optional bool allow_double_delete = 1;
+}
+
+// Parameters for minijail_is_fs_restriction_ruleset_initialized
+// param_0: %struct.minijail*
+//   ↳ Handle to %struct.minijail* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message minijail_is_fs_restriction_ruleset_initialized_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for minijail_keep_supplementary_gids
+// param_0: %struct.minijail*
+//   ↳ Handle to %struct.minijail* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message minijail_keep_supplementary_gids_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for minijail_kill
+// param_0: %struct.minijail*
+//   ↳ Handle to %struct.minijail* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message minijail_kill_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for minijail_log_seccomp_filter_failures
+// param_0: %struct.minijail*
+//   ↳ Handle to %struct.minijail* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message minijail_log_seccomp_filter_failures_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for minijail_log_to_fd
+// param_0: i32
+// param_1: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message minijail_log_to_fd_Params {
+  optional int32 param_0 = 1;
+  optional int32 param_1 = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for minijail_mount
+// param_0: %struct.minijail*
+//   ↳ Handle to %struct.minijail* object
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_2: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_3: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_4: i64
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message minijail_mount_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bytes param_2 = 7;
+  optional uint32 param_2_length = 8;
+  optional uint32 param_2_length_override = 9;
+  optional bool param_2_is_null = 10;
+  optional bytes param_3 = 11;
+  optional uint32 param_3_length = 12;
+  optional uint32 param_3_length_override = 13;
+  optional bool param_3_is_null = 14;
+  optional int64 param_4 = 15;
+  optional bool allow_double_delete = 16;
+}
+
+// Parameters for minijail_mount_dev
+// param_0: %struct.minijail*
+//   ↳ Handle to %struct.minijail* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message minijail_mount_dev_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for minijail_mount_tmp
+// param_0: %struct.minijail*
+//   ↳ Handle to %struct.minijail* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message minijail_mount_tmp_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for minijail_mount_tmp_size
+// param_0: %struct.minijail*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i64
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message minijail_mount_tmp_size_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int64 param_1 = 3;
+  optional bool skip_dependency_check = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for minijail_mount_with_data
+// param_0: %struct.minijail*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_2: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_3: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_4: i64
+// param_5: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message minijail_mount_with_data_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bytes param_2 = 7;
+  optional uint32 param_2_length = 8;
+  optional uint32 param_2_length_override = 9;
+  optional bool param_2_is_null = 10;
+  optional bytes param_3 = 11;
+  optional uint32 param_3_length = 12;
+  optional uint32 param_3_length_override = 13;
+  optional bool param_3_is_null = 14;
+  optional int64 param_4 = 15;
+  optional bytes param_5 = 16;
+  optional uint32 param_5_length = 17;
+  optional uint32 param_5_length_override = 18;
+  optional bool param_5_is_null = 19;
+  optional bool skip_dependency_check = 20;
+  optional bool allow_double_delete = 21;
+}
+
+// Parameters for minijail_namespace_cgroups
+// param_0: %struct.minijail*
+//   ↳ Handle to %struct.minijail* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message minijail_namespace_cgroups_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for minijail_namespace_enter_net
+// param_0: %struct.minijail*
+//   ↳ Handle to %struct.minijail* object
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message minijail_namespace_enter_net_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional bool param_1_is_null = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for minijail_namespace_enter_vfs
+// param_0: %struct.minijail*
+//   ↳ Handle to %struct.minijail* object
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message minijail_namespace_enter_vfs_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional bool param_1_is_null = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for minijail_namespace_ipc
+// param_0: %struct.minijail*
+//   ↳ Handle to %struct.minijail* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message minijail_namespace_ipc_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for minijail_namespace_net
+// param_0: %struct.minijail*
+//   ↳ Handle to %struct.minijail* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message minijail_namespace_net_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for minijail_namespace_net_loopback
+// param_0: %struct.minijail*
+//   ↳ Handle to %struct.minijail* object
+//   ↳ Nullable exploration knob
+// param_1: bytes
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message minijail_namespace_net_loopback_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional bool param_1_is_null = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for minijail_namespace_pids
+// param_0: %struct.minijail*
+//   ↳ Handle to %struct.minijail* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message minijail_namespace_pids_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for minijail_namespace_pids_rw_proc
+// param_0: %struct.minijail*
+//   ↳ Handle to %struct.minijail* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message minijail_namespace_pids_rw_proc_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for minijail_namespace_set_hostname
+// param_0: %struct.minijail*
+//   ↳ Handle to %struct.minijail* object
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message minijail_namespace_set_hostname_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for minijail_namespace_user
+// param_0: %struct.minijail*
+//   ↳ Handle to %struct.minijail* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message minijail_namespace_user_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for minijail_namespace_user_disable_setgroups
+// param_0: %struct.minijail*
+//   ↳ Handle to %struct.minijail* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message minijail_namespace_user_disable_setgroups_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for minijail_namespace_uts
+// param_0: %struct.minijail*
+//   ↳ Handle to %struct.minijail* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message minijail_namespace_uts_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for minijail_namespace_vfs
+// param_0: %struct.minijail*
+//   ↳ Handle to %struct.minijail* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message minijail_namespace_vfs_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for minijail_new
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message minijail_new_Params {
+  optional bool allow_double_delete = 1;
+}
+
+// Parameters for minijail_new_session_keyring
+// param_0: %struct.minijail*
+//   ↳ Handle to %struct.minijail* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message minijail_new_session_keyring_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for minijail_no_new_privs
+// param_0: %struct.minijail*
+//   ↳ Handle to %struct.minijail* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message minijail_no_new_privs_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for minijail_parse_seccomp_filters
+// param_0: %struct.minijail*
+//   ↳ Handle to %struct.minijail* object
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message minijail_parse_seccomp_filters_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for minijail_parse_seccomp_filters_from_fd
+// param_0: %struct.minijail*
+//   ↳ Handle to %struct.minijail* object
+//   ↳ Nullable exploration knob
+// param_1: bytes
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message minijail_parse_seccomp_filters_from_fd_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional bool param_1_is_null = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for minijail_preserve_fd
+// param_0: %struct.minijail*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32
+// param_2: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message minijail_preserve_fd_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional int32 param_2 = 4;
+  optional bool skip_dependency_check = 5;
+  optional bool allow_double_delete = 6;
+}
+
+// Parameters for minijail_remount_mode
+// param_0: %struct.minijail*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i64
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message minijail_remount_mode_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int64 param_1 = 3;
+  optional bool skip_dependency_check = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for minijail_remount_proc_readonly
+// param_0: %struct.minijail*
+//   ↳ Handle to %struct.minijail* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message minijail_remount_proc_readonly_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for minijail_reset_signal_handlers
+// param_0: %struct.minijail*
+//   ↳ Handle to %struct.minijail* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message minijail_reset_signal_handlers_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for minijail_reset_signal_mask
+// param_0: %struct.minijail*
+//   ↳ Handle to %struct.minijail* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message minijail_reset_signal_mask_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for minijail_rlimit
+// param_0: %struct.minijail*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i32
+// param_2: i64
+// param_3: i64
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message minijail_rlimit_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional int64 param_2 = 4;
+  optional int64 param_3 = 5;
+  optional bool skip_dependency_check = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for minijail_run
+// param_0: %struct.minijail*
+//   ↳ Handle to %struct.minijail* object
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Nullable exploration knob
+// param_2: i8**
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message minijail_run_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional bool param_1_is_null = 4;
+  optional bytes param_2 = 5;
+  optional bool param_2_is_null = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for minijail_run_as_init
+// param_0: %struct.minijail*
+//   ↳ Handle to %struct.minijail* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message minijail_run_as_init_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for minijail_run_env
+// param_0: %struct.minijail*
+//   ↳ Handle to %struct.minijail* object
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Nullable exploration knob
+// param_2: i8**
+//   ↳ Nullable exploration knob
+// param_3: i8**
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message minijail_run_env_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional bool param_1_is_null = 4;
+  optional bytes param_2 = 5;
+  optional bool param_2_is_null = 6;
+  optional bytes param_3 = 7;
+  optional bool param_3_is_null = 8;
+  optional bool allow_double_delete = 9;
+}
+
+// Parameters for minijail_run_env_pid_pipes
+// param_0: %struct.minijail*
+//   ↳ Handle to %struct.minijail* object
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Nullable exploration knob
+// param_2: i8**
+//   ↳ Nullable exploration knob
+// param_3: i8**
+//   ↳ Nullable exploration knob
+// param_4: i32*
+//   ↳ Nullable exploration knob
+// param_5: i32*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_6: i32*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_7: i32*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message minijail_run_env_pid_pipes_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional bool param_1_is_null = 4;
+  optional bytes param_2 = 5;
+  optional bool param_2_is_null = 6;
+  optional bytes param_3 = 7;
+  optional bool param_3_is_null = 8;
+  optional bytes param_4 = 9;
+  optional bool param_4_is_null = 10;
+  optional uint32 param_5_handle = 11;
+  optional bool param_5_is_null = 12;
+  optional uint32 param_6_handle = 13;
+  optional bool param_6_is_null = 14;
+  optional uint32 param_7_handle = 15;
+  optional bool param_7_is_null = 16;
+  optional bool skip_dependency_check = 17;
+  optional bool allow_double_delete = 18;
+}
+
+// Parameters for minijail_run_env_pid_pipes_no_preload
+// param_0: %struct.minijail*
+//   ↳ Handle to %struct.minijail* object
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Nullable exploration knob
+// param_2: i8**
+//   ↳ Nullable exploration knob
+// param_3: i8**
+//   ↳ Nullable exploration knob
+// param_4: i32*
+//   ↳ Nullable exploration knob
+// param_5: i32*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_6: i32*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_7: i32*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message minijail_run_env_pid_pipes_no_preload_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional bool param_1_is_null = 4;
+  optional bytes param_2 = 5;
+  optional bool param_2_is_null = 6;
+  optional bytes param_3 = 7;
+  optional bool param_3_is_null = 8;
+  optional bytes param_4 = 9;
+  optional bool param_4_is_null = 10;
+  optional uint32 param_5_handle = 11;
+  optional bool param_5_is_null = 12;
+  optional uint32 param_6_handle = 13;
+  optional bool param_6_is_null = 14;
+  optional uint32 param_7_handle = 15;
+  optional bool param_7_is_null = 16;
+  optional bool skip_dependency_check = 17;
+  optional bool allow_double_delete = 18;
+}
+
+// Parameters for minijail_run_fd_env_pid_pipes
+// param_0: %struct.minijail*
+//   ↳ Handle to %struct.minijail* object
+//   ↳ Nullable exploration knob
+// param_1: i32
+// param_2: i8**
+//   ↳ Nullable exploration knob
+// param_3: i8**
+//   ↳ Nullable exploration knob
+// param_4: i32*
+//   ↳ Nullable exploration knob
+// param_5: i32*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_6: i32*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_7: i32*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message minijail_run_fd_env_pid_pipes_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional bytes param_2 = 4;
+  optional bool param_2_is_null = 5;
+  optional bytes param_3 = 6;
+  optional bool param_3_is_null = 7;
+  optional bytes param_4 = 8;
+  optional bool param_4_is_null = 9;
+  optional uint32 param_5_handle = 10;
+  optional bool param_5_is_null = 11;
+  optional uint32 param_6_handle = 12;
+  optional bool param_6_is_null = 13;
+  optional uint32 param_7_handle = 14;
+  optional bool param_7_is_null = 15;
+  optional bool skip_dependency_check = 16;
+  optional bool allow_double_delete = 17;
+}
+
+// Parameters for minijail_run_no_preload
+// param_0: %struct.minijail*
+//   ↳ Handle to %struct.minijail* object
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Nullable exploration knob
+// param_2: i8**
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message minijail_run_no_preload_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional bool param_1_is_null = 4;
+  optional bytes param_2 = 5;
+  optional bool param_2_is_null = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for minijail_run_pid
+// param_0: %struct.minijail*
+//   ↳ Handle to %struct.minijail* object
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Nullable exploration knob
+// param_2: i8**
+//   ↳ Nullable exploration knob
+// param_3: i32*
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message minijail_run_pid_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional bool param_1_is_null = 4;
+  optional bytes param_2 = 5;
+  optional bool param_2_is_null = 6;
+  optional bytes param_3 = 7;
+  optional bool param_3_is_null = 8;
+  optional bool allow_double_delete = 9;
+}
+
+// Parameters for minijail_run_pid_pipes
+// param_0: %struct.minijail*
+//   ↳ Handle to %struct.minijail* object
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Nullable exploration knob
+// param_2: i8**
+//   ↳ Nullable exploration knob
+// param_3: i32*
+//   ↳ Nullable exploration knob
+// param_4: i32*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_5: i32*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_6: i32*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message minijail_run_pid_pipes_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional bool param_1_is_null = 4;
+  optional bytes param_2 = 5;
+  optional bool param_2_is_null = 6;
+  optional bytes param_3 = 7;
+  optional bool param_3_is_null = 8;
+  optional uint32 param_4_handle = 9;
+  optional bool param_4_is_null = 10;
+  optional uint32 param_5_handle = 11;
+  optional bool param_5_is_null = 12;
+  optional uint32 param_6_handle = 13;
+  optional bool param_6_is_null = 14;
+  optional bool skip_dependency_check = 15;
+  optional bool allow_double_delete = 16;
+}
+
+// Parameters for minijail_run_pid_pipes_no_preload
+// param_0: %struct.minijail*
+//   ↳ Handle to %struct.minijail* object
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Nullable exploration knob
+// param_2: i8**
+//   ↳ Nullable exploration knob
+// param_3: i32*
+//   ↳ Nullable exploration knob
+// param_4: i32*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_5: i32*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_6: i32*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message minijail_run_pid_pipes_no_preload_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional bool param_1_is_null = 4;
+  optional bytes param_2 = 5;
+  optional bool param_2_is_null = 6;
+  optional bytes param_3 = 7;
+  optional bool param_3_is_null = 8;
+  optional uint32 param_4_handle = 9;
+  optional bool param_4_is_null = 10;
+  optional uint32 param_5_handle = 11;
+  optional bool param_5_is_null = 12;
+  optional uint32 param_6_handle = 13;
+  optional bool param_6_is_null = 14;
+  optional bool skip_dependency_check = 15;
+  optional bool allow_double_delete = 16;
+}
+
+// Parameters for minijail_run_pipe
+// param_0: %struct.minijail*
+//   ↳ Handle to %struct.minijail* object
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Nullable exploration knob
+// param_2: i8**
+//   ↳ Nullable exploration knob
+// param_3: i32*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message minijail_run_pipe_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional bool param_1_is_null = 4;
+  optional bytes param_2 = 5;
+  optional bool param_2_is_null = 6;
+  optional uint32 param_3_handle = 7;
+  optional bool param_3_is_null = 8;
+  optional bool skip_dependency_check = 9;
+  optional bool allow_double_delete = 10;
+}
+
+// Parameters for minijail_set_ambient_caps
+// param_0: %struct.minijail*
+//   ↳ Handle to %struct.minijail* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message minijail_set_ambient_caps_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for minijail_set_enable_default_runtime
+// param_0: %struct.minijail*
+//   ↳ Handle to %struct.minijail* object
+//   ↳ Nullable exploration knob
+// param_1: bytes
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message minijail_set_enable_default_runtime_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional bool param_1_is_null = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for minijail_set_enable_new_sessions
+// param_0: %struct.minijail*
+//   ↳ Handle to %struct.minijail* object
+//   ↳ Nullable exploration knob
+// param_1: bytes
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message minijail_set_enable_new_sessions_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional bool param_1_is_null = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for minijail_set_enable_profile_fs_restrictions
+// param_0: %struct.minijail*
+//   ↳ Handle to %struct.minijail* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message minijail_set_enable_profile_fs_restrictions_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for minijail_set_preload_path
+// param_0: %struct.minijail*
+//   ↳ Handle to %struct.minijail* object
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message minijail_set_preload_path_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for minijail_set_seccomp_filter_allow_speculation
+// param_0: %struct.minijail*
+//   ↳ Handle to %struct.minijail* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message minijail_set_seccomp_filter_allow_speculation_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for minijail_set_seccomp_filter_tsync
+// param_0: %struct.minijail*
+//   ↳ Handle to %struct.minijail* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message minijail_set_seccomp_filter_tsync_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for minijail_set_seccomp_filters
+// param_0: %struct.minijail*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: %struct.sock_fprog*
+//   ↳ Struct blob init (size=128)
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message minijail_set_seccomp_filters_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1_blob = 3;
+  optional bool param_1_is_null = 4;
+  optional bool skip_dependency_check = 5;
+  optional bool allow_double_delete = 6;
+}
+
+// Parameters for minijail_set_supplementary_gids
+// param_0: %struct.minijail*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i64
+// param_2: i32*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message minijail_set_supplementary_gids_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int64 param_1 = 3;
+  optional bytes param_2 = 4;
+  optional uint32 param_2_length = 5;
+  optional uint32 param_2_length_override = 6;
+  optional bool param_2_is_null = 7;
+  optional bool skip_dependency_check = 8;
+  optional bool allow_double_delete = 9;
+}
+
+// Parameters for minijail_set_using_minimalistic_mountns
+// param_0: %struct.minijail*
+//   ↳ Handle to %struct.minijail* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message minijail_set_using_minimalistic_mountns_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for minijail_skip_remount_private
+// param_0: %struct.minijail*
+//   ↳ Handle to %struct.minijail* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message minijail_skip_remount_private_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for minijail_skip_setting_securebits
+// param_0: %struct.minijail*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i64
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message minijail_skip_setting_securebits_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int64 param_1 = 3;
+  optional bool skip_dependency_check = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for minijail_syscall_name
+// param_0: %struct.minijail*
+//   ↳ Handle to %struct.minijail* object
+//   ↳ Nullable exploration knob
+// param_1: i64
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message minijail_syscall_name_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int64 param_1 = 3;
+  optional bool allow_double_delete = 4;
+}
+
+// Parameters for minijail_uidmap
+// param_0: %struct.minijail*
+//   ↳ Handle to %struct.minijail* object
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message minijail_uidmap_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for minijail_use_alt_syscall
+// param_0: %struct.minijail*
+//   ↳ Handle to %struct.minijail* object
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message minijail_use_alt_syscall_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for minijail_use_caps
+// param_0: %struct.minijail*
+//   ↳ Handle (set_by/delete) for dependency-aware mutation
+//   ↳ Nullable exploration knob
+// param_1: i64
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message minijail_use_caps_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int64 param_1 = 3;
+  optional bool skip_dependency_check = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for minijail_use_seccomp
+// param_0: %struct.minijail*
+//   ↳ Handle to %struct.minijail* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message minijail_use_seccomp_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for minijail_use_seccomp_filter
+// param_0: %struct.minijail*
+//   ↳ Handle to %struct.minijail* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message minijail_use_seccomp_filter_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for minijail_wait
+// param_0: %struct.minijail*
+//   ↳ Handle to %struct.minijail* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message minijail_wait_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for minijail_write_pid_file
+// param_0: %struct.minijail*
+//   ↳ Handle to %struct.minijail* object
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message minijail_write_pid_file_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Dynamic dispatch: exactly one API call variant per Action.
+message Action {
+  oneof action {
+    minijail_add_fs_restriction_access_rights_Params minijail_add_fs_restriction_access_rights = 1;
+    minijail_add_fs_restriction_advanced_rw_Params minijail_add_fs_restriction_advanced_rw = 2;
+    minijail_add_fs_restriction_edit_Params minijail_add_fs_restriction_edit = 3;
+    minijail_add_fs_restriction_ro_Params minijail_add_fs_restriction_ro = 4;
+    minijail_add_fs_restriction_rw_Params minijail_add_fs_restriction_rw = 5;
+    minijail_add_fs_restriction_rx_Params minijail_add_fs_restriction_rx = 6;
+    minijail_add_hook_Params minijail_add_hook = 7;
+    minijail_add_minimalistic_mountns_fs_rules_Params minijail_add_minimalistic_mountns_fs_rules = 8;
+    minijail_add_remount_Params minijail_add_remount = 9;
+    minijail_add_to_cgroup_Params minijail_add_to_cgroup = 10;
+    minijail_bind_Params minijail_bind = 11;
+    minijail_capbset_drop_Params minijail_capbset_drop = 12;
+    minijail_change_gid_Params minijail_change_gid = 13;
+    minijail_change_group_Params minijail_change_group = 14;
+    minijail_change_uid_Params minijail_change_uid = 15;
+    minijail_change_user_Params minijail_change_user = 16;
+    minijail_close_open_fds_Params minijail_close_open_fds = 17;
+    minijail_copy_jail_Params minijail_copy_jail = 18;
+    minijail_create_session_Params minijail_create_session = 19;
+    minijail_destroy_Params minijail_destroy = 20;
+    minijail_disable_fs_restrictions_Params minijail_disable_fs_restrictions = 21;
+    minijail_enable_default_fs_restrictions_Params minijail_enable_default_fs_restrictions = 22;
+    minijail_enter_Params minijail_enter = 23;
+    minijail_enter_chroot_Params minijail_enter_chroot = 24;
+    minijail_enter_pivot_root_Params minijail_enter_pivot_root = 25;
+    minijail_fork_Params minijail_fork = 26;
+    minijail_forward_signals_Params minijail_forward_signals = 27;
+    minijail_get_enable_default_runtime_Params minijail_get_enable_default_runtime = 28;
+    minijail_get_original_path_Params minijail_get_original_path = 29;
+    minijail_gidmap_Params minijail_gidmap = 30;
+    minijail_inherit_usergroups_Params minijail_inherit_usergroups = 31;
+    minijail_is_fs_restriction_available_Params minijail_is_fs_restriction_available = 32;
+    minijail_is_fs_restriction_ruleset_initialized_Params minijail_is_fs_restriction_ruleset_initialized = 33;
+    minijail_keep_supplementary_gids_Params minijail_keep_supplementary_gids = 34;
+    minijail_kill_Params minijail_kill = 35;
+    minijail_log_seccomp_filter_failures_Params minijail_log_seccomp_filter_failures = 36;
+    minijail_log_to_fd_Params minijail_log_to_fd = 37;
+    minijail_mount_Params minijail_mount = 38;
+    minijail_mount_dev_Params minijail_mount_dev = 39;
+    minijail_mount_tmp_Params minijail_mount_tmp = 40;
+    minijail_mount_tmp_size_Params minijail_mount_tmp_size = 41;
+    minijail_mount_with_data_Params minijail_mount_with_data = 42;
+    minijail_namespace_cgroups_Params minijail_namespace_cgroups = 43;
+    minijail_namespace_enter_net_Params minijail_namespace_enter_net = 44;
+    minijail_namespace_enter_vfs_Params minijail_namespace_enter_vfs = 45;
+    minijail_namespace_ipc_Params minijail_namespace_ipc = 46;
+    minijail_namespace_net_Params minijail_namespace_net = 47;
+    minijail_namespace_net_loopback_Params minijail_namespace_net_loopback = 48;
+    minijail_namespace_pids_Params minijail_namespace_pids = 49;
+    minijail_namespace_pids_rw_proc_Params minijail_namespace_pids_rw_proc = 50;
+    minijail_namespace_set_hostname_Params minijail_namespace_set_hostname = 51;
+    minijail_namespace_user_Params minijail_namespace_user = 52;
+    minijail_namespace_user_disable_setgroups_Params minijail_namespace_user_disable_setgroups = 53;
+    minijail_namespace_uts_Params minijail_namespace_uts = 54;
+    minijail_namespace_vfs_Params minijail_namespace_vfs = 55;
+    minijail_new_Params minijail_new = 56;
+    minijail_new_session_keyring_Params minijail_new_session_keyring = 57;
+    minijail_no_new_privs_Params minijail_no_new_privs = 58;
+    minijail_parse_seccomp_filters_Params minijail_parse_seccomp_filters = 59;
+    minijail_parse_seccomp_filters_from_fd_Params minijail_parse_seccomp_filters_from_fd = 60;
+    minijail_preserve_fd_Params minijail_preserve_fd = 61;
+    minijail_remount_mode_Params minijail_remount_mode = 62;
+    minijail_remount_proc_readonly_Params minijail_remount_proc_readonly = 63;
+    minijail_reset_signal_handlers_Params minijail_reset_signal_handlers = 64;
+    minijail_reset_signal_mask_Params minijail_reset_signal_mask = 65;
+    minijail_rlimit_Params minijail_rlimit = 66;
+    minijail_run_Params minijail_run = 67;
+    minijail_run_as_init_Params minijail_run_as_init = 68;
+    minijail_run_env_Params minijail_run_env = 69;
+    minijail_run_env_pid_pipes_Params minijail_run_env_pid_pipes = 70;
+    minijail_run_env_pid_pipes_no_preload_Params minijail_run_env_pid_pipes_no_preload = 71;
+    minijail_run_fd_env_pid_pipes_Params minijail_run_fd_env_pid_pipes = 72;
+    minijail_run_no_preload_Params minijail_run_no_preload = 73;
+    minijail_run_pid_Params minijail_run_pid = 74;
+    minijail_run_pid_pipes_Params minijail_run_pid_pipes = 75;
+    minijail_run_pid_pipes_no_preload_Params minijail_run_pid_pipes_no_preload = 76;
+    minijail_run_pipe_Params minijail_run_pipe = 77;
+    minijail_set_ambient_caps_Params minijail_set_ambient_caps = 78;
+    minijail_set_enable_default_runtime_Params minijail_set_enable_default_runtime = 79;
+    minijail_set_enable_new_sessions_Params minijail_set_enable_new_sessions = 80;
+    minijail_set_enable_profile_fs_restrictions_Params minijail_set_enable_profile_fs_restrictions = 81;
+    minijail_set_preload_path_Params minijail_set_preload_path = 82;
+    minijail_set_seccomp_filter_allow_speculation_Params minijail_set_seccomp_filter_allow_speculation = 83;
+    minijail_set_seccomp_filter_tsync_Params minijail_set_seccomp_filter_tsync = 84;
+    minijail_set_seccomp_filters_Params minijail_set_seccomp_filters = 85;
+    minijail_set_supplementary_gids_Params minijail_set_supplementary_gids = 86;
+    minijail_set_using_minimalistic_mountns_Params minijail_set_using_minimalistic_mountns = 87;
+    minijail_skip_remount_private_Params minijail_skip_remount_private = 88;
+    minijail_skip_setting_securebits_Params minijail_skip_setting_securebits = 89;
+    minijail_syscall_name_Params minijail_syscall_name = 90;
+    minijail_uidmap_Params minijail_uidmap = 91;
+    minijail_use_alt_syscall_Params minijail_use_alt_syscall = 92;
+    minijail_use_caps_Params minijail_use_caps = 93;
+    minijail_use_seccomp_Params minijail_use_seccomp = 94;
+    minijail_use_seccomp_filter_Params minijail_use_seccomp_filter = 95;
+    minijail_wait_Params minijail_wait = 96;
+    minijail_write_pid_file_Params minijail_write_pid_file = 97;
+  }
+}
+
+// Top-level fuzz input (v2). Dynamic sequence of Actions.
+message FuzzInput {
+  optional uint32 global_seed = 1;
+  repeated Action actions = 2;
+}

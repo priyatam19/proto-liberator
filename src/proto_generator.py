@@ -14,7 +14,7 @@ from dataclasses import dataclass
 # Import local modules
 from type_mapper import TypeMapper, TypeContext
 from contracts import DEFAULT_MAX_ACTIONS
-from utils import load_json, load_text_lines, save_file, to_proto_field_name
+from utils import load_json, load_text_lines, save_file, unique_proto_field_names
 
 
 @dataclass
@@ -355,8 +355,9 @@ class ProtoGenerator:
         msg.add_field("optional", "uint32", "global_seed")
 
         options = f"[(nanopb).max_count = {self.max_calls_per_api}]" if self.mutation_mode == "nanopb" else ""
+        field_names = unique_proto_field_names(function_names)
         for func_name in sorted(set(function_names)):
-            field_name = to_proto_field_name(func_name)
+            field_name = field_names[func_name]
             params_type = f"{func_name}_Params"
             msg.add_field(
                 "repeated",
@@ -384,8 +385,9 @@ class ProtoGenerator:
         oneof = msg.add_oneof("action")
 
         unique_sorted_funcs = sorted(set(function_names))
+        field_names = unique_proto_field_names(unique_sorted_funcs)
         for tag, func_name in enumerate(unique_sorted_funcs, start=1):
-            field_name = to_proto_field_name(func_name)
+            field_name = field_names[func_name]
             params_type = f"{func_name}_Params"
             oneof.add_field(params_type, field_name, tag)
 

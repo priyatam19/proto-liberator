@@ -31,13 +31,13 @@ from jinja2 import Environment, FileSystemLoader
 try:
     from contracts import MSG_FUZZ_INPUT, MSG_ACTION, FIELD_ACTIONS, FIELD_ACTION_ONEOF, DEFAULT_MAX_ACTIONS
     from emi_guard_rules import EmiGuardRules
-    from utils import load_json, load_text_lines, to_proto_field_name
+    from utils import load_json, load_text_lines, unique_proto_field_names
     from type_mapper import TypeMapper, TypeContext
 except ImportError:
     sys.path.append(os.path.dirname(__file__))
     from contracts import MSG_FUZZ_INPUT, MSG_ACTION, FIELD_ACTIONS, FIELD_ACTION_ONEOF, DEFAULT_MAX_ACTIONS
     from emi_guard_rules import EmiGuardRules
-    from utils import load_json, load_text_lines, to_proto_field_name
+    from utils import load_json, load_text_lines, unique_proto_field_names
     from type_mapper import TypeMapper, TypeContext
 
 
@@ -908,6 +908,12 @@ class WrapperGenerator:
         api_sequence = []
         unique_apis_set = set()
         unique_apis = []
+        eligible_functions = [
+            fn
+            for fn in raw_sequence
+            if fn in entries and (not self.minimum_apis or fn in self.minimum_apis)
+        ]
+        field_names = unique_proto_field_names(eligible_functions)
 
         for func_name in raw_sequence:
             if func_name not in entries:
@@ -970,7 +976,7 @@ class WrapperGenerator:
 
             call = {
                 "name": func_name,
-                "field_name": to_proto_field_name(func_name),
+                "field_name": field_names[func_name],
                 "struct_type": f"{prefix}{func_name}_Params",
                 "argc": argc,
                 "args": args,
@@ -1026,6 +1032,7 @@ class WrapperGenerator:
         sorted_funcs = sorted(entries.keys())
         if self.minimum_apis:
             sorted_funcs = [fn for fn in sorted_funcs if fn in self.minimum_apis]
+        field_names = unique_proto_field_names(sorted_funcs)
 
         scalar_dep_info_by_api = self._scalar_dependency_info_by_api()
         scalar_deleter_types_by_api = self._scalar_deleter_types_by_api()
@@ -1151,13 +1158,20 @@ class WrapperGenerator:
             if returns_scalar:
                 return_scalar_type_key = scalar_type_key_for(ret_llvm_type, ret_type, self.mapper)
                 scalar_type_keys.append(return_scalar_type_key)
-            field_name = to_proto_field_name(func_name)
+            field_name = field_names[func_name]
+            namespaces = sig.get("namespace", []) if isinstance(sig, dict) else []
+            if not isinstance(namespaces, list):
+                namespaces = []
+            qualified_name = "::".join(
+                [str(ns) for ns in namespaces if str(ns).strip()] + [func_name]
+            )
             unsupported_vararg = self.mapper.is_unsupported_vararg(func_name, context=self.type_context)
             post_call_check = self.emi_rules.get_post_call_check(func_name, "ret") if not return_is_void else None
 
             apis.append(
                 {
                     "name": func_name,
+                    "qualified_name": qualified_name,
                     "field_name": field_name,
                     "struct_type": f"{prefix}{func_name}_Params",
                     "oneof_tag": f"{action_type}_{field_name}_tag",

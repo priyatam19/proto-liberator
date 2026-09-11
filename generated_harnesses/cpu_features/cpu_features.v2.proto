@@ -1,0 +1,102 @@
+syntax = "proto2";
+
+package cpu_features_fuzzer;
+
+
+// Parameters for FillX86BrandString
+// param_0: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message FillX86BrandString_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for GetX86CacheInfo
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message GetX86CacheInfo_Params {
+  optional bool allow_double_delete = 1;
+}
+
+// Parameters for GetX86FeaturesEnumName
+// param_0: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message GetX86FeaturesEnumName_Params {
+  optional int32 param_0 = 1;
+  optional bool allow_double_delete = 2;
+}
+
+// Parameters for GetX86FeaturesEnumValue
+// param_0: %struct.X86Features*
+//   ↳ Struct blob init (size=96)
+//   ↳ Nullable exploration knob
+// param_1: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message GetX86FeaturesEnumValue_Params {
+  optional bytes param_0_blob = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional bool allow_double_delete = 4;
+}
+
+// Parameters for GetX86Info
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message GetX86Info_Params {
+  optional bool allow_double_delete = 1;
+}
+
+// Parameters for GetX86Microarchitecture
+// param_0: %struct.X86Info*
+//   ↳ Struct blob init (size=704)
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message GetX86Microarchitecture_Params {
+  optional bytes param_0_blob = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for GetX86MicroarchitectureName
+// param_0: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message GetX86MicroarchitectureName_Params {
+  optional int32 param_0 = 1;
+  optional bool allow_double_delete = 2;
+}
+
+// Dynamic dispatch: exactly one API call variant per Action.
+message Action {
+  oneof action {
+    FillX86BrandString_Params fill_x86_brand_string = 1;
+    GetX86CacheInfo_Params get_x86_cache_info = 2;
+    GetX86FeaturesEnumName_Params get_x86_features_enum_name = 3;
+    GetX86FeaturesEnumValue_Params get_x86_features_enum_value = 4;
+    GetX86Info_Params get_x86_info = 5;
+    GetX86Microarchitecture_Params get_x86_microarchitecture = 6;
+    GetX86MicroarchitectureName_Params get_x86_microarchitecture_name = 7;
+  }
+}
+
+// Top-level fuzz input (v2). Dynamic sequence of Actions.
+message FuzzInput {
+  optional uint32 global_seed = 1;
+  repeated Action actions = 2;
+}

@@ -1,0 +1,1401 @@
+syntax = "proto2";
+
+package cjson_fuzzer;
+
+
+// Parameters for cJSON_AddArrayToObject
+// param_0: %struct.cJSON*
+//   ↳ Handle to %struct.cJSON* object
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message cJSON_AddArrayToObject_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for cJSON_AddBoolToObject
+// param_0: %struct.cJSON*
+//   ↳ Handle to %struct.cJSON* object
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_2: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message cJSON_AddBoolToObject_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional int32 param_2 = 7;
+  optional bool allow_double_delete = 8;
+}
+
+// Parameters for cJSON_AddFalseToObject
+// param_0: %struct.cJSON*
+//   ↳ Handle to %struct.cJSON* object
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message cJSON_AddFalseToObject_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for cJSON_AddItemReferenceToArray
+// param_0: %struct.cJSON*
+//   ↳ Handle to %struct.cJSON* object
+//   ↳ Nullable exploration knob
+// param_1: %struct.cJSON*
+//   ↳ Handle to %struct.cJSON* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message cJSON_AddItemReferenceToArray_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional uint32 param_1_handle = 3;
+  optional bool param_1_is_null = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for cJSON_AddItemReferenceToObject
+// param_0: %struct.cJSON*
+//   ↳ Handle to %struct.cJSON* object
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_2: %struct.cJSON*
+//   ↳ Handle to %struct.cJSON* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message cJSON_AddItemReferenceToObject_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional uint32 param_2_handle = 7;
+  optional bool param_2_is_null = 8;
+  optional bool allow_double_delete = 9;
+}
+
+// Parameters for cJSON_AddItemToArray
+// param_0: %struct.cJSON*
+//   ↳ Handle to %struct.cJSON* object
+//   ↳ Nullable exploration knob
+// param_1: %struct.cJSON*
+//   ↳ Handle to %struct.cJSON* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message cJSON_AddItemToArray_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional uint32 param_1_handle = 3;
+  optional bool param_1_is_null = 4;
+  optional bool skip_dependency_check = 5;
+  optional bool allow_double_delete = 6;
+}
+
+// Parameters for cJSON_AddItemToObject
+// param_0: %struct.cJSON*
+//   ↳ Handle to %struct.cJSON* object
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_2: %struct.cJSON*
+//   ↳ Handle to %struct.cJSON* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message cJSON_AddItemToObject_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional uint32 param_2_handle = 7;
+  optional bool param_2_is_null = 8;
+  optional bool skip_dependency_check = 9;
+  optional bool allow_double_delete = 10;
+}
+
+// Parameters for cJSON_AddItemToObjectCS
+// param_0: %struct.cJSON*
+//   ↳ Handle to %struct.cJSON* object
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_2: %struct.cJSON*
+//   ↳ Handle to %struct.cJSON* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message cJSON_AddItemToObjectCS_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional uint32 param_2_handle = 7;
+  optional bool param_2_is_null = 8;
+  optional bool skip_dependency_check = 9;
+  optional bool allow_double_delete = 10;
+}
+
+// Parameters for cJSON_AddNullToObject
+// param_0: %struct.cJSON*
+//   ↳ Handle to %struct.cJSON* object
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message cJSON_AddNullToObject_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for cJSON_AddNumberToObject
+// param_0: %struct.cJSON*
+//   ↳ Handle to %struct.cJSON* object
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_2: double
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message cJSON_AddNumberToObject_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional double param_2 = 7;
+  optional bool allow_double_delete = 8;
+}
+
+// Parameters for cJSON_AddObjectToObject
+// param_0: %struct.cJSON*
+//   ↳ Handle to %struct.cJSON* object
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message cJSON_AddObjectToObject_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for cJSON_AddRawToObject
+// param_0: %struct.cJSON*
+//   ↳ Handle to %struct.cJSON* object
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_2: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message cJSON_AddRawToObject_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bytes param_2 = 7;
+  optional uint32 param_2_length = 8;
+  optional uint32 param_2_length_override = 9;
+  optional bool param_2_is_null = 10;
+  optional bool allow_double_delete = 11;
+}
+
+// Parameters for cJSON_AddStringToObject
+// param_0: %struct.cJSON*
+//   ↳ Handle to %struct.cJSON* object
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_2: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message cJSON_AddStringToObject_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bytes param_2 = 7;
+  optional uint32 param_2_length = 8;
+  optional uint32 param_2_length_override = 9;
+  optional bool param_2_is_null = 10;
+  optional bool allow_double_delete = 11;
+}
+
+// Parameters for cJSON_AddTrueToObject
+// param_0: %struct.cJSON*
+//   ↳ Handle to %struct.cJSON* object
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message cJSON_AddTrueToObject_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for cJSON_Compare
+// param_0: %struct.cJSON*
+//   ↳ Handle to %struct.cJSON* object
+//   ↳ Nullable exploration knob
+// param_1: %struct.cJSON*
+//   ↳ Handle to %struct.cJSON* object
+//   ↳ Nullable exploration knob
+// param_2: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message cJSON_Compare_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional uint32 param_1_handle = 3;
+  optional bool param_1_is_null = 4;
+  optional int32 param_2 = 5;
+  optional bool allow_double_delete = 6;
+}
+
+// Parameters for cJSON_CreateArray
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message cJSON_CreateArray_Params {
+  optional bool allow_double_delete = 1;
+}
+
+// Parameters for cJSON_CreateArrayReference
+// param_0: %struct.cJSON*
+//   ↳ Handle to %struct.cJSON* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message cJSON_CreateArrayReference_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for cJSON_CreateBool
+// param_0: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message cJSON_CreateBool_Params {
+  optional int32 param_0 = 1;
+  optional bool allow_double_delete = 2;
+}
+
+// Parameters for cJSON_CreateDoubleArray
+// param_0: double*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_1: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message cJSON_CreateDoubleArray_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional int32 param_1 = 5;
+  optional bool allow_double_delete = 6;
+}
+
+// Parameters for cJSON_CreateFalse
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message cJSON_CreateFalse_Params {
+  optional bool allow_double_delete = 1;
+}
+
+// Parameters for cJSON_CreateFloatArray
+// param_0: float*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_1: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message cJSON_CreateFloatArray_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional int32 param_1 = 5;
+  optional bool allow_double_delete = 6;
+}
+
+// Parameters for cJSON_CreateIntArray
+// param_0: i32*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_1: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message cJSON_CreateIntArray_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional int32 param_1 = 5;
+  optional bool allow_double_delete = 6;
+}
+
+// Parameters for cJSON_CreateNull
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message cJSON_CreateNull_Params {
+  optional bool allow_double_delete = 1;
+}
+
+// Parameters for cJSON_CreateNumber
+// param_0: double
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message cJSON_CreateNumber_Params {
+  optional double param_0 = 1;
+  optional bool allow_double_delete = 2;
+}
+
+// Parameters for cJSON_CreateObject
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message cJSON_CreateObject_Params {
+  optional bool allow_double_delete = 1;
+}
+
+// Parameters for cJSON_CreateObjectReference
+// param_0: %struct.cJSON*
+//   ↳ Handle to %struct.cJSON* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message cJSON_CreateObjectReference_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for cJSON_CreateRaw
+// param_0: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message cJSON_CreateRaw_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for cJSON_CreateString
+// param_0: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message cJSON_CreateString_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for cJSON_CreateStringArray
+// param_0: i8**
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_1: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message cJSON_CreateStringArray_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional int32 param_1 = 5;
+  optional bool allow_double_delete = 6;
+}
+
+// Parameters for cJSON_CreateStringReference
+// param_0: i8*
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message cJSON_CreateStringReference_Params {
+  optional bytes param_0 = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for cJSON_CreateTrue
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message cJSON_CreateTrue_Params {
+  optional bool allow_double_delete = 1;
+}
+
+// Parameters for cJSON_Delete
+// param_0: %struct.cJSON*
+//   ↳ Handle to %struct.cJSON* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message cJSON_Delete_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for cJSON_DeleteItemFromArray
+// param_0: %struct.cJSON*
+//   ↳ Handle to %struct.cJSON* object
+//   ↳ Nullable exploration knob
+// param_1: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message cJSON_DeleteItemFromArray_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional bool allow_double_delete = 4;
+}
+
+// Parameters for cJSON_DeleteItemFromObject
+// param_0: %struct.cJSON*
+//   ↳ Handle to %struct.cJSON* object
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message cJSON_DeleteItemFromObject_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for cJSON_DeleteItemFromObjectCaseSensitive
+// param_0: %struct.cJSON*
+//   ↳ Handle to %struct.cJSON* object
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message cJSON_DeleteItemFromObjectCaseSensitive_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for cJSON_DetachItemFromArray
+// param_0: %struct.cJSON*
+//   ↳ Handle to %struct.cJSON* object
+//   ↳ Nullable exploration knob
+// param_1: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message cJSON_DetachItemFromArray_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional bool allow_double_delete = 4;
+}
+
+// Parameters for cJSON_DetachItemFromObject
+// param_0: %struct.cJSON*
+//   ↳ Handle to %struct.cJSON* object
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message cJSON_DetachItemFromObject_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for cJSON_DetachItemFromObjectCaseSensitive
+// param_0: %struct.cJSON*
+//   ↳ Handle to %struct.cJSON* object
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message cJSON_DetachItemFromObjectCaseSensitive_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for cJSON_DetachItemViaPointer
+// param_0: %struct.cJSON*
+//   ↳ Handle to %struct.cJSON* object
+//   ↳ Nullable exploration knob
+// param_1: %struct.cJSON*
+//   ↳ Handle to %struct.cJSON* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message cJSON_DetachItemViaPointer_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional uint32 param_1_handle = 3;
+  optional bool param_1_is_null = 4;
+  optional bool skip_dependency_check = 5;
+  optional bool allow_double_delete = 6;
+}
+
+// Parameters for cJSON_Duplicate
+// param_0: %struct.cJSON*
+//   ↳ Handle to %struct.cJSON* object
+//   ↳ Nullable exploration knob
+// param_1: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message cJSON_Duplicate_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional bool allow_double_delete = 4;
+}
+
+// Parameters for cJSON_GetArrayItem
+// param_0: %struct.cJSON*
+//   ↳ Handle to %struct.cJSON* object
+//   ↳ Nullable exploration knob
+// param_1: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message cJSON_GetArrayItem_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional bool allow_double_delete = 4;
+}
+
+// Parameters for cJSON_GetArraySize
+// param_0: %struct.cJSON*
+//   ↳ Handle to %struct.cJSON* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message cJSON_GetArraySize_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for cJSON_GetErrorPtr
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message cJSON_GetErrorPtr_Params {
+  optional bool allow_double_delete = 1;
+}
+
+// Parameters for cJSON_GetNumberValue
+// param_0: %struct.cJSON*
+//   ↳ Handle to %struct.cJSON* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message cJSON_GetNumberValue_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for cJSON_GetObjectItem
+// param_0: %struct.cJSON*
+//   ↳ Handle to %struct.cJSON* object
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message cJSON_GetObjectItem_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for cJSON_GetObjectItemCaseSensitive
+// param_0: %struct.cJSON*
+//   ↳ Handle to %struct.cJSON* object
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message cJSON_GetObjectItemCaseSensitive_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for cJSON_GetStringValue
+// param_0: %struct.cJSON*
+//   ↳ Handle to %struct.cJSON* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message cJSON_GetStringValue_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for cJSON_HasObjectItem
+// param_0: %struct.cJSON*
+//   ↳ Handle to %struct.cJSON* object
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message cJSON_HasObjectItem_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for cJSON_InitHooks
+// param_0: %struct.cJSON_Hooks*
+//   ↳ Handle to %struct.cJSON_Hooks* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message cJSON_InitHooks_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for cJSON_InsertItemInArray
+// param_0: %struct.cJSON*
+//   ↳ Handle to %struct.cJSON* object
+//   ↳ Nullable exploration knob
+// param_1: i32
+// param_2: %struct.cJSON*
+//   ↳ Handle to %struct.cJSON* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message cJSON_InsertItemInArray_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional uint32 param_2_handle = 4;
+  optional bool param_2_is_null = 5;
+  optional bool skip_dependency_check = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for cJSON_IsArray
+// param_0: %struct.cJSON*
+//   ↳ Handle to %struct.cJSON* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message cJSON_IsArray_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for cJSON_IsBool
+// param_0: %struct.cJSON*
+//   ↳ Handle to %struct.cJSON* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message cJSON_IsBool_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for cJSON_IsFalse
+// param_0: %struct.cJSON*
+//   ↳ Handle to %struct.cJSON* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message cJSON_IsFalse_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for cJSON_IsInvalid
+// param_0: %struct.cJSON*
+//   ↳ Handle to %struct.cJSON* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message cJSON_IsInvalid_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for cJSON_IsNull
+// param_0: %struct.cJSON*
+//   ↳ Handle to %struct.cJSON* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message cJSON_IsNull_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for cJSON_IsNumber
+// param_0: %struct.cJSON*
+//   ↳ Handle to %struct.cJSON* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message cJSON_IsNumber_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for cJSON_IsObject
+// param_0: %struct.cJSON*
+//   ↳ Handle to %struct.cJSON* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message cJSON_IsObject_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for cJSON_IsRaw
+// param_0: %struct.cJSON*
+//   ↳ Handle to %struct.cJSON* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message cJSON_IsRaw_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for cJSON_IsString
+// param_0: %struct.cJSON*
+//   ↳ Handle to %struct.cJSON* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message cJSON_IsString_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for cJSON_IsTrue
+// param_0: %struct.cJSON*
+//   ↳ Handle to %struct.cJSON* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message cJSON_IsTrue_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for cJSON_Minify
+// param_0: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message cJSON_Minify_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for cJSON_Parse
+// param_0: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message cJSON_Parse_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for cJSON_ParseWithLength
+// param_0: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_1: i64
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message cJSON_ParseWithLength_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional int64 param_1 = 5;
+  optional bool allow_double_delete = 6;
+}
+
+// Parameters for cJSON_ParseWithLengthOpts
+// param_0: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_1: i64
+// param_2: i8**
+//   ↳ Nullable exploration knob
+// param_3: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message cJSON_ParseWithLengthOpts_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional int64 param_1 = 5;
+  optional bytes param_2 = 6;
+  optional bool param_2_is_null = 7;
+  optional int32 param_3 = 8;
+  optional bool skip_dependency_check = 9;
+  optional bool allow_double_delete = 10;
+}
+
+// Parameters for cJSON_ParseWithOpts
+// param_0: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_1: i8**
+//   ↳ Nullable exploration knob
+// param_2: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message cJSON_ParseWithOpts_Params {
+  optional bytes param_0 = 1;
+  optional uint32 param_0_length = 2;
+  optional uint32 param_0_length_override = 3;
+  optional bool param_0_is_null = 4;
+  optional bytes param_1 = 5;
+  optional bool param_1_is_null = 6;
+  optional int32 param_2 = 7;
+  optional bool skip_dependency_check = 8;
+  optional bool allow_double_delete = 9;
+}
+
+// Parameters for cJSON_Print
+// param_0: %struct.cJSON*
+//   ↳ Handle to %struct.cJSON* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message cJSON_Print_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for cJSON_PrintBuffered
+// param_0: %struct.cJSON*
+//   ↳ Handle to %struct.cJSON* object
+//   ↳ Nullable exploration knob
+// param_1: i32
+//   ↳ malloc size override for overflow testing
+// param_2: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message cJSON_PrintBuffered_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional uint32 param_1_malloc_override = 4;
+  optional int32 param_2 = 5;
+  optional bool allow_double_delete = 6;
+}
+
+// Parameters for cJSON_PrintPreallocated
+// param_0: %struct.cJSON*
+//   ↳ Handle to %struct.cJSON* object
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Nullable exploration knob
+// param_2: i32
+// param_3: i32
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message cJSON_PrintPreallocated_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional bool param_1_is_null = 4;
+  optional int32 param_2 = 5;
+  optional int32 param_3 = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for cJSON_PrintUnformatted
+// param_0: %struct.cJSON*
+//   ↳ Handle to %struct.cJSON* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message cJSON_PrintUnformatted_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for cJSON_ReplaceItemInArray
+// param_0: %struct.cJSON*
+//   ↳ Handle to %struct.cJSON* object
+//   ↳ Nullable exploration knob
+// param_1: i32
+// param_2: %struct.cJSON*
+//   ↳ Handle to %struct.cJSON* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message cJSON_ReplaceItemInArray_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional int32 param_1 = 3;
+  optional uint32 param_2_handle = 4;
+  optional bool param_2_is_null = 5;
+  optional bool skip_dependency_check = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for cJSON_ReplaceItemInObject
+// param_0: %struct.cJSON*
+//   ↳ Handle to %struct.cJSON* object
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_2: %struct.cJSON*
+//   ↳ Handle to %struct.cJSON* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message cJSON_ReplaceItemInObject_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional uint32 param_2_handle = 7;
+  optional bool param_2_is_null = 8;
+  optional bool skip_dependency_check = 9;
+  optional bool allow_double_delete = 10;
+}
+
+// Parameters for cJSON_ReplaceItemInObjectCaseSensitive
+// param_0: %struct.cJSON*
+//   ↳ Handle to %struct.cJSON* object
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// param_2: %struct.cJSON*
+//   ↳ Handle to %struct.cJSON* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message cJSON_ReplaceItemInObjectCaseSensitive_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional uint32 param_2_handle = 7;
+  optional bool param_2_is_null = 8;
+  optional bool skip_dependency_check = 9;
+  optional bool allow_double_delete = 10;
+}
+
+// Parameters for cJSON_ReplaceItemViaPointer
+// param_0: %struct.cJSON*
+//   ↳ Handle to %struct.cJSON* object
+//   ↳ Nullable exploration knob
+// param_1: %struct.cJSON*
+//   ↳ Handle to %struct.cJSON* object
+//   ↳ Nullable exploration knob
+// param_2: %struct.cJSON*
+//   ↳ Handle to %struct.cJSON* object
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message cJSON_ReplaceItemViaPointer_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional uint32 param_1_handle = 3;
+  optional bool param_1_is_null = 4;
+  optional uint32 param_2_handle = 5;
+  optional bool param_2_is_null = 6;
+  optional bool skip_dependency_check = 7;
+  optional bool allow_double_delete = 8;
+}
+
+// Parameters for cJSON_SetNumberHelper
+// param_0: %struct.cJSON*
+//   ↳ Handle to %struct.cJSON* object
+//   ↳ Nullable exploration knob
+// param_1: double
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Allow stale handles for UAF exploration
+//   ↳ Skip double-delete protection
+message cJSON_SetNumberHelper_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional double param_1 = 3;
+  optional bool skip_dependency_check = 4;
+  optional bool allow_double_delete = 5;
+}
+
+// Parameters for cJSON_SetValuestring
+// param_0: %struct.cJSON*
+//   ↳ Handle to %struct.cJSON* object
+//   ↳ Nullable exploration knob
+// param_1: i8*
+//   ↳ Array with explicit length control
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message cJSON_SetValuestring_Params {
+  optional uint32 param_0_handle = 1;
+  optional bool param_0_is_null = 2;
+  optional bytes param_1 = 3;
+  optional uint32 param_1_length = 4;
+  optional uint32 param_1_length_override = 5;
+  optional bool param_1_is_null = 6;
+  optional bool allow_double_delete = 7;
+}
+
+// Parameters for cJSON_Version
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message cJSON_Version_Params {
+  optional bool allow_double_delete = 1;
+}
+
+// Parameters for cJSON_free
+// param_0: i8*
+//   ↳ Nullable exploration knob
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message cJSON_free_Params {
+  optional bytes param_0 = 1;
+  optional bool param_0_is_null = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Parameters for cJSON_malloc
+// param_0: i64
+//   ↳ malloc size override for overflow testing
+// 
+// Contract violation knobs for semantic bug exploration
+//   ↳ Skip double-delete protection
+message cJSON_malloc_Params {
+  optional int64 param_0 = 1;
+  optional uint32 param_0_malloc_override = 2;
+  optional bool allow_double_delete = 3;
+}
+
+// Dynamic dispatch: exactly one API call variant per Action.
+message Action {
+  oneof action {
+    cJSON_AddArrayToObject_Params c_json_add_array_to_object = 1;
+    cJSON_AddBoolToObject_Params c_json_add_bool_to_object = 2;
+    cJSON_AddFalseToObject_Params c_json_add_false_to_object = 3;
+    cJSON_AddItemReferenceToArray_Params c_json_add_item_reference_to_array = 4;
+    cJSON_AddItemReferenceToObject_Params c_json_add_item_reference_to_object = 5;
+    cJSON_AddItemToArray_Params c_json_add_item_to_array = 6;
+    cJSON_AddItemToObject_Params c_json_add_item_to_object = 7;
+    cJSON_AddItemToObjectCS_Params c_json_add_item_to_object_cs = 8;
+    cJSON_AddNullToObject_Params c_json_add_null_to_object = 9;
+    cJSON_AddNumberToObject_Params c_json_add_number_to_object = 10;
+    cJSON_AddObjectToObject_Params c_json_add_object_to_object = 11;
+    cJSON_AddRawToObject_Params c_json_add_raw_to_object = 12;
+    cJSON_AddStringToObject_Params c_json_add_string_to_object = 13;
+    cJSON_AddTrueToObject_Params c_json_add_true_to_object = 14;
+    cJSON_Compare_Params c_json_compare = 15;
+    cJSON_CreateArray_Params c_json_create_array = 16;
+    cJSON_CreateArrayReference_Params c_json_create_array_reference = 17;
+    cJSON_CreateBool_Params c_json_create_bool = 18;
+    cJSON_CreateDoubleArray_Params c_json_create_double_array = 19;
+    cJSON_CreateFalse_Params c_json_create_false = 20;
+    cJSON_CreateFloatArray_Params c_json_create_float_array = 21;
+    cJSON_CreateIntArray_Params c_json_create_int_array = 22;
+    cJSON_CreateNull_Params c_json_create_null = 23;
+    cJSON_CreateNumber_Params c_json_create_number = 24;
+    cJSON_CreateObject_Params c_json_create_object = 25;
+    cJSON_CreateObjectReference_Params c_json_create_object_reference = 26;
+    cJSON_CreateRaw_Params c_json_create_raw = 27;
+    cJSON_CreateString_Params c_json_create_string = 28;
+    cJSON_CreateStringArray_Params c_json_create_string_array = 29;
+    cJSON_CreateStringReference_Params c_json_create_string_reference = 30;
+    cJSON_CreateTrue_Params c_json_create_true = 31;
+    cJSON_Delete_Params c_json_delete = 32;
+    cJSON_DeleteItemFromArray_Params c_json_delete_item_from_array = 33;
+    cJSON_DeleteItemFromObject_Params c_json_delete_item_from_object = 34;
+    cJSON_DeleteItemFromObjectCaseSensitive_Params c_json_delete_item_from_object_case_sensitive = 35;
+    cJSON_DetachItemFromArray_Params c_json_detach_item_from_array = 36;
+    cJSON_DetachItemFromObject_Params c_json_detach_item_from_object = 37;
+    cJSON_DetachItemFromObjectCaseSensitive_Params c_json_detach_item_from_object_case_sensitive = 38;
+    cJSON_DetachItemViaPointer_Params c_json_detach_item_via_pointer = 39;
+    cJSON_Duplicate_Params c_json_duplicate = 40;
+    cJSON_GetArrayItem_Params c_json_get_array_item = 41;
+    cJSON_GetArraySize_Params c_json_get_array_size = 42;
+    cJSON_GetErrorPtr_Params c_json_get_error_ptr = 43;
+    cJSON_GetNumberValue_Params c_json_get_number_value = 44;
+    cJSON_GetObjectItem_Params c_json_get_object_item = 45;
+    cJSON_GetObjectItemCaseSensitive_Params c_json_get_object_item_case_sensitive = 46;
+    cJSON_GetStringValue_Params c_json_get_string_value = 47;
+    cJSON_HasObjectItem_Params c_json_has_object_item = 48;
+    cJSON_InitHooks_Params c_json_init_hooks = 49;
+    cJSON_InsertItemInArray_Params c_json_insert_item_in_array = 50;
+    cJSON_IsArray_Params c_json_is_array = 51;
+    cJSON_IsBool_Params c_json_is_bool = 52;
+    cJSON_IsFalse_Params c_json_is_false = 53;
+    cJSON_IsInvalid_Params c_json_is_invalid = 54;
+    cJSON_IsNull_Params c_json_is_null = 55;
+    cJSON_IsNumber_Params c_json_is_number = 56;
+    cJSON_IsObject_Params c_json_is_object = 57;
+    cJSON_IsRaw_Params c_json_is_raw = 58;
+    cJSON_IsString_Params c_json_is_string = 59;
+    cJSON_IsTrue_Params c_json_is_true = 60;
+    cJSON_Minify_Params c_json_minify = 61;
+    cJSON_Parse_Params c_json_parse = 62;
+    cJSON_ParseWithLength_Params c_json_parse_with_length = 63;
+    cJSON_ParseWithLengthOpts_Params c_json_parse_with_length_opts = 64;
+    cJSON_ParseWithOpts_Params c_json_parse_with_opts = 65;
+    cJSON_Print_Params c_json_print = 66;
+    cJSON_PrintBuffered_Params c_json_print_buffered = 67;
+    cJSON_PrintPreallocated_Params c_json_print_preallocated = 68;
+    cJSON_PrintUnformatted_Params c_json_print_unformatted = 69;
+    cJSON_ReplaceItemInArray_Params c_json_replace_item_in_array = 70;
+    cJSON_ReplaceItemInObject_Params c_json_replace_item_in_object = 71;
+    cJSON_ReplaceItemInObjectCaseSensitive_Params c_json_replace_item_in_object_case_sensitive = 72;
+    cJSON_ReplaceItemViaPointer_Params c_json_replace_item_via_pointer = 73;
+    cJSON_SetNumberHelper_Params c_json_set_number_helper = 74;
+    cJSON_SetValuestring_Params c_json_set_valuestring = 75;
+    cJSON_Version_Params c_json_version = 76;
+    cJSON_free_Params c_json_free = 77;
+    cJSON_malloc_Params c_json_malloc = 78;
+  }
+}
+
+// Top-level fuzz input (v2). Dynamic sequence of Actions.
+message FuzzInput {
+  optional uint32 global_seed = 1;
+  repeated Action actions = 2;
+}

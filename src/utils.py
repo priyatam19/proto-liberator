@@ -135,6 +135,22 @@ def to_proto_field_name(name: str) -> str:
     return sanitized
 
 
+def unique_proto_field_names(names: List[str]) -> Dict[str, str]:
+    """Return stable, unique protobuf field names for API function names."""
+    result: Dict[str, str] = {}
+    used = set()
+    for name in sorted(set(names)):
+        base = to_proto_field_name(name)
+        candidate = base
+        suffix = 2
+        while candidate in used:
+            candidate = f"{base}_{suffix}"
+            suffix += 1
+        result[name] = candidate
+        used.add(candidate)
+    return result
+
+
 def humanize_bytes(size_bytes: int) -> str:
     """
     Convert byte count to human-readable string
