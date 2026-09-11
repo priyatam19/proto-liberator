@@ -12,6 +12,8 @@ venv/
 # Local build/output
 build/
 lib/
+!scripts/lib/
+!scripts/lib/**
 *.o
 *.a
 *.so
