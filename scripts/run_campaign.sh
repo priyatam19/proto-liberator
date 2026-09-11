@@ -51,6 +51,22 @@ Required:
   --out-root DIR
   --header HEADER               Repeatable
 
+Pipeline staging (for splitting build/fuzz/coverage+triage across
+separate callers, e.g. one job per stage in a CI pipeline):
+  --stage build|fuzz|postprocess|all
+                                 Default: all (build, then fuzz, then
+                                 postprocess, exactly as before). build ==
+                                 schema+harness gen + compile fuzzer/profile
+                                 bin. fuzz == run libFuzzer for --duration-sec.
+                                 postprocess == corpus minimize + coverage
+                                 replay + crash classification/clustering.
+  --campaign-dir DIR             Reuse this exact directory instead of
+                                 generating a new <out-root>/<library>_<stamp>
+                                 one. Required for --stage fuzz/postprocess
+                                 (pass the same directory a prior --stage
+                                 build run used); optional for --stage build
+                                 or all.
+
 Common options:
   --driver PATH                 Optional driver.meta (v2 ok without)
   --schema-mode v2|v1           Default: v2
@@ -111,6 +127,8 @@ CONDITIONS=""
 APIS=""
 DRIVER=""
 OUT_ROOT=""
+STAGE="all"
+CAMPAIGN_DIR_OVERRIDE=""
 declare -a HEADERS=()
 SCHEMA_MODE="v2"
 MUTATION_MODE="lpm"
@@ -164,6 +182,8 @@ while [ $# -gt 0 ]; do
     --apis) APIS="${2:-}"; shift 2;;
     --driver) DRIVER="${2:-}"; shift 2;;
     --out-root) OUT_ROOT="${2:-}"; shift 2;;
+    --stage) STAGE="${2:-}"; shift 2;;
+    --campaign-dir) CAMPAIGN_DIR_OVERRIDE="${2:-}"; shift 2;;
     --header) HEADERS+=("${2:-}"); shift 2;;
     --schema-mode) SCHEMA_MODE="${2:-}"; shift 2;;
     --mutation-mode) MUTATION_MODE="${2:-}"; shift 2;;
@@ -254,6 +274,18 @@ done
 if [ -z "${LIBRARY}" ] || [ -z "${CONDITIONS}" ] || [ -z "${APIS}" ] || [ -z "${OUT_ROOT}" ] || [ "${#HEADERS[@]}" -eq 0 ]; then
   echo "[ERROR] Missing required args." >&2
   usage >&2
+  exit 2
+fi
+
+case "${STAGE}" in
+  build|fuzz|postprocess|all) ;;
+  *)
+    echo "[ERROR] --stage must be one of: build, fuzz, postprocess, all (got: ${STAGE})" >&2
+    exit 2
+    ;;
+esac
+if [ "${STAGE}" != "all" ] && [ "${STAGE}" != "build" ] && [ -z "${CAMPAIGN_DIR_OVERRIDE}" ]; then
+  echo "[ERROR] --stage ${STAGE} requires --campaign-dir (pointing at the same directory used by an earlier --stage build run)" >&2
   exit 2
 fi
 
@@ -355,8 +387,13 @@ for kv in "${LENIENT_RESIZE_ENV[@]}"; do
   VARIANT_ENVS["lenient-resize"]+=$'\n'"${kv}"
 done
 
-STAMP="$(date +%Y%m%d_%H%M%S)"
-CAMPAIGN_DIR="${OUT_ROOT%/}/${LIBRARY}_${STAMP}"
+STAMP=""
+if [ -n "${CAMPAIGN_DIR_OVERRIDE}" ]; then
+  CAMPAIGN_DIR="${CAMPAIGN_DIR_OVERRIDE}"
+else
+  STAMP="$(date +%Y%m%d_%H%M%S)"
+  CAMPAIGN_DIR="${OUT_ROOT%/}/${LIBRARY}_${STAMP}"
+fi
 mkdir -p "${CAMPAIGN_DIR}"
 
 META_JSON="${CAMPAIGN_DIR}/campaign.meta.txt"
@@ -717,26 +754,32 @@ cleanup() {
 trap cleanup EXIT
 
 # Build all variants first (serial, keeps logs simpler and avoids parallel protoc/clang contention).
-for v in "${VARIANTS[@]}"; do
-  build_variant "${v}"
-done
+if [ "${STAGE}" = "all" ] || [ "${STAGE}" = "build" ]; then
+  for v in "${VARIANTS[@]}"; do
+    build_variant "${v}"
+  done
+fi
 
-# Run fuzzers in parallel (2–3 variants recommended).
-for v in "${VARIANTS[@]}"; do
-  run_fuzz_variant "${v}" &
-  PIDS+=("$!")
-done
+if [ "${STAGE}" = "all" ] || [ "${STAGE}" = "fuzz" ]; then
+  # Run fuzzers in parallel (2–3 variants recommended).
+  for v in "${VARIANTS[@]}"; do
+    run_fuzz_variant "${v}" &
+    PIDS+=("$!")
+  done
 
-for pid in "${PIDS[@]}"; do
-  wait "${pid}" || true
-done
+  for pid in "${PIDS[@]}"; do
+    wait "${pid}" || true
+  done
 
-unset LLVM_PROFILE_FILE || true
-PIDS=()
+  unset LLVM_PROFILE_FILE || true
+  PIDS=()
+fi
 
-# Post-process each variant (serial).
-for v in "${VARIANTS[@]}"; do
-  postprocess_variant "${v}"
-done
+if [ "${STAGE}" = "all" ] || [ "${STAGE}" = "postprocess" ]; then
+  # Post-process each variant (serial).
+  for v in "${VARIANTS[@]}"; do
+    postprocess_variant "${v}"
+  done
+fi
 
 echo "[Campaign] Done: ${CAMPAIGN_DIR}"
